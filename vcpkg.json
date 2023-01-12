@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "limbo",
+  "version-semver": "0.0.1",
+  "dependencies": [
+    "nlopt",
+    "boost-filesystem",
+    "boost-system",
+    "boost-program-options",
+    "boost-thread",
+    "boost-parameter",
+    "tbb"
+  ],
+  "builtin-baseline": "f092860c0897753d058330cea034fd6ff9444dae",
+ 
+  "supports": "windows"
+}

@@ -1,0 +1,67 @@
+﻿{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "description": "Inherited by other presets",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_MODULE_PATH": "${sourceDir}/cmake",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "LIMBO_BUILD_TESTS":  "ON"
+      }
+    },
+    {
+      "name": "MSVC-Debug",
+      "description": "Target Windows with the Visual Studio development environment.",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "MSVC-Release",
+      "description": "Target Windows with the Visual Studio development environment.",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "MSVC-Release-Fast",
+      "inherits": "MSVC-Release",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/fp:fast /EHsc"
+      }
+    },
+    {
+      "name": "Clang-Release",
+      "inherits": "default",
+      "toolset": "ClangCL",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "windows-clang-x64"
+        }
+      }
+    },
+    {
+      "name": "Clang-Release-Fast",
+      "inherits": "Clang-Release",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/fp:fast /EHsc"
+      }
+    }
+  ]
+}
