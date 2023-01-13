@@ -11,6 +11,7 @@ add_executable(
 	"test_kernel.cpp"
 	"test_init_functions.cpp"
 )
+target_compile_definitions(limbo_tests PRIVATE LIMBO_TEST_RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/temp")
 target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
 install(TARGETS limbo_tests)
 
