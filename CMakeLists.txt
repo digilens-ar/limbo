@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options thread system)
 find_package(TBB CONFIG REQUIRED)
 find_package(NLopt CONFIG REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 
 add_library(limbo INTERFACE)
 target_include_directories(limbo INTERFACE "${CMAKE_SOURCE_DIR}/src")

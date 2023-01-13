@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.20)
 
 add_executable(limbo_tests "test.cpp")
-target_link_libaries(limbo_tests PUBLIC limbo GTest::gtest_main)
+target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
 install(TARGETS limbo_tests)
 
 include(GoogleTest) 
