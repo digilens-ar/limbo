@@ -47,7 +47,7 @@
 #define BOOST_TEST_MODULE test_gp
 #define protected public
 
-#include <boost/test/unit_test.hpp>
+#include <gtest/gtest.h>
 
 #include <limbo/acqui/ucb.hpp>
 #include <limbo/kernel/exp.hpp>

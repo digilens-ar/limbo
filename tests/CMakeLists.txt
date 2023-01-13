@@ -6,6 +6,10 @@ add_executable(
 	"test_serialize.cpp"
 	"test_optimizers.cpp"
 	"test_nlopt.cpp"
+	"test_mean.cpp"
+	"test_macros.cpp"
+	"test_kernel.cpp"
+	"test_init_functions.cpp"
 )
 target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
 install(TARGETS limbo_tests)

@@ -43,12 +43,10 @@
 //| The fact that you are presently reading this means that you have had
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE test_mean
 
 #include <iostream>
 
-#include <boost/test/unit_test.hpp>
+#include <gtest/gtest.h>
 
 #include <limbo/mean/constant.hpp>
 #include <limbo/mean/function_ard.hpp>
@@ -105,11 +103,11 @@ void check_mean(size_t dim_in, size_t dim_out, size_t K)
 
         std::tie(error, analytic, finite_diff) = check_grad(mean, hp, v);
         // std::cout << error << ": " << analytic << " vs " << finite_diff << std::endl;
-        BOOST_CHECK(error < 1e-6);
+        ASSERT_TRUE(error < 1e-6);
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_mean_constant)
+TEST(Limbo_Mean, mean_constant)
 {
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
@@ -118,7 +116,7 @@ BOOST_AUTO_TEST_CASE(test_mean_constant)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_mean_function_ard)
+TEST(Limbo_Mean, mean_function_ard)
 {
     // This test checks the gradients computation of FunctionARD when the base mean function
     // also has tunable parameters
@@ -129,7 +127,7 @@ BOOST_AUTO_TEST_CASE(test_mean_function_ard)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_mean_function_ard_dummy)
+TEST(Limbo_Mean, mean_function_ard_dummy)
 {
     // This test checks the gradients computation of FunctionARD when the base mean function
     // has no tunable parameters

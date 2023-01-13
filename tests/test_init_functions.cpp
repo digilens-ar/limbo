@@ -43,10 +43,8 @@
 //| The fact that you are presently reading this means that you have had
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE test_init_functions
 
-#include <boost/test/unit_test.hpp>
+#include <gtest/gtest.h>
 
 #include <limbo/acqui.hpp>
 #include <limbo/bayes_opt/boptimizer.hpp>
@@ -104,7 +102,7 @@ struct fit_eval {
     }
 };
 
-BOOST_AUTO_TEST_CASE(no_init)
+TEST(Limbo_Init_Functions, no_init)
 {
     std::cout << "NoInit" << std::endl;
     using Init_t = init::NoInit<Params>;
@@ -112,11 +110,11 @@ BOOST_AUTO_TEST_CASE(no_init)
 
     Opt_t opt;
     opt.optimize(fit_eval());
-    BOOST_CHECK(opt.observations().size() == 0);
-    BOOST_CHECK(opt.samples().size() == 0);
+    ASSERT_TRUE(opt.observations().size() == 0);
+    ASSERT_TRUE(opt.samples().size() == 0);
 }
 
-BOOST_AUTO_TEST_CASE(random_lhs)
+TEST(Limbo_Init_Functions, random_lhs)
 {
     std::cout << "LHS" << std::endl;
     struct MyParams : public Params {
@@ -130,20 +128,20 @@ BOOST_AUTO_TEST_CASE(random_lhs)
 
     Opt_t opt;
     opt.optimize(fit_eval());
-    BOOST_CHECK(opt.observations().size() == 10);
-    BOOST_CHECK(opt.samples().size() == 10);
+    ASSERT_TRUE(opt.observations().size() == 10);
+    ASSERT_TRUE(opt.samples().size() == 10);
     for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
         const Eigen::VectorXd& x = opt.samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
-            BOOST_CHECK(x[i] >= 0);
-            BOOST_CHECK(x[i] <= 1);
-            BOOST_CHECK(i == 0 || x[i] != x[0]);
+            ASSERT_TRUE(x[i] >= 0);
+            ASSERT_TRUE(x[i] <= 1);
+            ASSERT_TRUE(i == 0 || x[i] != x[0]);
         }
     }
 }
 
-BOOST_AUTO_TEST_CASE(random_sampling)
+TEST(Limbo_Init_Functions, random_sampling)
 {
     std::cout << "RandomSampling" << std::endl;
     struct MyParams : public Params {
@@ -157,20 +155,20 @@ BOOST_AUTO_TEST_CASE(random_sampling)
 
     Opt_t opt;
     opt.optimize(fit_eval());
-    BOOST_CHECK(opt.observations().size() == 10);
-    BOOST_CHECK(opt.samples().size() == 10);
+    ASSERT_TRUE(opt.observations().size() == 10);
+    ASSERT_TRUE(opt.samples().size() == 10);
     for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
         const Eigen::VectorXd& x = opt.samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
-            BOOST_CHECK(x[i] >= 0);
-            BOOST_CHECK(x[i] <= 1);
-            BOOST_CHECK(i == 0 || x[i] != x[0]);
+            ASSERT_TRUE(x[i] >= 0);
+            ASSERT_TRUE(x[i] <= 1);
+            ASSERT_TRUE(i == 0 || x[i] != x[0]);
         }
     }
 }
 
-BOOST_AUTO_TEST_CASE(random_sampling_grid)
+TEST(Limbo_Init_Functions, random_sampling_grid)
 {
     std::cout << "RandomSamplingGrid" << std::endl;
     struct MyParams : public Params {
@@ -185,20 +183,20 @@ BOOST_AUTO_TEST_CASE(random_sampling_grid)
 
     Opt_t opt;
     opt.optimize(fit_eval());
-    BOOST_CHECK(opt.observations().size() == 10);
-    BOOST_CHECK(opt.samples().size() == 10);
+    ASSERT_TRUE(opt.observations().size() == 10);
+    ASSERT_TRUE(opt.samples().size() == 10);
     for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
         const Eigen::VectorXd& x = opt.samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
-            BOOST_CHECK(x[i] >= 0);
-            BOOST_CHECK(x[i] <= 1);
-            BOOST_CHECK(x[i] == 0 || x[i] == 0.25 || x[i] == 0.5 || x[i] == 0.75 || x[i] == 1.0);
+            ASSERT_TRUE(x[i] >= 0);
+            ASSERT_TRUE(x[i] <= 1);
+            ASSERT_TRUE(x[i] == 0 || x[i] == 0.25 || x[i] == 0.5 || x[i] == 0.75 || x[i] == 1.0);
         }
     }
 }
 
-BOOST_AUTO_TEST_CASE(grid_sampling)
+TEST(Limbo_Init_Functions, grid_sampling)
 {
     std::cout << "GridSampling" << std::endl;
     struct MyParams : public Params {
@@ -213,15 +211,15 @@ BOOST_AUTO_TEST_CASE(grid_sampling)
     Opt_t opt;
     opt.optimize(fit_eval());
     std::cout << opt.observations().size() << std::endl;
-    BOOST_CHECK(opt.observations().size() == 25);
-    BOOST_CHECK(opt.samples().size() == 25);
+    ASSERT_TRUE(opt.observations().size() == 25);
+    ASSERT_TRUE(opt.samples().size() == 25);
     for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
         const Eigen::VectorXd& x = opt.samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
-            BOOST_CHECK(x[i] >= 0);
-            BOOST_CHECK(x[i] <= 1);
-            BOOST_CHECK(x[i] == 0 || x[i] == 0.25 || x[i] == 0.5 || x[i] == 0.75 || x[i] == 1.0);
+            ASSERT_TRUE(x[i] >= 0);
+            ASSERT_TRUE(x[i] <= 1);
+            ASSERT_TRUE(x[i] == 0 || x[i] == 0.25 || x[i] == 0.5 || x[i] == 0.75 || x[i] == 1.0);
         }
     }
 }

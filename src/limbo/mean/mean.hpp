@@ -71,7 +71,8 @@ namespace limbo {
             Eigen::MatrixXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {
                 // This should never be called!
-                assert(false);
+                assert(false); // TODO WTH!
+                return {};
             }
         };
     } // namespace mean

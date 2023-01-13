@@ -46,7 +46,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE test_cmaes
 
-#include <boost/test/unit_test.hpp>
+#include <gtest/gtest.h>
 
 #include <limbo/limbo.hpp>
 #include <limbo/opt/cmaes.hpp>

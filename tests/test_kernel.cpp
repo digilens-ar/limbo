@@ -43,12 +43,10 @@
 //| The fact that you are presently reading this means that you have had
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE test_kernel
 
 #include <iostream>
 
-#include <boost/test/unit_test.hpp>
+#include <gtest/gtest.h>
 
 #include <limbo/kernel/exp.hpp>
 #include <limbo/kernel/matern_five_halves.hpp>
@@ -151,11 +149,11 @@ void check_kernel(size_t N, size_t K, double e = 1e-6)
 
         std::tie(error, analytic, finite_diff) = check_grad(kern, hp, x1, x2, e);
         // std::cout << error << ": " << analytic.transpose() << " vs " << finite_diff.transpose() << std::endl;
-        BOOST_CHECK(error < 1e-5);
+        ASSERT_TRUE(error < 1e-5);
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_grad_exp)
+TEST(Limbo_Kernel, grad_exp)
 {
     for (int i = 1; i <= 10; i++) {
         check_kernel<kernel::Exp<Params>>(i, 100);
@@ -163,7 +161,7 @@ BOOST_AUTO_TEST_CASE(test_grad_exp)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_grad_matern_three)
+TEST(Limbo_Kernel, grad_matern_three)
 {
     for (int i = 1; i <= 10; i++) {
         check_kernel<kernel::MaternThreeHalves<Params>>(i, 100);
@@ -171,7 +169,7 @@ BOOST_AUTO_TEST_CASE(test_grad_matern_three)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_grad_matern_five)
+TEST(Limbo_Kernel, grad_matern_five)
 {
     for (int i = 1; i <= 10; i++) {
         check_kernel<kernel::MaternFiveHalves<Params>>(i, 100);
@@ -179,7 +177,7 @@ BOOST_AUTO_TEST_CASE(test_grad_matern_five)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_grad_SE_ARD)
+TEST(Limbo_Kernel, grad_SE_ARD)
 {
     Params::kernel_squared_exp_ard::set_k(0);
     for (int i = 1; i <= 10; i++) {
@@ -193,7 +191,7 @@ BOOST_AUTO_TEST_CASE(test_grad_SE_ARD)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_kernel_SE_ARD)
+TEST(Limbo_Kernel, kernel_SE_ARD)
 {
     Params::kernel_squared_exp_ard::set_k(0);
 
@@ -203,22 +201,22 @@ BOOST_AUTO_TEST_CASE(test_kernel_SE_ARD)
     se.set_h_params(hp);
 
     Eigen::VectorXd v1 = make_v2(1, 1);
-    BOOST_CHECK(std::abs(se(v1, v1) - 1) < 1e-6);
+    ASSERT_TRUE(std::abs(se(v1, v1) - 1) < 1e-6);
 
     Eigen::VectorXd v2 = make_v2(0, 1);
     double s1 = se(v1, v2);
 
-    BOOST_CHECK(std::abs(s1 - std::exp(-0.5 * (v1.transpose() * v2)[0])) < 1e-5);
+    ASSERT_TRUE(std::abs(s1 - std::exp(-0.5 * (v1.transpose() * v2)[0])) < 1e-5);
 
     hp(0) = 1;
     se.set_h_params(hp);
     double s2 = se(v1, v2);
-    BOOST_CHECK(s1 < s2);
+    ASSERT_TRUE(s1 < s2);
 
     Params::kernel_squared_exp_ard::set_k(1);
     se = kernel::SquaredExpARD<Params>(2);
     hp = Eigen::VectorXd::Zero(se.h_params_size());
 
     se.set_h_params(hp);
-    BOOST_CHECK(s1 == se(v1, v2));
+    ASSERT_TRUE(s1 == se(v1, v2));
 }
