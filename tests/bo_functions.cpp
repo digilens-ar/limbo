@@ -313,8 +313,10 @@ void add_to_results(const char* key, T1& map, const T2& p)
 #else
     typename T1::iterator a;
     a = map.find(key);
-    if (a == map.end())
+    if (a == map.end()) {
         map[key] = std::vector<std::pair<double, double>>();
+        a = map.find(key);
+    }
 #endif
     a->second.push_back(p);
 }

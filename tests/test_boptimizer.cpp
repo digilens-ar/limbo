@@ -43,11 +43,8 @@
 //| The fact that you are presently reading this means that you have had
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE test_boptimizer
 
 #include <gtest/gtest.h>
-
 #include <limbo/limbo.hpp>
 
 using namespace limbo;
@@ -133,7 +130,7 @@ struct eval_unbounded {
 };
 #endif
 
-BOOST_AUTO_TEST_CASE(test_bo_inheritance)
+TEST(Limbo_Boptimizer, bo_inheritance)
 {
     using namespace limbo;
 
@@ -153,7 +150,7 @@ BOOST_AUTO_TEST_CASE(test_bo_inheritance)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters>>;
     using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<stat::Samples<Params>, stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
     using Init_t = init::NoInit<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
@@ -161,11 +158,11 @@ BOOST_AUTO_TEST_CASE(test_bo_inheritance)
     bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
     opt.optimize(eval2<Params>());
 
-    BOOST_CHECK(opt.total_iterations() == 1);
+    ASSERT_TRUE(opt.total_iterations() == 1);
 }
 
 #ifdef USE_LIBCMAES
-BOOST_AUTO_TEST_CASE(test_bo_unbounded)
+TEST(Limbo_Boptimizer, bo_unbounded)
 {
     using namespace limbo;
 
@@ -195,11 +192,11 @@ BOOST_AUTO_TEST_CASE(test_bo_unbounded)
     bayes_opt::BOptimizer<Parameters, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
     opt.optimize(eval_unbounded<Params>());
 
-    BOOST_CHECK_CLOSE(opt.best_sample()(0), 2.5, 10);
+    ASSERT_NEAR(opt.best_sample()(0), 2.5, 10);
 }
 #endif
 
-BOOST_AUTO_TEST_CASE(test_bo_gp)
+TEST(Limbo_Boptimizer, bo_gp)
 {
     using namespace limbo;
 
@@ -213,7 +210,7 @@ BOOST_AUTO_TEST_CASE(test_bo_gp)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
     using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<stat::Samples<Params>, stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::EI<Params, GP_t>;
@@ -223,10 +220,10 @@ BOOST_AUTO_TEST_CASE(test_bo_gp)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    BOOST_CHECK((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
 }
 
-BOOST_AUTO_TEST_CASE(test_bo_gp_auto)
+TEST(Limbo_Boptimizer, bo_gp_auto)
 {
     using namespace limbo;
 
@@ -240,7 +237,7 @@ BOOST_AUTO_TEST_CASE(test_bo_gp_auto)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
     using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<stat::Samples<Params>, stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params>>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
@@ -250,10 +247,10 @@ BOOST_AUTO_TEST_CASE(test_bo_gp_auto)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    BOOST_CHECK((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
 }
 
-BOOST_AUTO_TEST_CASE(test_bo_gp_mean)
+TEST(Limbo_Boptimizer, bo_gp_mean)
 {
     using namespace limbo;
 
@@ -267,7 +264,7 @@ BOOST_AUTO_TEST_CASE(test_bo_gp_mean)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
     using Mean_t = mean::FunctionARD<Params, mean::Data<Params>>;
-    using Stat_t = boost::fusion::vector<stat::Samples<Params>, stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::MeanLFOpt<Params>>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
@@ -277,5 +274,5 @@ BOOST_AUTO_TEST_CASE(test_bo_gp_mean)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    BOOST_CHECK((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
 }
