@@ -55,7 +55,6 @@
 #ifdef USE_TBB
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/parallel_for.h>
-#include <tbb/task_scheduler_init.h>
 #else
 #include <map>
 #endif

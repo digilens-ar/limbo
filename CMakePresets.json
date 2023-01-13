@@ -27,6 +27,13 @@
       }
     },
     {
+      "name": "MSVC-Debug-TBB",
+      "inherits": "MSVC-Debug",
+      "cacheVariables": {
+        "LIMBO_USE_TBB":  "ON"
+      }
+    },
+    {
       "name": "MSVC-Release",
       "description": "Target Windows with the Visual Studio development environment.",
       "inherits": "default",
