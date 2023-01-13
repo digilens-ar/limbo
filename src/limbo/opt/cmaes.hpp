@@ -54,9 +54,7 @@
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/parallel.hpp>
 
-#ifndef USE_LIBCMAES
-#warning NO libcmaes support
-#else
+#ifdef USE_LIBCMAES
 
 #include <libcmaes/cmaes.h>
 

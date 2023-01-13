@@ -43,14 +43,10 @@
 //| The fact that you are presently reading this means that you have had
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE test_serialize
 
 #include <cstring>
 #include <fstream>
-
-#include <boost/test/unit_test.hpp>
-
+#include <gtest/gtest.h>
 #include <limbo/kernel/exp.hpp>
 #include <limbo/mean/constant.hpp>
 #include <limbo/mean/function_ard.hpp>
@@ -107,14 +103,19 @@ struct LoadParams {
     };
 };
 
-double get_diff(double a, double b)
+template<typename GP1, typename GP2>
+void compareResults(GP1& gp1, GP2& gp2, Eigen::VectorXd const& s)
 {
-    return std::abs(a - b);
-}
-
-double get_diff(const Eigen::VectorXd& a, const Eigen::VectorXd& b)
-{
-    return (a - b).norm();
+    auto [mu1, sigma_sq_1] = gp1.query(s);
+    auto [mu2, sigma_sq_2] = gp2.query(s);
+    GTEST_ASSERT_LE((mu1 - mu2).norm(), 1e-10);
+    if constexpr (std::is_same_v<decltype(sigma_sq_1), double>) {
+        ASSERT_NEAR(sigma_sq_1, sigma_sq_2, 1e-10);
+    }
+    else
+    { // is an eigen vector
+        GTEST_ASSERT_LE((sigma_sq_1 - sigma_sq_2).norm(), 1e-10);
+    }
 }
 
 template <typename GP, typename GPLoad, typename Archive>
@@ -148,16 +149,13 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     GPLoad gp2(3, 1);
     gp2.template load<Archive>(name);
 
-    BOOST_CHECK_EQUAL(gp.nb_samples(), gp2.nb_samples());
+    GTEST_ASSERT_EQ(gp.nb_samples(), gp2.nb_samples());
 
     // check that the two GPs make the same predictions
     size_t k = 1000;
     for (size_t i = 0; i < k; i++) {
         Eigen::VectorXd s = tools::random_vector(3).array() * 4.0 - 2.0;
-        auto v1 = gp.query(s);
-        auto v2 = gp2.query(s);
-        BOOST_CHECK_SMALL(get_diff(std::get<0>(v1), std::get<0>(v2)), 1e-10);
-        BOOST_CHECK_SMALL(get_diff(std::get<1>(v1), std::get<1>(v2)), 1e-10);
+        compareResults(gp, gp2, s);
     }
 
     // attempt to load without recomputing
@@ -166,19 +164,16 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     Archive a3(name);
     gp3.load(a3, false);
 
-    BOOST_CHECK_EQUAL(gp.nb_samples(), gp3.nb_samples());
+    GTEST_ASSERT_EQ(gp.nb_samples(), gp3.nb_samples());
 
     // check that the two GPs make the same predictions
     for (size_t i = 0; i < k; i++) {
         Eigen::VectorXd s = tools::random_vector(3).array() * 4.0 - 2.0;
-        auto v1 = gp.query(s);
-        auto v2 = gp3.query(s);
-        BOOST_CHECK_SMALL(get_diff(std::get<0>(v1), std::get<0>(v2)), 1e-10);
-        BOOST_CHECK_SMALL(get_diff(std::get<1>(v1), std::get<1>(v2)), 1e-10);
+        compareResults(gp, gp3, s);
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_text_archive)
+TEST(Limbo_Serialize, text_archive)
 {
     test_gp<limbo::model::GPOpt<Params>, limbo::model::GPOpt<LoadParams>, limbo::serialize::TextArchive>("/tmp/gp_opt_text");
     test_gp<limbo::model::GPBasic<Params>, limbo::model::GPBasic<LoadParams>, limbo::serialize::TextArchive>("/tmp/gp_basic_text", false);
@@ -188,7 +183,7 @@ BOOST_AUTO_TEST_CASE(test_text_archive)
     test_gp<GPMean, GPMeanLoad, limbo::serialize::TextArchive>("/tmp/gp_mean_text");
 }
 
-BOOST_AUTO_TEST_CASE(test_bin_archive)
+TEST(Limbo_Serialize, bin_archive)
 {
     test_gp<limbo::model::GPOpt<Params>, limbo::model::GPOpt<LoadParams>, limbo::serialize::BinaryArchive>("/tmp/gp_opt_bin");
     test_gp<limbo::model::GPBasic<Params>, limbo::model::GPBasic<LoadParams>, limbo::serialize::BinaryArchive>("/tmp/gp_basic_bin", false);
@@ -198,7 +193,7 @@ BOOST_AUTO_TEST_CASE(test_bin_archive)
     test_gp<GPMean, GPMeanLoad, limbo::serialize::BinaryArchive>("/tmp/gp_mean_bin");
 }
 
-BOOST_AUTO_TEST_CASE(test_multi_gp_save)
+TEST(Limbo_Serialize, multi_gp_save) 
 {
     using GP_Multi_t = limbo::model::MultiGP<Params, limbo::model::GP, limbo::kernel::Exp<Params>, limbo::mean::NullFunction<Params>>;
     test_gp<GP_Multi_t, GP_Multi_t, limbo::serialize::TextArchive>("/tmp/gp_multi_text", false);

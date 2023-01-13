@@ -90,7 +90,7 @@ namespace limbo {
         /// easy way to get the PID
         inline std::string getpid()
         {
-            return std::to_string(::getpid());
+            return std::to_string(::_getpid());
         }
     }
 }

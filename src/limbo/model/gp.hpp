@@ -65,6 +65,9 @@
 #include <limbo/model/gp/kernel_lf_opt.hpp>
 #include <limbo/model/gp/no_lf_opt.hpp>
 #include <limbo/tools.hpp>
+#ifdef _WIN32
+#include <corecrt_math_defines.h>
+#endif
 
 namespace limbo {
     namespace model {

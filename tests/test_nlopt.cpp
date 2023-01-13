@@ -43,11 +43,8 @@
 //| The fact that you are presently reading this means that you have had
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE test_nlopt
 
-#include <boost/test/unit_test.hpp>
-
+#include <gtest/gtest.h>
 #include <limbo/limbo.hpp>
 #include <limbo/opt/nlopt_grad.hpp>
 #include <limbo/opt/nlopt_no_grad.hpp>
@@ -97,16 +94,16 @@ opt::eval_t my_inequality_constraint(const Eigen::VectorXd& params, bool eval_gr
     return {v, grad};
 }
 
-BOOST_AUTO_TEST_CASE(test_nlopt_grad_simple)
+TEST(Limbo_NLOpt, nlopt_grad_simple)
 {
     opt::NLOptGrad<Params, nlopt::LD_MMA> optimizer;
     Eigen::VectorXd g = optimizer(my_function, tools::random_vector(2), false);
 
-    BOOST_CHECK_SMALL(g(0), 0.00000001);
-    BOOST_CHECK_SMALL(g(1), 0.00000001);
+    ASSERT_LE(g(0), 0.00000001);
+    ASSERT_LE(g(1), 0.00000001);
 }
 
-BOOST_AUTO_TEST_CASE(test_nlopt_no_grad_simple)
+TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 {
     opt::NLOptNoGrad<Params, nlopt::LN_COBYLA> optimizer;
     Eigen::VectorXd best(2);
@@ -119,11 +116,11 @@ BOOST_AUTO_TEST_CASE(test_nlopt_no_grad_simple)
         }
     }
 
-    BOOST_CHECK_SMALL(best(0), 0.00000001);
-    BOOST_CHECK_SMALL(best(1), 0.00000001);
+    ASSERT_LE(best(0), 0.00000001);
+    ASSERT_LE(best(1), 0.00000001);
 }
 
-BOOST_AUTO_TEST_CASE(test_nlopt_no_grad_constraint)
+TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
 {
     opt::NLOptNoGrad<Params, nlopt::LN_COBYLA> optimizer;
     optimizer.initialize(2);
@@ -140,11 +137,11 @@ BOOST_AUTO_TEST_CASE(test_nlopt_no_grad_constraint)
         }
     }
 
-    BOOST_CHECK_SMALL(std::abs(1. - best(0)), 0.000001);
-    BOOST_CHECK_SMALL(std::abs(3. - best(1)), 0.000001);
+    ASSERT_LE(std::abs(1. - best(0)), 0.000001);
+    ASSERT_LE(std::abs(3. - best(1)), 0.000001);
 }
 
-BOOST_AUTO_TEST_CASE(test_nlopt_grad_constraint)
+TEST(Limbo_NLOpt, nlopt_grad_constraint)
 {
     opt::NLOptGrad<Params, nlopt::LD_AUGLAG_EQ> optimizer;
     optimizer.initialize(2);
@@ -161,6 +158,6 @@ BOOST_AUTO_TEST_CASE(test_nlopt_grad_constraint)
         }
     }
 
-    BOOST_CHECK_SMALL(std::abs(1. - best(0)), 0.0001);
-    BOOST_CHECK_SMALL(std::abs(3. - best(1)), 0.0001);
+    ASSERT_LE(std::abs(1. - best(0)), 0.0001);
+    ASSERT_LE(std::abs(3. - best(1)), 0.0001);
 }

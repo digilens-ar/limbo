@@ -53,6 +53,10 @@
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
 
+#ifdef _WIN32
+#include <corecrt_math_defines.h>
+#endif
+
 namespace limbo {
     namespace defaults {
         struct acqui_ei {
