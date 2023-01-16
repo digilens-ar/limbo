@@ -151,7 +151,7 @@ namespace {
 
             std::tie(error, analytic, finite_diff) = check_grad(kern, hp, x1, x2, e);
             // std::cout << error << ": " << analytic.transpose() << " vs " << finite_diff.transpose() << std::endl;
-            ASSERT_TRUE(error < 1e-5);
+            ASSERT_LE(error, 1e-5);
         }
     }
 }
