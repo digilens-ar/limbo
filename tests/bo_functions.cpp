@@ -115,210 +115,213 @@ inline Eigen::VectorXd t_osz(const Eigen::VectorXd& x)
     return r;
 }
 
-struct Sphere {
-    BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 1);
+namespace {
+    struct Sphere {
+        BO_PARAM(size_t, dim_in, 2);
+        BO_PARAM(size_t, dim_out, 1);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        Eigen::Vector2d opt(0.5, 0.5);
-        return tools::make_vector(-(x - opt).squaredNorm());
-    }
-};
-
-struct Ellipsoid {
-    BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 1);
-
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        Eigen::Vector2d opt(0.5, 0.5);
-        Eigen::Vector2d z = t_osz(x - opt);
-        double r = 0;
-        for (size_t i = 0; i < dim_in(); ++i)
-            r += std::pow(10, ((double)i) / (dim_in() - 1.0)) * z(i) * z(i) + 1;
-        return tools::make_vector(-r);
-    }
-};
-
-struct Rastrigin {
-    BO_PARAM(size_t, dim_in, 4);
-    BO_PARAM(size_t, dim_out, 1);
-
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        double f = 10 * x.size();
-        for (int i = 0; i < x.size(); ++i)
-            f += x(i) * x(i) - 10 * cos(2 * M_PI * x(i));
-        return tools::make_vector(-f);
-    }
-};
-
-// see : http://www.sfu.ca/~ssurjano/hart3.html
-struct Hartman3 {
-    BO_PARAM(size_t, dim_in, 3);
-    BO_PARAM(size_t, dim_out, 1);
-
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        Eigen::Matrix<double, 4, 3> a, p;
-        a << 3.0, 10, 30, 0.1, 10, 35, 3.0, 10, 30, 0.1, 10, 36;
-        p << 0.3689, 0.1170, 0.2673, 0.4699, 0.4387, 0.7470, 0.1091, 0.8732, 0.5547,
-            0.0382, 0.5743, 0.8828;
-        Eigen::Vector4d alpha;
-        alpha << 1.0, 1.2, 3.0, 3.2;
-
-        double res = 0;
-        for (int i = 0; i < 4; i++) {
-            double s = 0.0f;
-            for (size_t j = 0; j < 3; j++) {
-                s += a(i, j) * (x(j) - p(i, j)) * (x(j) - p(i, j));
-            }
-            res += alpha(i) * exp(-s);
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            Eigen::Vector2d opt(0.5, 0.5);
+            return tools::make_vector(-(x - opt).squaredNorm());
         }
-        return tools::make_vector(res);
-    }
-};
+    };
 
-// see : http://www.sfu.ca/~ssurjano/hart6.html
-struct Hartman6 {
-    BO_PARAM(size_t, dim_in, 6);
-    BO_PARAM(size_t, dim_out, 1);
+    struct Ellipsoid {
+        BO_PARAM(size_t, dim_in, 2);
+        BO_PARAM(size_t, dim_out, 1);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        Eigen::Matrix<double, 4, 6> a, p;
-        a << 10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17,
-            8, 17, 8, 0.05, 10, 0.1, 14;
-        p << 0.1312, 0.1696, 0.5569, 0.0124, 0.8283, 0.5886, 0.2329, 0.4135, 0.8307,
-            0.3736, 0.1004, 0.9991, 0.2348, 0.1451, 0.3522, 0.2883, 0.3047, 0.665,
-            0.4047, 0.8828, 0.8732, 0.5743, 0.1091, 0.0381;
-
-        Eigen::Vector4d alpha;
-        alpha << 1.0, 1.2, 3.0, 3.2;
-
-        double res = 0;
-        for (int i = 0; i < 4; i++) {
-            double s = 0.0f;
-            for (size_t j = 0; j < 6; j++) {
-                s += a(i, j) * (x(j) - p(i, j)) * (x(j) - p(i, j));
-            }
-            res += alpha(i) * exp(-s);
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            Eigen::Vector2d opt(0.5, 0.5);
+            Eigen::Vector2d z = t_osz(x - opt);
+            double r = 0;
+            for (size_t i = 0; i < dim_in(); ++i)
+                r += std::pow(10, ((double)i) / (dim_in() - 1.0)) * z(i) * z(i) + 1;
+            return tools::make_vector(-r);
         }
-        return tools::make_vector(res);
-    }
-};
-
-// see : http://www.sfu.ca/~ssurjano/goldpr.html
-// (with ln, as suggested in Jones et al.)
-struct GoldenPrice {
-    BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 1);
-
-    Eigen::VectorXd operator()(const Eigen::VectorXd& xx) const
-    {
-        Eigen::VectorXd x = (4.0 * xx).array() - 2.0;
-        double r = (1 + (x(0) + x(1) + 1) * (x(0) + x(1) + 1) * (19 - 14 * x(0) + 3 * x(0) * x(0) - 14 * x(1) + 6 * x(0) * x(1) + 3 * x(1) * x(1))) * (30 + (2 * x(0) - 3 * x(1)) * (2 * x(0) - 3 * x(1)) * (18 - 32 * x(0) + 12 * x(0) * x(0) + 48 * x(1) - 36 * x(0) * x(1) + 27 * x(1) * x(1)));
-
-        return tools::make_vector(-log(r) + 5);
-    }
-};
-
-struct Params {
-    struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-        BO_PARAM(bool, stats_enabled, false);
     };
 
-    struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+    struct Rastrigin {
+        BO_PARAM(size_t, dim_in, 4);
+        BO_PARAM(size_t, dim_out, 1);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            double f = 10 * x.size();
+            for (int i = 0; i < x.size(); ++i)
+                f += x(i) * x(i) - 10 * cos(2 * M_PI * x(i));
+            return tools::make_vector(-f);
+        }
     };
 
-    struct init_randomsampling {
-        BO_PARAM(int, samples, 10);
+    // see : http://www.sfu.ca/~ssurjano/hart3.html
+    struct Hartman3 {
+        BO_PARAM(size_t, dim_in, 3);
+        BO_PARAM(size_t, dim_out, 1);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            Eigen::Matrix<double, 4, 3> a, p;
+            a << 3.0, 10, 30, 0.1, 10, 35, 3.0, 10, 30, 0.1, 10, 36;
+            p << 0.3689, 0.1170, 0.2673, 0.4699, 0.4387, 0.7470, 0.1091, 0.8732, 0.5547,
+                0.0382, 0.5743, 0.8828;
+            Eigen::Vector4d alpha;
+            alpha << 1.0, 1.2, 3.0, 3.2;
+
+            double res = 0;
+            for (int i = 0; i < 4; i++) {
+                double s = 0.0f;
+                for (size_t j = 0; j < 3; j++) {
+                    s += a(i, j) * (x(j) - p(i, j)) * (x(j) - p(i, j));
+                }
+                res += alpha(i) * exp(-s);
+            }
+            return tools::make_vector(res);
+        }
     };
 
-    struct stop_maxiterations {
-        BO_PARAM(int, iterations, 40);
+    // see : http://www.sfu.ca/~ssurjano/hart6.html
+    struct Hartman6 {
+        BO_PARAM(size_t, dim_in, 6);
+        BO_PARAM(size_t, dim_out, 1);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            Eigen::Matrix<double, 4, 6> a, p;
+            a << 10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17,
+                8, 17, 8, 0.05, 10, 0.1, 14;
+            p << 0.1312, 0.1696, 0.5569, 0.0124, 0.8283, 0.5886, 0.2329, 0.4135, 0.8307,
+                0.3736, 0.1004, 0.9991, 0.2348, 0.1451, 0.3522, 0.2883, 0.3047, 0.665,
+                0.4047, 0.8828, 0.8732, 0.5743, 0.1091, 0.0381;
+
+            Eigen::Vector4d alpha;
+            alpha << 1.0, 1.2, 3.0, 3.2;
+
+            double res = 0;
+            for (int i = 0; i < 4; i++) {
+                double s = 0.0f;
+                for (size_t j = 0; j < 6; j++) {
+                    s += a(i, j) * (x(j) - p(i, j)) * (x(j) - p(i, j));
+                }
+                res += alpha(i) * exp(-s);
+            }
+            return tools::make_vector(res);
+        }
     };
 
-    struct kernel : public defaults::kernel {
-        BO_PARAM(double, noise, 1e-6);
+    // see : http://www.sfu.ca/~ssurjano/goldpr.html
+    // (with ln, as suggested in Jones et al.)
+    struct GoldenPrice {
+        BO_PARAM(size_t, dim_in, 2);
+        BO_PARAM(size_t, dim_out, 1);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd& xx) const
+        {
+            Eigen::VectorXd x = (4.0 * xx).array() - 2.0;
+            double r = (1 + (x(0) + x(1) + 1) * (x(0) + x(1) + 1) * (19 - 14 * x(0) + 3 * x(0) * x(0) - 14 * x(1) + 6 * x(0) * x(1) + 3 * x(1) * x(1))) * (30 + (2 * x(0) - 3 * x(1)) * (2 * x(0) - 3 * x(1)) * (18 - 32 * x(0) + 12 * x(0) * x(0) + 48 * x(1) - 36 * x(0) * x(1) + 27 * x(1) * x(1)));
+
+            return tools::make_vector(-log(r) + 5);
+        }
     };
 
-    struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
-    };
+    struct Params {
+        struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
+            BO_PARAM(bool, stats_enabled, false);
+        };
 
-    struct acqui_ucb : public defaults::acqui_ucb {
-    };
+        struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+        };
+
+        struct init_randomsampling {
+            BO_PARAM(int, samples, 10);
+        };
+
+        struct stop_maxiterations {
+            BO_PARAM(int, iterations, 40);
+        };
+
+        struct kernel : public defaults::kernel {
+            BO_PARAM(double, noise, 1e-6);
+        };
+
+        struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
+        };
+
+        struct acqui_ucb : public defaults::acqui_ucb {
+        };
 
 #ifdef USE_NLOPT
-    struct opt_nloptnograd : public defaults::opt_nloptnograd {
-    };
+        struct opt_nloptnograd : public defaults::opt_nloptnograd {
+        };
 #elif defined(USE_LIBCMAES)
-    struct opt_cmaes : public defaults::opt_cmaes {
-    };
+        struct opt_cmaes : public defaults::opt_cmaes {
+        };
 #else
-    struct opt_gridsearch : public defaults::opt_gridsearch {
-    };
+        struct opt_gridsearch : public defaults::opt_gridsearch {
+        };
 #endif
-};
+    };
 
-template <typename T>
-void print_res(const T& r)
-{
-    std::cout << "====== RESULTS ======" << std::endl;
-    for (auto x : r) {
-        for (auto y : x.second) {
-            std::cout << x.first << "\t =>"
-                      << " found :" << y.second << " expected " << y.first
-                      << std::endl;
+    template <typename T>
+    void print_res(const T& r)
+    {
+        std::cout << "====== RESULTS ======" << std::endl;
+        for (auto x : r) {
+            for (auto y : x.second) {
+                std::cout << x.first << "\t =>"
+                    << " found :" << y.second << " expected " << y.first
+                    << std::endl;
+            }
+            std::vector<std::pair<double, double>>& v = x.second;
+            std::sort(v.begin(), v.end(),
+                [](const std::pair<double, double>& x1,
+                    const std::pair<double, double>& x2) {
+                        // clang-format off
+                        return x1.second < x2.second;
+            // clang-format on
+                });
+            double med = v[v.size() / 2].second;
+            if (fabs(v[0].first - med) < 0.05)
+                std::cout << "[" << colors::green << "OK" << colors::reset << "] ";
+            else
+                std::cout << "[" << colors::red << "ERROR" << colors::reset << "] ";
+            std::cout << colors::yellow << colors::bold << " -- " << x.first
+                << colors::reset << " ";
+            std::cout << "Median: " << med << " error :" << fabs(v[0].first - med)
+                << std::endl;
         }
-        std::vector<std::pair<double, double>>& v = x.second;
-        std::sort(v.begin(), v.end(),
-            [](const std::pair<double, double>& x1,
-                      const std::pair<double, double>& x2) {
+    }
+
+    bool is_in_argv(int argc, char** argv, const char* needle)
+    {
+        auto it = std::find_if(argv, argv + argc,
+            [=](const char* s) {
                 // clang-format off
-                return x1.second < x2.second;
-                // clang-format on
+                return strcmp(needle, s) == 0;
+        // clang-format on
             });
-        double med = v[v.size() / 2].second;
-        if (fabs(v[0].first - med) < 0.05)
-            std::cout << "[" << colors::green << "OK" << colors::reset << "] ";
-        else
-            std::cout << "[" << colors::red << "ERROR" << colors::reset << "] ";
-        std::cout << colors::yellow << colors::bold << " -- " << x.first
-                  << colors::reset << " ";
-        std::cout << "Median: " << med << " error :" << fabs(v[0].first - med)
-                  << std::endl;
+        return !(it == argv + argc);
+    }
+
+    template <typename T1, typename T2>
+    void add_to_results(const char* key, T1& map, const T2& p)
+    {
+#ifdef USE_TBB
+        typename T1::accessor a;
+        if (!map.find(a, key))
+            map.insert(a, key);
+#else
+        typename T1::iterator a;
+        a = map.find(key);
+        if (a == map.end()) {
+            map[key] = std::vector<std::pair<double, double>>();
+            a = map.find(key);
+        }
+#endif
+        a->second.push_back(p);
     }
 }
-
-bool is_in_argv(int argc, char** argv, const char* needle)
-{
-    auto it = std::find_if(argv, argv + argc,
-        [=](const char* s) {
-            // clang-format off
-            return strcmp(needle, s) == 0;
-            // clang-format on
-        });
-    return !(it == argv + argc);
-}
-
-template <typename T1, typename T2>
-void add_to_results(const char* key, T1& map, const T2& p)
-{
-#ifdef USE_TBB
-    typename T1::accessor a;
-    if (!map.find(a, key))
-        map.insert(a, key);
-#else
-    typename T1::iterator a;
-    a = map.find(key);
-    if (a == map.end())
-        map[key] = std::vector<std::pair<double, double>>();
-#endif
-    a->second.push_back(p);
-}
-
 int main(int argc, char** argv)
 {
     tools::par::init();
