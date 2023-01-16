@@ -61,28 +61,29 @@
 #error "Please define LIMBO_TEST_RESOURCE_DIR"
 #endif
 
+namespace {
+    struct Params {
+        struct kernel_exp {
+            BO_PARAM(double, sigma_sq, 1.0);
+            BO_PARAM(double, l, 0.2);
+        };
+        struct kernel : public limbo::defaults::kernel {
+        };
+        struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
+        };
+        struct opt_rprop : public limbo::defaults::opt_rprop {
+        };
 
-struct Params {
-    struct kernel_exp {
-        BO_PARAM(double, sigma_sq, 1.0);
-        BO_PARAM(double, l, 0.2);
-    };
-    struct kernel : public limbo::defaults::kernel {
-    };
-    struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
-    };
-    struct opt_rprop : public limbo::defaults::opt_rprop {
-    };
+        struct kernel_maternfivehalves {
+            BO_PARAM(double, sigma_sq, 1);
+            BO_PARAM(double, l, 1);
+        };
 
-    struct kernel_maternfivehalves {
-        BO_PARAM(double, sigma_sq, 1);
-        BO_PARAM(double, l, 1);
+        struct mean_constant {
+            BO_PARAM(double, constant, 1);
+        };
     };
-
-    struct mean_constant {
-        BO_PARAM(double, constant, 1);
-    };
-};
+}
 
 // Different parameters in load to test
 struct LoadParams {
@@ -191,6 +192,7 @@ static std::string rootDir(LIMBO_TEST_RESOURCE_DIR);
 
 TEST(Limbo_Serialize, text_archive)
 {
+    std::cout << Params::kernel::noise() << "\n";
     test_gp<limbo::model::GPOpt<Params>, limbo::model::GPOpt<LoadParams>, limbo::serialize::TextArchive>(rootDir + "/gp_opt_text");
     test_gp<limbo::model::GPBasic<Params>, limbo::model::GPBasic<LoadParams>, limbo::serialize::TextArchive>(rootDir + "/gp_basic_text", false);
 

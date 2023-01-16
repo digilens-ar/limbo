@@ -56,30 +56,32 @@
 
 using namespace limbo;
 
-struct Params {
-    struct opt_gridsearch {
-        BO_PARAM(int, bins, 20);
-    };
+namespace {
+    struct Params {
+        struct opt_gridsearch {
+            BO_PARAM(int, bins, 20);
+        };
 
-    struct opt_parallelrepeater {
-        BO_PARAM(int, repeats, 2);
-        BO_PARAM(double, epsilon, 0.1);
-    };
+        struct opt_parallelrepeater {
+            BO_PARAM(int, repeats, 2);
+            BO_PARAM(double, epsilon, 0.1);
+        };
 
-    struct opt_rprop : public defaults::opt_rprop {
-        BO_PARAM(int, iterations, 150);
-    };
+        struct opt_rprop : public defaults::opt_rprop {
+            BO_PARAM(int, iterations, 150);
+        };
 
-    struct opt_gradient_ascent : public defaults::opt_gradient_ascent {
-        BO_PARAM(int, iterations, 150);
-        BO_PARAM(double, alpha, 0.1);
-    };
+        struct opt_gradient_ascent : public defaults::opt_gradient_ascent {
+            BO_PARAM(int, iterations, 150);
+            BO_PARAM(double, alpha, 0.1);
+        };
 
-    struct opt_adam : public defaults::opt_adam {
-        BO_PARAM(int, iterations, 150);
-        BO_PARAM(double, alpha, 0.1);
+        struct opt_adam : public defaults::opt_adam {
+            BO_PARAM(int, iterations, 150);
+            BO_PARAM(double, alpha, 0.1);
+        };
     };
-};
+}
 
 // test with a standard function
 int monodim_calls = 0;

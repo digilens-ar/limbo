@@ -53,55 +53,56 @@
 
 using namespace limbo;
 
-struct Params {
-    struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-        BO_PARAM(bool, stats_enabled, false);
-    };
+namespace {
+    struct Params {
+        struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
+            BO_PARAM(bool, stats_enabled, false);
+        };
 
-    struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
-    };
+        struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+        };
 
-    struct stop_maxiterations {
-        BO_PARAM(int, iterations, 0);
-    };
+        struct stop_maxiterations {
+            BO_PARAM(int, iterations, 0);
+        };
 
-    struct kernel : public defaults::kernel {
-        BO_PARAM(double, noise, 0.01);
-    };
+        struct kernel : public defaults::kernel {
+            BO_PARAM(double, noise, 0.01);
+        };
 
-    struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
-        BO_PARAM(double, sigma_sq, 1);
-        BO_PARAM(double, l, 0.25);
-    };
+        struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
+            BO_PARAM(double, sigma_sq, 1);
+            BO_PARAM(double, l, 0.25);
+        };
 
-    struct acqui_ucb : public defaults::acqui_ucb {
-    };
+        struct acqui_ucb : public defaults::acqui_ucb {
+        };
 
 #ifdef USE_NLOPT
-    struct opt_nloptnograd : public defaults::opt_nloptnograd {
-    };
+        struct opt_nloptnograd : public defaults::opt_nloptnograd {
+        };
 #elif defined(USE_LIBCMAES)
-    struct opt_cmaes : public defaults::opt_cmaes {
-    };
+        struct opt_cmaes : public defaults::opt_cmaes {
+        };
 #else
-    struct opt_gridsearch : public defaults::opt_gridsearch {
-    };
+        struct opt_gridsearch : public defaults::opt_gridsearch {
+        };
 #endif
-};
+    };
 
-struct fit_eval {
-    BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 1);
+    struct fit_eval {
+        BO_PARAM(size_t, dim_in, 2);
+        BO_PARAM(size_t, dim_out, 1);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        double res = 0;
-        for (int i = 0; i < x.size(); i++)
-            res += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
-        return tools::make_vector(res);
-    }
-};
-
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            double res = 0;
+            for (int i = 0; i < x.size(); i++)
+                res += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
+            return tools::make_vector(res);
+        }
+    };
+}
 TEST(Limbo_Init_Functions, no_init)
 {
     std::cout << "NoInit" << std::endl;

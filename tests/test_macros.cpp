@@ -50,17 +50,20 @@
 
 #include <limbo/tools/macros.hpp>
 
-struct Params {
-    struct test {
-        BO_PARAM(double, a, 1);
-        BO_DYN_PARAM(int, b);
-        BO_PARAM_ARRAY(double, c, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-        BO_PARAM_VECTOR(double, d, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-        BO_PARAM_STRING(e, "e");
+namespace {
+    struct Params {
+        struct test {
+            BO_PARAM(double, a, 1);
+            BO_DYN_PARAM(int, b);
+            BO_PARAM_ARRAY(double, c, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+            BO_PARAM_VECTOR(double, d, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+            BO_PARAM_STRING(e, "e");
+        };
     };
-};
 
-BO_DECLARE_DYN_PARAM(int, Params::test, b);
+    BO_DECLARE_DYN_PARAM(int, Params::test, b);
+
+}
 
 TEST(Limbo_Macros, macros)
 {

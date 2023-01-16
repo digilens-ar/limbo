@@ -56,100 +56,103 @@
 #include <limbo/tools/random_generator.hpp>
 
 using namespace limbo;
-struct Params {
-    struct kernel : public defaults::kernel {
-        BO_PARAM(double, noise, 0.0);
+
+namespace {
+    struct Params {
+        struct kernel : public defaults::kernel {
+            BO_PARAM(double, noise, 0.0);
+        };
+
+        struct kernel_squared_exp_ard {
+            BO_DYN_PARAM(int, k);
+            BO_PARAM(double, sigma_sq, 1);
+        };
+
+        struct kernel_exp : public defaults::kernel_exp {
+        };
+
+        struct kernel_maternthreehalves : public defaults::kernel_maternthreehalves {
+        };
+
+        struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
+        };
     };
 
-    struct kernel_squared_exp_ard {
-        BO_DYN_PARAM(int, k);
-        BO_PARAM(double, sigma_sq, 1);
+    struct ParamsNoise {
+        struct kernel : public defaults::kernel {
+            BO_PARAM(double, noise, 0.01);
+            BO_PARAM(bool, optimize_noise, true);
+        };
+
+        struct kernel_squared_exp_ard {
+            BO_PARAM(int, k, 0);
+            BO_PARAM(double, sigma_sq, 1);
+        };
+
+        struct kernel_exp : public defaults::kernel_exp {
+        };
+
+        struct kernel_maternthreehalves : public defaults::kernel_maternthreehalves {
+        };
+
+        struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
+        };
     };
 
-    struct kernel_exp : public defaults::kernel_exp {
-    };
+    BO_DECLARE_DYN_PARAM(int, Params::kernel_squared_exp_ard, k);
 
-    struct kernel_maternthreehalves : public defaults::kernel_maternthreehalves {
-    };
-
-    struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
-    };
-};
-
-struct ParamsNoise {
-    struct kernel : public defaults::kernel {
-        BO_PARAM(double, noise, 0.01);
-        BO_PARAM(bool, optimize_noise, true);
-    };
-
-    struct kernel_squared_exp_ard {
-        BO_PARAM(int, k, 0);
-        BO_PARAM(double, sigma_sq, 1);
-    };
-
-    struct kernel_exp : public defaults::kernel_exp {
-    };
-
-    struct kernel_maternthreehalves : public defaults::kernel_maternthreehalves {
-    };
-
-    struct kernel_maternfivehalves : public defaults::kernel_maternfivehalves {
-    };
-};
-
-BO_DECLARE_DYN_PARAM(int, Params::kernel_squared_exp_ard, k);
-
-Eigen::VectorXd make_v2(double x1, double x2)
-{
-    Eigen::VectorXd v2(2);
-    v2 << x1, x2;
-    return v2;
-}
-
-// Check gradient via finite differences method
-template <typename Kernel>
-std::tuple<double, Eigen::VectorXd, Eigen::VectorXd> check_grad(const Kernel& kern, const Eigen::VectorXd& x, const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, double e = 1e-4)
-{
-    Eigen::VectorXd analytic_result, finite_diff_result;
-    Kernel ke = kern;
-    ke.set_h_params(x);
-
-    analytic_result = ke.grad(x1, x2);
-
-    finite_diff_result = Eigen::VectorXd::Zero(x.size());
-    for (int j = 0; j < x.size(); j++) {
-        Eigen::VectorXd test1 = x, test2 = x;
-        test1[j] -= e;
-        test2[j] += e;
-        Kernel k1 = kern;
-        k1.set_h_params(test1);
-        Kernel k2 = kern;
-        k2.set_h_params(test2);
-        double res1 = k1(x1, x2);
-        double res2 = k2(x1, x2);
-        finite_diff_result[j] = (res2 - res1) / (2.0 * e);
+    Eigen::VectorXd make_v2(double x1, double x2)
+    {
+        Eigen::VectorXd v2(2);
+        v2 << x1, x2;
+        return v2;
     }
 
-    return std::make_tuple((analytic_result - finite_diff_result).norm(), analytic_result, finite_diff_result);
-}
+    // Check gradient via finite differences method
+    template <typename Kernel>
+    std::tuple<double, Eigen::VectorXd, Eigen::VectorXd> check_grad(const Kernel& kern, const Eigen::VectorXd& x, const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, double e = 1e-4)
+    {
+        Eigen::VectorXd analytic_result, finite_diff_result;
+        Kernel ke = kern;
+        ke.set_h_params(x);
 
-template <typename Kernel>
-void check_kernel(size_t N, size_t K, double e = 1e-6)
-{
-    Kernel kern(N);
+        analytic_result = ke.grad(x1, x2);
 
-    for (size_t i = 0; i < K; i++) {
-        Eigen::VectorXd hp = tools::random_vector(kern.h_params_size()).array() * 6. - 3.;
+        finite_diff_result = Eigen::VectorXd::Zero(x.size());
+        for (int j = 0; j < x.size(); j++) {
+            Eigen::VectorXd test1 = x, test2 = x;
+            test1[j] -= e;
+            test2[j] += e;
+            Kernel k1 = kern;
+            k1.set_h_params(test1);
+            Kernel k2 = kern;
+            k2.set_h_params(test2);
+            double res1 = k1(x1, x2);
+            double res2 = k2(x1, x2);
+            finite_diff_result[j] = (res2 - res1) / (2.0 * e);
+        }
 
-        double error;
-        Eigen::VectorXd analytic, finite_diff;
+        return std::make_tuple((analytic_result - finite_diff_result).norm(), analytic_result, finite_diff_result);
+    }
 
-        Eigen::VectorXd x1 = tools::random_vector(N).array() * 10. - 5.;
-        Eigen::VectorXd x2 = tools::random_vector(N).array() * 10. - 5.;
+    template <typename Kernel>
+    void check_kernel(size_t N, size_t K, double e = 1e-6)
+    {
+        Kernel kern(N);
 
-        std::tie(error, analytic, finite_diff) = check_grad(kern, hp, x1, x2, e);
-        // std::cout << error << ": " << analytic.transpose() << " vs " << finite_diff.transpose() << std::endl;
-        ASSERT_TRUE(error < 1e-5);
+        for (size_t i = 0; i < K; i++) {
+            Eigen::VectorXd hp = tools::random_vector(kern.h_params_size()).array() * 6. - 3.;
+
+            double error;
+            Eigen::VectorXd analytic, finite_diff;
+
+            Eigen::VectorXd x1 = tools::random_vector(N).array() * 10. - 5.;
+            Eigen::VectorXd x2 = tools::random_vector(N).array() * 10. - 5.;
+
+            std::tie(error, analytic, finite_diff) = check_grad(kern, hp, x1, x2, e);
+            // std::cout << error << ": " << analytic.transpose() << " vs " << finite_diff.transpose() << std::endl;
+            ASSERT_TRUE(error < 1e-5);
+        }
     }
 }
 
