@@ -58,7 +58,6 @@
 #include <tbb/parallel_for_each.h>
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
-#include <tbb/task_scheduler_init.h>
 #endif
 
 ///@defgroup par_tools
@@ -109,7 +108,7 @@ namespace limbo {
 #ifdef USE_TBB
             inline void init()
             {
-                static tbb::task_scheduler_init init;
+
             }
 #else
             /// @ingroup par_tools

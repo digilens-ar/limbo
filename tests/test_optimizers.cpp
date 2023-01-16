@@ -53,7 +53,9 @@
 #include <limbo/opt/random_point.hpp>
 #include <limbo/opt/rprop.hpp>
 #include <limbo/tools/macros.hpp>
-
+#ifdef USE_TBB
+#include <tbb/global_control.h>
+#endif
 using namespace limbo;
 
 namespace {
@@ -272,7 +274,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 TEST(Limbo_Optimizers, parallel_repeater)
 {
 #ifdef USE_TBB
-    static tbb::task_scheduler_init init(1);
+    tbb::global_control(tbb::global_control::max_allowed_parallelism, 1);
 #endif
     using namespace limbo;
 
