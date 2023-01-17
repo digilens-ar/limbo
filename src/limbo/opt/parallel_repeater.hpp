@@ -84,19 +84,19 @@ namespace limbo {
                 using pair_t = std::pair<Eigen::VectorXd, double>;
 
                 auto body = [&](int i) {
-                    // clang-format off
+                    
                     Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * Params::opt_parallelrepeater::epsilon() - Params::opt_parallelrepeater::epsilon();
                     Eigen::VectorXd v = Optimizer()(f, init + r_deviation, bounded);
                     double val = opt::eval(f, v);
 
                     return std::make_pair(v, val);
-                    // clang-format on
+                    
                 };
 
                 auto comp = [](const pair_t& v1, const pair_t& v2) {
-                    // clang-format off
+                    
                     return v1.second > v2.second;
-                    // clang-format on
+                    
                 };
 
                 pair_t init_v = std::make_pair(init, -std::numeric_limits<float>::max());

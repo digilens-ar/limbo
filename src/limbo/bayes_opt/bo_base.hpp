@@ -125,7 +125,7 @@ namespace limbo {
             boost::parameter::optional<tag::stopcrit>,
             boost::parameter::optional<tag::modelfun>>;
 
-        // clang-format off
+        
         template <class Params,
           class A1 = boost::parameter::void_,
           class A2 = boost::parameter::void_,
@@ -133,7 +133,7 @@ namespace limbo {
           class A4 = boost::parameter::void_,
           class A5 = boost::parameter::void_,
           class A6 = boost::parameter::void_>
-        // clang-format on
+        
         /**
         \rst
 

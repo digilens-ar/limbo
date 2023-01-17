@@ -13,7 +13,6 @@
     "gtest",
     "eigen3"
   ],
-  "builtin-baseline": "f092860c0897753d058330cea034fd6ff9444dae",
- 
+  "builtin-baseline": "877e3dc2323a4d4c3c75e7168c22a0c4e921d4db",
   "supports": "windows"
 }

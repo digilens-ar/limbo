@@ -90,9 +90,9 @@ namespace limbo {
                     assert(sigma.size() == objs.size());
                     pareto_t p(points.size());
                     tools::par::loop(0, p.size(), [&](size_t k) {
-                        // clang-format off
+                        
                     p[k] = std::make_tuple(points[k], objs[k], sigma[k]);
-                        // clang-format on
+                        
                     });
                     return p;
                 }

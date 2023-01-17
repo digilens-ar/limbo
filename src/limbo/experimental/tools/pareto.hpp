@@ -146,7 +146,7 @@ namespace pareto {
                 pareto; // Using Template alias (for GCC 4.7 and later)
 #endif
             limbo::tools::par::loop(0, p.size(), [&](size_t i) {
-                // clang-format off
+                
                 /*    if (i % 10000 == 0)
                     {
                         std::cout << i << '[' << p.size() << "] ";
@@ -155,7 +155,7 @@ namespace pareto {
                 */
                     if (non_dominated<K>(std::get<K>(p[i]), p))
                         pareto.push_back(p[i]);
-                // clang-format on
+                
             });
             std::sort(pareto.begin(), pareto.end(), compare_objs_lex<K>());
             return limbo::tools::par::convert_vector(pareto);

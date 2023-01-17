@@ -115,7 +115,7 @@ namespace limbo {
                 // Assert that the algorithm is non-gradient
                 // TO-DO: Add support for MLSL (Multi-Level Single-Linkage)
                 // TO-DO: Add better support for ISRES (Improved Stochastic Ranking Evolution Strategy)
-                // clang-format off
+                
                 static_assert(Algorithm == nlopt::LN_COBYLA || Algorithm == nlopt::LN_BOBYQA ||
                     Algorithm == nlopt::LN_NEWUOA || Algorithm == nlopt::LN_NEWUOA_BOUND ||
                     Algorithm == nlopt::LN_PRAXIS || Algorithm == nlopt::LN_NELDERMEAD ||
@@ -126,7 +126,7 @@ namespace limbo {
                     Algorithm == nlopt::GN_ORIG_DIRECT_L || Algorithm == nlopt::GN_CRS2_LM ||
                     Algorithm == nlopt::LN_AUGLAG || Algorithm == nlopt::LN_AUGLAG_EQ ||
                     Algorithm == nlopt::GN_ISRES || Algorithm == nlopt::GN_ESCH, "NLOptNoGrad accepts gradient free nlopt algorithms only");
-                // clang-format on
+                
 
                 NLOptBase<Params, Algorithm>::initialize(dim);
 

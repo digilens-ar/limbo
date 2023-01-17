@@ -111,7 +111,7 @@ namespace limbo {
             {
                 // Assert that the algorithm is gradient-based
                 // TO-DO: Add support for MLSL (Multi-Level Single-Linkage)
-                // clang-format off
+                
                 static_assert(Algorithm == nlopt::LD_MMA || Algorithm == nlopt::LD_SLSQP ||
                     Algorithm == nlopt::LD_LBFGS || Algorithm == nlopt::LD_TNEWTON_PRECOND_RESTART ||
                     Algorithm == nlopt::LD_TNEWTON_PRECOND || Algorithm == nlopt::LD_TNEWTON_RESTART ||
@@ -120,7 +120,7 @@ namespace limbo {
                     Algorithm == nlopt::GD_STOGO_RAND || Algorithm == nlopt::LD_LBFGS_NOCEDAL ||
                     Algorithm == nlopt::LD_AUGLAG || Algorithm == nlopt::LD_AUGLAG_EQ ||
                     Algorithm == nlopt::LD_CCSAQ, "NLOptGrad accepts gradient-based nlopt algorithms only");
-                // clang-format on
+                
 
                 NLOptBase<Params, Algorithm>::initialize(dim);
 
