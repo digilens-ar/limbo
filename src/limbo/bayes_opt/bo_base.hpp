@@ -157,11 +157,11 @@ namespace limbo {
                 
         template <
             class Params,
-			typename init_t = init::RandomSampling<Params>,
+			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
     		typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
-			typename acqui_t = acqui::UCB<Params, model_type>
+			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>
     	>
         class BoBase {
         public:

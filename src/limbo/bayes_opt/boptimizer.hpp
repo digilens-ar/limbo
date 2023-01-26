@@ -110,8 +110,8 @@ namespace limbo {
 		template <
             class Params,
         	typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
-			typename acqui_t = acqui::UCB<Params, model_type>,
-			typename init_t = init::RandomSampling<Params>,
+			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
+			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
 			typename acqui_opt_t = typename defaults<Params>::acquiopt_t
@@ -192,13 +192,13 @@ namespace limbo {
             template <typename Params>
             using model_t = model::GPOpt<Params>;
             template <typename Params>
-            using acqui_t = acqui::UCB<Params, model_t<Params>>;
+            using acqui_t = acqui::UCB<typename Params::acqui_ucb, model_t<Params>>;
         }
 
         /// A shortcut for a BOptimizer with UCB + GPOpt
         /// The acquisition function and the model CANNOT be tuned (use BOptimizer for this)
         template <class Params,
-			typename init_t = init::RandomSampling<Params>,
+			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
 			typename acqui_opt_t = typename defaults<Params>::acquiopt_t>

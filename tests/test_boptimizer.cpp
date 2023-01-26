@@ -155,7 +155,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::NoInit;
     using GP_t = model::GP<Kernel_t, Mean_t>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
@@ -213,7 +213,7 @@ TEST(Limbo_Boptimizer, bo_gp)
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
-    using Init_t = init::RandomSampling<Params>;
+    using Init_t = init::RandomSampling<Params::init_randomsampling>;
     using GP_t = model::GP<Kernel_t, Mean_t>;
     using Acqui_t = acqui::EI<Params::acqui_ei, GP_t>;
 
@@ -240,9 +240,9 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
-    using Init_t = init::RandomSampling<Params>;
+    using Init_t = init::RandomSampling<Params::init_randomsampling>;
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
@@ -267,9 +267,9 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
     using Mean_t = mean::FunctionARD<mean::Data>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
-    using Init_t = init::RandomSampling<Params>;
+    using Init_t = init::RandomSampling<Params::init_randomsampling>;
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::MeanLFOpt<Params::opt_rprop>>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
