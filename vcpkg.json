@@ -4,7 +4,7 @@
   "version-semver": "0.0.1",
   "dependencies": [
     "nlopt",
-    "boost-filesystem",
+    "boost-fusion",
     "tbb",
     "gtest",
     "eigen3"

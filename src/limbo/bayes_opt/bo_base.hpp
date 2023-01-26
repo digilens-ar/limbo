@@ -57,12 +57,12 @@
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/vector.hpp>
 #define BOOST_NO_SCOPED_ENUMS
-#include <boost/filesystem.hpp>
 
 #include <Eigen/Core>
 
 // we need everything to have the defaults
 #define _USE_MATH_DEFINES // This makes sure to bring in the M_PI define which is not in the C or C++ standard and is not defined by default on Windows.
+#include <filesystem>
 #include <limbo/acqui/ucb.hpp>
 #include <limbo/init/random_sampling.hpp>
 #include <limbo/kernel/exp.hpp>
@@ -252,8 +252,8 @@ namespace limbo {
                 if (!Params::bayes_opt_bobase::stats_enabled())
                     return;
                 _res_dir = tools::hostname() + "_" + tools::date() + "_" + tools::getpid();
-                boost::filesystem::path my_path(_res_dir);
-                boost::filesystem::create_directory(my_path);
+                std::filesystem::path my_path(_res_dir);
+                std::filesystem::create_directory(my_path);
             }
 
             std::string _res_dir;
