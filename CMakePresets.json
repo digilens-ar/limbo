@@ -16,7 +16,8 @@
         "CMAKE_MODULE_PATH": "${sourceDir}/cmake",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "LIMBO_BUILD_TESTS":  "ON",
-        "LIMBO_BUILD_TUTORIALS":  "ON"
+        "LIMBO_BUILD_TUTORIALS":  "ON",
+        "LIMBO_BUILD_EXAMPLES":  "ON"
       }
     },
     {

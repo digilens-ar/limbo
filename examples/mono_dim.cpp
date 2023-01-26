@@ -53,7 +53,6 @@
 
 using namespace limbo;
 
-BO_PARAMS(std::cout,
           struct Params {
               struct acqui_gpucb : public defaults::acqui_gpucb {
               };
@@ -105,7 +104,7 @@ BO_PARAMS(std::cout,
 
               struct opt_rprop : public defaults::opt_rprop {
               };
-          };)
+          };
 
 struct fit_eval {
     BO_PARAM(size_t, dim_in, 2);
@@ -126,10 +125,10 @@ int main()
     using Mean_t = mean::Data<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
-    using stat_t = boost::fusion::vector<stat::ConsoleSummary<Params>,
-        stat::Samples<Params>,
-        stat::Observations<Params>,
-        stat::GP<Params>>;
+    using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
+        limbo::stat::Samples,
+        limbo::stat::Observations,
+        limbo::stat::GP<Params::stat_gp>>;
 
     bayes_opt::BOptimizer<Params, modelfun<GP_t>, statsfun<stat_t>, acquifun<Acqui_t>> opt;
     opt.optimize(fit_eval());

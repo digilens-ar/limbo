@@ -51,3 +51,8 @@ option(LIMBO_BUILD_TUTORIALS "Build tutorials for limbo" OFF)
 if(LIMBO_BUILD_TUTORIALS)
 	add_subdirectory(tutorials)
 endif()
+
+option(LIMBO_BUILD_EXAMPLES "Build examples for limbo" OFF)
+if(LIMBO_BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
