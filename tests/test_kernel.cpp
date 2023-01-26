@@ -159,8 +159,8 @@ namespace {
 TEST(Limbo_Kernel, grad_exp)
 {
     for (int i = 1; i <= 10; i++) {
-        check_kernel<kernel::Exp<Params>>(i, 100);
-        check_kernel<kernel::Exp<ParamsNoise>>(i, 100);
+        check_kernel<kernel::Exp<Params::kernel, Params::kernel_exp>>(i, 100);
+        check_kernel<kernel::Exp<ParamsNoise::kernel, ParamsNoise::kernel_exp>>(i, 100);
     }
 }
 

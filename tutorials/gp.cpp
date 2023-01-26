@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     }
 
     // the type of the GP
-    using Kernel_t = kernel::Exp<Params>;
+    using Kernel_t = kernel::Exp<Params::kernel, Params::kernel_exp>;
     using Mean_t = mean::Data;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
 
