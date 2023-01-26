@@ -64,7 +64,7 @@ namespace limbo {
           @ingroup opt
         Base class for NLOpt wrappers
         */
-        template <typename Params, nlopt::algorithm Algorithm>
+        template <nlopt::algorithm Algorithm>
         struct NLOptBase {
         public:
             virtual void initialize(int dim)

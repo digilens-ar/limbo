@@ -77,7 +77,7 @@ namespace limbo {
         /// - a kernel function
         /// - a mean function
         /// - [optional] an optimizer for the hyper-parameters
-        template <typename Params, typename KernelFunction = kernel::MaternFiveHalves<Params>, typename MeanFunction = mean::Data<Params>, typename HyperParamsOptimizer = gp::NoLFOpt<Params>>
+        template <typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
         class GP {
         public:
             /// useful because the model might be created before knowing anything about the process
@@ -637,12 +637,12 @@ namespace limbo {
         /// GPBasic is a GP with a "mean data" mean function, Exponential kernel,
         /// and NO hyper-parameter optimization
         template <typename Params>
-        using GPBasic = GP<Params, kernel::MaternFiveHalves<Params>, mean::Data<Params>, gp::NoLFOpt<Params>>;
+        using GPBasic = GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>, mean::Data, gp::NoLFOpt>;
 
         /// GPOpt is a GP with a "mean data" mean function, Exponential kernel with Automatic Relevance
         /// Determination (ARD), and hyper-parameter optimization based on Rprop
         template <typename Params>
-        using GPOpt = GP<Params, kernel::SquaredExpARD<Params>, mean::Data<Params>, gp::KernelLFOpt<Params>>;
+        using GPOpt = GP<kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<typename Params::opt_rprop>>;
     } // namespace model
 } // namespace limbo
 

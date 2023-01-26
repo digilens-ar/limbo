@@ -54,8 +54,8 @@ namespace limbo {
     namespace stat {
         /// @ingroup stat
         /// filename: `gp_<iteration>.dat`
-        template <typename Params>
-        struct GP : public StatBase<Params> {
+        template <typename Stat_GP>
+        struct GP : public StatBase {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
@@ -76,7 +76,7 @@ namespace limbo {
                 const BO& bo, const AggregatorFunction& afun,
                 const Eigen::VectorXd& current) const
             {
-                for (double x = 0; x <= 1.0f; x += 1.0f / (double)Params::stat_gp::bins()) {
+                for (double x = 0; x <= 1.0f; x += 1.0f / (double)Stat_GP::bins()) {
                     Eigen::VectorXd point = current;
                     point[dim_in] = x;
                     if (dim_in == current.size() - 1) {

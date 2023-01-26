@@ -53,7 +53,6 @@
 
 using namespace limbo;
 
-BO_PARAMS(std::cout,
           struct Params {
               struct acqui_gpucb : public defaults::acqui_gpucb {
               };
@@ -105,7 +104,7 @@ BO_PARAMS(std::cout,
 
               struct opt_rprop : public defaults::opt_rprop {
               };
-          };)
+          };
 
 struct fit_eval {
     BO_PARAM(size_t, dim_in, 2);
@@ -122,16 +121,17 @@ struct fit_eval {
 
 int main()
 {
-    using Kernel_t = kernel::MaternFiveHalves<Params>;
-    using Mean_t = mean::Data<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
-    using stat_t = boost::fusion::vector<stat::ConsoleSummary<Params>,
-        stat::Samples<Params>,
-        stat::Observations<Params>,
-        stat::GP<Params>>;
+    using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
+    using Mean_t = mean::Data;
+    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
+    using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
+        limbo::stat::Samples,
+        limbo::stat::Observations,
+        limbo::stat::GP<Params::stat_gp>>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, statsfun<stat_t>, acquifun<Acqui_t>> opt;
+    using BD = bayes_opt::BOptimizer<Params>;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt;
     opt.optimize(fit_eval());
     std::cout << opt.best_observation() << " res  "
               << opt.best_sample().transpose() << std::endl;

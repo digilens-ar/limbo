@@ -55,63 +55,67 @@
 #include <limbo/tools/random_generator.hpp>
 
 using namespace limbo;
-struct Params {
-    struct mean_constant {
-        BO_PARAM(double, constant, 1);
+
+namespace {
+    struct Params {
+        struct mean_constant {
+            BO_PARAM(double, constant, 1);
+        };
     };
-};
 
-// Check gradient via finite differences method
-template <typename Mean>
-std::tuple<double, Eigen::MatrixXd, Eigen::MatrixXd> check_grad(const Mean& mean, const Eigen::VectorXd& x, const Eigen::VectorXd& v, double e = 1e-4)
-{
-    Eigen::MatrixXd analytic_result, finite_diff_result;
-    Mean me = mean;
-    me.set_h_params(x);
 
-    analytic_result = me.grad(v, v);
+	// Check gradient via finite differences method
+	template <typename Mean>
+	std::tuple<double, Eigen::MatrixXd, Eigen::MatrixXd> check_grad(const Mean& mean, const Eigen::VectorXd& x, const Eigen::VectorXd& v, double e = 1e-4)
+	{
+	    Eigen::MatrixXd analytic_result, finite_diff_result;
+	    Mean me = mean;
+	    me.set_h_params(x);
 
-    finite_diff_result = Eigen::MatrixXd::Zero(me(v, v).size(), x.size());
-    for (int j = 0; j < x.size(); j++) {
-        Eigen::VectorXd test1 = x, test2 = x;
-        test1[j] -= e;
-        test2[j] += e;
-        Mean m1 = mean;
-        m1.set_h_params(test1);
-        Mean m2 = mean;
-        m2.set_h_params(test2);
-        Eigen::VectorXd res1 = m1(v, v);
-        Eigen::VectorXd res2 = m2(v, v);
-        finite_diff_result.col(j) = (res2 - res1).array() / (2.0 * e);
-    }
+	    analytic_result = me.grad(v, v);
 
-    return std::make_tuple((analytic_result - finite_diff_result).norm(), analytic_result, finite_diff_result);
-}
+	    finite_diff_result = Eigen::MatrixXd::Zero(me(v, v).size(), x.size());
+	    for (int j = 0; j < x.size(); j++) {
+	        Eigen::VectorXd test1 = x, test2 = x;
+	        test1[j] -= e;
+	        test2[j] += e;
+	        Mean m1 = mean;
+	        m1.set_h_params(test1);
+	        Mean m2 = mean;
+	        m2.set_h_params(test2);
+	        Eigen::VectorXd res1 = m1(v, v);
+	        Eigen::VectorXd res2 = m2(v, v);
+	        finite_diff_result.col(j) = (res2 - res1).array() / (2.0 * e);
+	    }
 
-template <typename Mean>
-void check_mean(size_t dim_in, size_t dim_out, size_t K)
-{
-    Mean mean(dim_out);
+	    return std::make_tuple((analytic_result - finite_diff_result).norm(), analytic_result, finite_diff_result);
+	}
 
-    for (size_t i = 0; i < K; i++) {
-        Eigen::VectorXd hp = tools::random_vector(mean.h_params_size()).array() * 10. - 5.;
+	template <typename Mean>
+	void check_mean(size_t dim_in, size_t dim_out, size_t K)
+	{
+	    Mean mean(dim_out);
 
-        double error;
-        Eigen::MatrixXd analytic, finite_diff;
+	    for (size_t i = 0; i < K; i++) {
+	        Eigen::VectorXd hp = tools::random_vector(mean.h_params_size()).array() * 10. - 5.;
 
-        Eigen::VectorXd v = tools::random_vector(dim_in).array() * 10. - 5.;
+	        double error;
+	        Eigen::MatrixXd analytic, finite_diff;
 
-        std::tie(error, analytic, finite_diff) = check_grad(mean, hp, v);
-        // std::cout << error << ": " << analytic << " vs " << finite_diff << std::endl;
-        ASSERT_TRUE(error < 1e-6);
-    }
+	        Eigen::VectorXd v = tools::random_vector(dim_in).array() * 10. - 5.;
+
+	        std::tie(error, analytic, finite_diff) = check_grad(mean, hp, v);
+	        // std::cout << error << ": " << analytic << " vs " << finite_diff << std::endl;
+	        ASSERT_TRUE(error < 1e-6);
+	    }
+	}
 }
 
 TEST(Limbo_Mean, mean_constant)
 {
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
-            check_mean<mean::Constant<Params>>(k, i, 100);
+            check_mean<mean::Constant<Params::mean_constant>>(k, i, 100);
         }
     }
 }
@@ -122,7 +126,7 @@ TEST(Limbo_Mean, mean_function_ard)
     // also has tunable parameters
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
-            check_mean<mean::FunctionARD<Params, mean::Constant<Params>>>(k, i, 100);
+            check_mean<mean::FunctionARD<mean::Constant<Params::mean_constant>>>(k, i, 100);
         }
     }
 }
@@ -133,7 +137,7 @@ TEST(Limbo_Mean, mean_function_ard_dummy)
     // has no tunable parameters
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
-            check_mean<mean::FunctionARD<Params, mean::NullFunction<Params>>>(k, i, 100);
+            check_mean<mean::FunctionARD<mean::NullFunction>>(k, i, 100);
         }
     }
 }

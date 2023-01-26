@@ -47,8 +47,8 @@
 #define LIMBO_TOOLS_MACROS_HPP
 
 #include <Eigen/Core>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
+#include <regex>
 
 #define BO_PARAM(Type, Name, Value) \
     static constexpr Type Name() { return Value; }
@@ -97,8 +97,8 @@
         Ps__()                                                \
         {                                                     \
             static std::string __params = #P;                 \
-            boost::replace_all(__params, ";", ";\n");         \
-            boost::replace_all(__params, "{", "{\n");         \
+			std::regex_replace(__params, std::regex(";"), ";\n"); \
+			std::regex_replace(__params, std::regex("{"), "{\n"); \
             Stream << "Parameters:" << __params << std::endl; \
         }                                                     \
     };                                                        \

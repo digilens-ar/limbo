@@ -67,7 +67,7 @@ namespace limbo {
         ///
         /// Parameters:
         /// - int bins
-        template <typename Params>
+        template <typename opt_gridsearch>
         struct GridSearch {
         public:
             template <typename F>
@@ -84,7 +84,7 @@ namespace limbo {
             Eigen::VectorXd _inner_search(const F& f, size_t depth, const Eigen::VectorXd& current) const
             {
                 size_t dim = current.size();
-                double step_size = 1.0 / (double)Params::opt_gridsearch::bins();
+                double step_size = 1.0 / (double)opt_gridsearch::bins();
                 double upper_lim = 1.0 + step_size;
                 double best_fit = -std::numeric_limits<double>::max();
                 Eigen::VectorXd current_result(dim);

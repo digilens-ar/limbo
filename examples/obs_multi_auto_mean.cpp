@@ -120,7 +120,7 @@ protected:
 };
 
 template <typename Params>
-struct MeanOffset : public mean::BaseMean<Params> {
+struct MeanOffset : public mean::BaseMean {
     MeanOffset(size_t dim_out = 1) {}
 
     template <typename GP>
@@ -139,7 +139,7 @@ struct MeanOffset : public mean::BaseMean<Params> {
 };
 
 template <typename Params>
-struct MeanRotation : public mean::BaseMean<Params> {
+struct MeanRotation : public mean::BaseMean {
     MeanRotation(size_t dim_out = 1) {}
 
     template <typename GP>
@@ -163,7 +163,7 @@ struct MeanRotation : public mean::BaseMean<Params> {
 };
 
 template <typename Params>
-struct MeanComplet : public mean::BaseMean<Params> {
+struct MeanComplet : public mean::BaseMean {
     MeanComplet(size_t dim_out = 1) {}
 
     template <typename GP>
@@ -206,12 +206,12 @@ struct fit_eval {
 int main()
 {
 
-    using Kernel_t = kernel::SquaredExpARD<Params>;
-    using Mean_t = mean::FunctionARD<Params, MeanComplet<Params>>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params>>;
+    using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
+    using Mean_t = mean::FunctionARD<MeanComplet<Params>>;
+    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, acquifun<Acqui_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt;
     opt.optimize(fit_eval());
 
     std::cout << opt.best_observation() << " res  "

@@ -70,7 +70,7 @@ namespace limbo {
           - ``double alpha``
         \endrst
         */
-        template <typename Params, typename Model>
+        template <typename AcquiUcb, typename Model>
         class UCB {
         public:
             UCB(const Model& model, int iteration = 0) : _model(model) {}
@@ -86,7 +86,7 @@ namespace limbo {
                 Eigen::VectorXd mu;
                 double sigma;
                 std::tie(mu, sigma) = _model.query(v);
-                return opt::no_grad(afun(mu) + Params::acqui_ucb::alpha() * sqrt(sigma));
+                return opt::no_grad(afun(mu) + AcquiUcb::alpha() * sqrt(sigma));
             }
 
         protected:

@@ -55,13 +55,13 @@ namespace limbo {
         namespace bayes_opt {
 
             template <class Params,
-                // clang-format off
+                
               class A2 = boost::parameter::void_,
               class A3 = boost::parameter::void_,
               class A4 = boost::parameter::void_,
               class A5 = boost::parameter::void_,
               class A6 = boost::parameter::void_>
-            // clang-format on
+            
             class Nsbo : public BoMulti<Params, A2, A3, A4, A5, A6> {
             public:
                 using pareto_point_t = std::tuple<Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd>;

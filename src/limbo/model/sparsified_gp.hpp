@@ -68,10 +68,10 @@ namespace limbo {
         /// - [optional] an optimizer for the hyper-parameters
         /// A sparsification based on the density of points is performed
         /// until a desired number of points is reached
-        template <typename Params, typename KernelFunction = kernel::MaternFiveHalves<Params>, typename MeanFunction = mean::Data<Params>, typename HyperParamsOptimizer = gp::NoLFOpt<Params>>
-        class SparsifiedGP : public GP<Params, KernelFunction, MeanFunction, HyperParamsOptimizer> {
+        template <typename ModelSparseGP, typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
+        class SparsifiedGP : public GP<KernelFunction, MeanFunction, HyperParamsOptimizer> {
         public:
-            using base_gp_t = GP<Params, KernelFunction, MeanFunction, HyperParamsOptimizer>;
+            using base_gp_t = GP<KernelFunction, MeanFunction, HyperParamsOptimizer>;
 
             /// useful because the model might be created before knowing anything about the process
             SparsifiedGP() : base_gp_t() {}
@@ -86,7 +86,7 @@ namespace limbo {
             {
                 /// if the number of samples is less or equal than the desired
                 /// compute the normal GP
-                if (samples.size() <= Params::model_sparse_gp::max_points())
+                if (samples.size() <= ModelSparseGP::max_points())
                     base_gp_t::compute(samples, observations, compute_kernel);
                 /// otherwise, sparsify the samples
                 else {
@@ -106,7 +106,7 @@ namespace limbo {
                 base_gp_t::add_sample(sample, observation);
                 /// if we surpassed the maximum points, re-sparsify
                 /// and recompute
-                if (this->_samples.size() > Params::model_sparse_gp::max_points()) {
+                if (this->_samples.size() > ModelSparseGP::max_points()) {
                     /// get observations in appropriate format
                     std::vector<Eigen::VectorXd> observations;
                     for (size_t i = 0; i < this->_samples.size(); i++) {
@@ -167,7 +167,7 @@ namespace limbo {
                 });
 
                 std::vector<Eigen::VectorXd> samp = samples, obs = observations;
-                while (samp.size() > Params::model_sparse_gp::max_points()) {
+                while (samp.size() > ModelSparseGP::max_points()) {
                     int k = _get_most_dense_point(samp[0].size(), samp.size(), distances);
                     /// sanity check
                     if (k < 0)

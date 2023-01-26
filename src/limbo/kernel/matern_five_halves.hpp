@@ -80,9 +80,9 @@ namespace limbo {
           Reference: :cite:`matern1960spatial` & :cite:`brochu2010tutorial` p.10 & https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function
           \endrst
         */
-        template <typename Params>
-        struct MaternFiveHalves : public BaseKernel<Params, MaternFiveHalves<Params>> {
-            MaternFiveHalves(size_t dim = 1) : _sf2(Params::kernel_maternfivehalves::sigma_sq()), _l(Params::kernel_maternfivehalves::l())
+        template <typename kernel_opt, typename kernel_maternfivehalves>
+        struct MaternFiveHalves : public BaseKernel<kernel_opt, MaternFiveHalves<kernel_opt, kernel_maternfivehalves>> {
+            MaternFiveHalves(size_t dim = 1) : _sf2(kernel_maternfivehalves::sigma_sq()), _l(kernel_maternfivehalves::l())
             {
                 _h_params = Eigen::VectorXd(2);
                 _h_params << std::log(_l), std::log(std::sqrt(_sf2));

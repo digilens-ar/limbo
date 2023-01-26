@@ -104,14 +104,14 @@ namespace limbo {
          - double fun_tolerance
          - double xrel_tolerance
         */
-        template <typename Params, nlopt::algorithm Algorithm = nlopt::LD_LBFGS>
-        struct NLOptGrad : public NLOptBase<Params, Algorithm> {
+        template <typename opt_nloptgrad, nlopt::algorithm Algorithm = nlopt::LD_LBFGS>
+        struct NLOptGrad : public NLOptBase<Algorithm> {
         public:
             void initialize(int dim) override
             {
                 // Assert that the algorithm is gradient-based
                 // TO-DO: Add support for MLSL (Multi-Level Single-Linkage)
-                // clang-format off
+                
                 static_assert(Algorithm == nlopt::LD_MMA || Algorithm == nlopt::LD_SLSQP ||
                     Algorithm == nlopt::LD_LBFGS || Algorithm == nlopt::LD_TNEWTON_PRECOND_RESTART ||
                     Algorithm == nlopt::LD_TNEWTON_PRECOND || Algorithm == nlopt::LD_TNEWTON_RESTART ||
@@ -120,13 +120,13 @@ namespace limbo {
                     Algorithm == nlopt::GD_STOGO_RAND || Algorithm == nlopt::LD_LBFGS_NOCEDAL ||
                     Algorithm == nlopt::LD_AUGLAG || Algorithm == nlopt::LD_AUGLAG_EQ ||
                     Algorithm == nlopt::LD_CCSAQ, "NLOptGrad accepts gradient-based nlopt algorithms only");
-                // clang-format on
+                
 
-                NLOptBase<Params, Algorithm>::initialize(dim);
+                NLOptBase<Algorithm>::initialize(dim);
 
-                this->_opt.set_maxeval(Params::opt_nloptgrad::iterations());
-                this->_opt.set_ftol_rel(Params::opt_nloptgrad::fun_tolerance());
-                this->_opt.set_xtol_rel(Params::opt_nloptgrad::xrel_tolerance());
+                this->_opt.set_maxeval(opt_nloptgrad::iterations());
+                this->_opt.set_ftol_rel(opt_nloptgrad::fun_tolerance());
+                this->_opt.set_xtol_rel(opt_nloptgrad::xrel_tolerance());
             }
         };
     } // namespace opt

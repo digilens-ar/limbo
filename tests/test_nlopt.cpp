@@ -51,52 +51,54 @@
 
 using namespace limbo;
 
-struct Params {
-    struct opt_nloptgrad : public defaults::opt_nloptgrad {
-        BO_PARAM(int, iterations, 200);
+namespace {
+    struct Params {
+        struct opt_nloptgrad : public defaults::opt_nloptgrad {
+            BO_PARAM(int, iterations, 200);
+        };
+
+        struct opt_nloptnograd : public defaults::opt_nloptnograd {
+            BO_PARAM(int, iterations, 200);
+        };
     };
 
-    struct opt_nloptnograd : public defaults::opt_nloptnograd {
-        BO_PARAM(int, iterations, 200);
-    };
-};
+    opt::eval_t my_function(const Eigen::VectorXd& params, bool eval_grad)
+    {
+        double v = -params(0) * params(0) - params(1) * params(1);
+        if (!eval_grad)
+            return opt::no_grad(v);
+        Eigen::VectorXd grad(2);
+        grad(0) = -2 * params(0);
+        grad(1) = -2 * params(1);
+        return { v, grad };
+    }
 
-opt::eval_t my_function(const Eigen::VectorXd& params, bool eval_grad)
-{
-    double v = -params(0) * params(0) - params(1) * params(1);
-    if (!eval_grad)
-        return opt::no_grad(v);
-    Eigen::VectorXd grad(2);
-    grad(0) = -2 * params(0);
-    grad(1) = -2 * params(1);
-    return {v, grad};
-}
+    opt::eval_t my_constraint(const Eigen::VectorXd& params, bool eval_grad)
+    {
+        double v = params(0) + 3. * params(1) - 10.;
+        if (!eval_grad)
+            return opt::no_grad(v);
+        Eigen::VectorXd grad(2);
+        grad(0) = 1.;
+        grad(1) = 3.;
+        return { v, grad };
+    }
 
-opt::eval_t my_constraint(const Eigen::VectorXd& params, bool eval_grad)
-{
-    double v = params(0) + 3. * params(1) - 10.;
-    if (!eval_grad)
-        return opt::no_grad(v);
-    Eigen::VectorXd grad(2);
-    grad(0) = 1.;
-    grad(1) = 3.;
-    return {v, grad};
-}
-
-opt::eval_t my_inequality_constraint(const Eigen::VectorXd& params, bool eval_grad)
-{
-    double v = -params(0) - 3. * params(1) + 10.;
-    if (!eval_grad)
-        return opt::no_grad(v);
-    Eigen::VectorXd grad(2);
-    grad(0) = -1.;
-    grad(1) = -3.;
-    return {v, grad};
+    opt::eval_t my_inequality_constraint(const Eigen::VectorXd& params, bool eval_grad)
+    {
+        double v = -params(0) - 3. * params(1) + 10.;
+        if (!eval_grad)
+            return opt::no_grad(v);
+        Eigen::VectorXd grad(2);
+        grad(0) = -1.;
+        grad(1) = -3.;
+        return { v, grad };
+    }
 }
 
 TEST(Limbo_NLOpt, nlopt_grad_simple)
 {
-    opt::NLOptGrad<Params, nlopt::LD_MMA> optimizer;
+    opt::NLOptGrad<Params::opt_nloptgrad, nlopt::LD_MMA> optimizer;
     Eigen::VectorXd g = optimizer(my_function, tools::random_vector(2), false);
 
     ASSERT_LE(g(0), 0.00000001);
@@ -105,7 +107,7 @@ TEST(Limbo_NLOpt, nlopt_grad_simple)
 
 TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 {
-    opt::NLOptNoGrad<Params, nlopt::LN_COBYLA> optimizer;
+    opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA> optimizer;
     Eigen::VectorXd best(2);
     best << 1, 1;
     size_t N = 10;
@@ -122,7 +124,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 
 TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
 {
-    opt::NLOptNoGrad<Params, nlopt::LN_COBYLA> optimizer;
+    opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA> optimizer;
     optimizer.initialize(2);
     optimizer.add_equality_constraint(my_constraint);
 

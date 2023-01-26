@@ -90,19 +90,19 @@ namespace limbo {
         /// - double gamma
         /// - bool nesterov
         /// - double eps_stop
-        template <typename Params>
+        template <typename opt_gradient_ascent>
         struct GradientAscent {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
-                assert(Params::opt_gradient_ascent::gamma() >= 0. && Params::opt_gradient_ascent::gamma() < 1.);
-                assert(Params::opt_gradient_ascent::alpha() >= 0.);
+                assert(opt_gradient_ascent::gamma() >= 0. && opt_gradient_ascent::gamma() < 1.);
+                assert(opt_gradient_ascent::alpha() >= 0.);
 
                 size_t param_dim = init.size();
-                double gamma = Params::opt_gradient_ascent::gamma();
-                double alpha = Params::opt_gradient_ascent::alpha();
-                double stop = Params::opt_gradient_ascent::eps_stop();
-                bool is_nesterov = Params::opt_gradient_ascent::nesterov();
+                double gamma = opt_gradient_ascent::gamma();
+                double alpha = opt_gradient_ascent::alpha();
+                double stop = opt_gradient_ascent::eps_stop();
+                bool is_nesterov = opt_gradient_ascent::nesterov();
 
                 Eigen::VectorXd v = Eigen::VectorXd::Zero(param_dim);
 
@@ -117,7 +117,7 @@ namespace limbo {
                     }
                 }
 
-                for (int i = 0; i < Params::opt_gradient_ascent::iterations(); ++i) {
+                for (int i = 0; i < opt_gradient_ascent::iterations(); ++i) {
                     Eigen::VectorXd prev_params = params;
                     Eigen::VectorXd query_params = params;
                     // if Nesterov momentum, change query parameters

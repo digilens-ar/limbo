@@ -56,13 +56,13 @@ namespace limbo {
     namespace opt {
 
         // Needed for the variadic data structure
-        template <typename Params, typename... Optimizers>
+        template <typename... Optimizers>
         struct Chained {
         };
 
         // Base case: just 1 optimizer to call
-        template <typename Params, typename Optimizer>
-        struct Chained<Params, Optimizer> {
+        template <typename Optimizer>
+        struct Chained<Optimizer> {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
@@ -71,12 +71,12 @@ namespace limbo {
         };
 
         // Recursive case: call current optimizer, and pass result as init value for the next one
-        template <typename Params, typename Optimizer, typename... Optimizers>
-        struct Chained<Params, Optimizer, Optimizers...> : Chained<Params, Optimizers...> {
+        template <typename Optimizer, typename... Optimizers>
+        struct Chained<Optimizer, Optimizers...> : Chained<Optimizers...> {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
-                return Chained<Params, Optimizers...>::operator()(f, Optimizer()(f, init, bounded), bounded);
+                return Chained<Optimizers...>::operator()(f, Optimizer()(f, init, bounded), bounded);
             };
         };
     }

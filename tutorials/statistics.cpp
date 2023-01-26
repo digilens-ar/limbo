@@ -110,7 +110,7 @@ struct Eval {
 };
 
 template <typename Params>
-struct WorstObservation : public stat::StatBase<Params> {
+struct WorstObservation : public limbo::stat::StatBase {
     template <typename BO, typename AggregatorFunction>
     void operator()(const BO& bo, const AggregatorFunction& afun)
     {
@@ -145,13 +145,14 @@ int main()
     // we use the default acquisition function / model / stat / etc.
 
     // define a special list of statistics which include our new statistics class
-    using stat_t = boost::fusion::vector<stat::ConsoleSummary<Params>,
-        stat::Samples<Params>,
-        stat::Observations<Params>,
+    using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
+        limbo::stat::Samples,
+        limbo::stat::Observations,
         WorstObservation<Params>>;
 
     /// remmeber to use the new statistics vector via statsfun<>!
-    bayes_opt::BOptimizer<Params, statsfun<stat_t>> boptimizer;
+    using BD = bayes_opt::BOptimizer<Params>; // Default
+    bayes_opt::BOptimizer<Params, BD::model_t, BD::acquisition_function_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> boptimizer;
 
     // run the evaluation
     boptimizer.optimize(Eval());

@@ -63,9 +63,9 @@ namespace limbo {
           Parameter:
             - ``double constant`` (the value of the constant)
         */
-        template <typename Params>
-        struct Constant : public BaseMean<Params> {
-            Constant(size_t dim_out = 1) : _dim_out(dim_out), _constant(Params::mean_constant::constant()) {}
+        template <typename mean_constant>
+        struct Constant : public BaseMean {
+            Constant(size_t dim_out = 1) : _dim_out(dim_out), _constant(mean_constant::constant()) {}
 
             template <typename GP>
             Eigen::VectorXd operator()(const Eigen::VectorXd& v, const GP&) const

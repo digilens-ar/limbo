@@ -132,11 +132,11 @@ namespace limbo {
 
             // to be removed once moved out of experimental?
             BOOST_PARAMETER_TEMPLATE_KEYWORD(initfun)
-            BOOST_PARAMETER_TEMPLATE_KEYWORD(acquifun)
-            BOOST_PARAMETER_TEMPLATE_KEYWORD(modelfun)
-            BOOST_PARAMETER_TEMPLATE_KEYWORD(statsfun)
-            BOOST_PARAMETER_TEMPLATE_KEYWORD(stopcrit)
-
+                BOOST_PARAMETER_TEMPLATE_KEYWORD(acquifun)
+                BOOST_PARAMETER_TEMPLATE_KEYWORD(modelfun)
+                BOOST_PARAMETER_TEMPLATE_KEYWORD(statsfun)
+                BOOST_PARAMETER_TEMPLATE_KEYWORD(stopcrit)
+                static_assert(false);
             using bo_multi_signature = boost::parameter::parameters<boost::parameter::optional<tag::statsfun>,
                 boost::parameter::optional<tag::initfun>,
                 boost::parameter::optional<tag::acquifun>,

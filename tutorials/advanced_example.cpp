@@ -44,6 +44,10 @@
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
 // please see the explanation in the documentation
+#ifndef USE_LIBCMAES
+#error This tutorial required libCMAES to work
+#endif
+
 #include <limbo/limbo.hpp>
 
 using namespace limbo;
@@ -112,7 +116,7 @@ Eigen::Vector2d forward_kinematics(const Eigen::VectorXd& x)
 }
 
 template <typename Params>
-struct MeanFWModel : mean::BaseMean<Params> {
+struct MeanFWModel : mean::BaseMean {
     MeanFWModel(size_t dim_out = 1) {}
 
     template <typename GP>
@@ -182,7 +186,7 @@ int main()
 
     using stop_t = boost::fusion::vector<stop::MaxIterations<Params>, MinTolerance<Params>>;
 
-    using stat_t = boost::fusion::vector<stat::ConsoleSummary<Params>, stat::Samples<Params>, stat::Observations<Params>, stat::AggregatedObservations<Params>, stat::GPAcquisitions<Params>, stat::BestAggregatedObservations<Params>, stat::GPKernelHParams<Params>>;
+    using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary, limbo::stat::Samples, limbo::stat::Observations, limbo::stat::AggregatedObservations, limbo::stat::GPAcquisitions, limbo::stat::BestAggregatedObservations, limbo::stat::GPKernelHParams>;
 
     bayes_opt::BOptimizer<Params, modelfun<gp_t>, acquifun<acqui_t>, acquiopt<acqui_opt_t>, initfun<init_t>, statsfun<stat_t>, stopcrit<stop_t>> boptimizer;
     // Instantiate aggregator

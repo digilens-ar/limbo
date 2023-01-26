@@ -53,8 +53,8 @@
 
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
-#include <boost/filesystem.hpp>
 
+#include <filesystem>
 #include <Eigen/Core>
 
 namespace limbo {
@@ -127,8 +127,8 @@ namespace limbo {
 
             void _create_directory() const
             {
-                boost::filesystem::path my_path(_dir_name);
-                boost::filesystem::create_directories(my_path);
+                std::filesystem::path my_path(_dir_name);
+                std::filesystem::create_directories(my_path);
             }
 
             std::vector<std::vector<double>> _load(const std::string& object_name) const

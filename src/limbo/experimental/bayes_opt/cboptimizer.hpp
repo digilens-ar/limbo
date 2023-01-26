@@ -86,7 +86,7 @@ namespace limbo {
                 boost::parameter::optional<limbo::tag::modelfun>,
                 boost::parameter::optional<limbo::experimental::tag::constraint_modelfun>>;
 
-            // clang-format off
+            
         /**
         The classic Bayesian optimization algorithm.
 
@@ -116,7 +116,7 @@ namespace limbo {
           class A5 = boost::parameter::void_,
           class A6 = boost::parameter::void_,
           class A7 = boost::parameter::void_>
-            // clang-format on
+            
             class CBOptimizer : public limbo::bayes_opt::BoBase<Params, A1, A2, A3, A4, A5, A6> {
             public:
                 // defaults

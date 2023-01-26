@@ -67,13 +67,13 @@ namespace limbo {
             - ``int samples`` (total number of samples)
           \endrst
         */
-        template <typename Params>
+        template <typename InitRandomSampling>
         struct RandomSampling {
             template <typename StateFunction, typename AggregatorFunction, typename Opt>
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
-                for (int i = 0; i < Params::init_randomsampling::samples(); i++) {
-                    auto new_sample = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
+                for (int i = 0; i < InitRandomSampling::samples(); i++) {
+                    auto new_sample = tools::random_vector(StateFunction::dim_in(), Opt::params_t::bayes_opt_bobase::bounded());
                     opt.eval_and_add(seval, new_sample);
                 }
             }

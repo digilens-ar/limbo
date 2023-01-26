@@ -72,19 +72,19 @@ namespace limbo {
             - ``int bins`` (number of bins for each dimensions)
           \endrst
         */
-        template <typename Params>
+        template <typename init_randomsamplinggrid>
         struct RandomSamplingGrid {
             template <typename StateFunction, typename AggregatorFunction, typename Opt>
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 // Only works with bounded BO
-                assert(Params::bayes_opt_bobase::bounded());
+                assert(Opt::params_t::bayes_opt_bobase::bounded());
 
-                tools::rgen_int_t rgen(0, Params::init_randomsamplinggrid::bins());
-                for (int i = 0; i < Params::init_randomsamplinggrid::samples(); i++) {
+                tools::rgen_int_t rgen(0, init_randomsamplinggrid::bins());
+                for (int i = 0; i < init_randomsamplinggrid::samples(); i++) {
                     Eigen::VectorXd new_sample(StateFunction::dim_in());
                     for (size_t i = 0; i < StateFunction::dim_in(); i++)
-                        new_sample[i] = rgen.rand() / double(Params::init_randomsamplinggrid::bins());
+                        new_sample[i] = rgen.rand() / double(init_randomsamplinggrid::bins());
                     opt.eval_and_add(seval, new_sample);
                 }
             }

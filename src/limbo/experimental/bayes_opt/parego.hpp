@@ -61,7 +61,7 @@ namespace limbo {
 
             using parego_signature = boost::parameter::parameters<boost::parameter::optional<tag::parego_modelfun>>;
 
-            // clang-format off
+            
             template <class Params,
                       class A1 = boost::parameter::void_,
                       class A2 = boost::parameter::void_,
@@ -84,7 +84,7 @@ namespace limbo {
             , A1, A2, A3, A4, A5> {//pass the remaining arguments
               // nothing here !
             };
-            // clang-format on
+            
         }
     }
 }

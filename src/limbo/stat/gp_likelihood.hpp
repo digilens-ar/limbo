@@ -54,8 +54,7 @@ namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `gp_likelihood.dat`
-        template <typename Params>
-        struct GPLikelihood : public StatBase<Params> {
+        struct GPLikelihood : public StatBase {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {

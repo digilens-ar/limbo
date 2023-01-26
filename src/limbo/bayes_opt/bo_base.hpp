@@ -56,14 +56,13 @@
 #include <boost/fusion/include/accumulate.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/vector.hpp>
-#include <boost/parameter.hpp>
 #define BOOST_NO_SCOPED_ENUMS
-#include <boost/filesystem.hpp>
 
 #include <Eigen/Core>
 
 // we need everything to have the defaults
 #define _USE_MATH_DEFINES // This makes sure to bring in the M_PI define which is not in the C or C++ standard and is not defined by default on Windows.
+#include <filesystem>
 #include <limbo/acqui/ucb.hpp>
 #include <limbo/init/random_sampling.hpp>
 #include <limbo/kernel/exp.hpp>
@@ -104,36 +103,14 @@ namespace limbo {
             return x(0);
         }
     };
-    class EvaluationError : public std::exception {
-    };
+    class EvaluationError : public std::exception {};
 
     // we use optimal named template parameters
     // see:
     // http://www.boost.org/doc/libs/1_55_0/libs/parameter/doc/html/index.html#parameter-enabled-class-templates
 
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(initfun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(acquifun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(modelfun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(statsfun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(stopcrit)
-
     namespace bayes_opt {
 
-        using bobase_signature = boost::parameter::parameters<boost::parameter::optional<tag::statsfun>,
-            boost::parameter::optional<tag::initfun>,
-            boost::parameter::optional<tag::acquifun>,
-            boost::parameter::optional<tag::stopcrit>,
-            boost::parameter::optional<tag::modelfun>>;
-
-        // clang-format off
-        template <class Params,
-          class A1 = boost::parameter::void_,
-          class A2 = boost::parameter::void_,
-          class A3 = boost::parameter::void_,
-          class A4 = boost::parameter::void_,
-          class A5 = boost::parameter::void_,
-          class A6 = boost::parameter::void_>
-        // clang-format on
         /**
         \rst
 
@@ -177,27 +154,23 @@ namespace limbo {
           - ``bayes_opt::BOptimizer<Params, modelfun<GP_t>, acquifun<Acqui_t>> opt;``
 
         */
+                
+        template <
+            class Params,
+			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
+    		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
+    		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
+    		typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
+			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>
+    	>
         class BoBase {
         public:
             using params_t = Params;
-            // defaults
-            struct defaults {
-                using init_t = init::RandomSampling<Params>; // 1
-                using model_t = model::GP<Params>; // 2
-                // WARNING: you have to specify the acquisition  function
-                // if you use a custom model
-                using acqui_t = acqui::UCB<Params, model_t>; // 3
-                using stat_t = boost::fusion::vector<stat::Samples<Params>, stat::AggregatedObservations<Params>, stat::ConsoleSummary<Params>>; // 4
-                using stop_t = boost::fusion::vector<stop::MaxIterations<Params>>; // 5
-            };
 
             // extract the types
-            using args = typename bobase_signature::bind<A1, A2, A3, A4, A5, A6>::type;
-            using init_function_t = typename boost::parameter::binding<args, tag::initfun, typename defaults::init_t>::type;
-            using acquisition_function_t = typename boost::parameter::binding<args, tag::acquifun, typename defaults::acqui_t>::type;
-            using model_t = typename boost::parameter::binding<args, tag::modelfun, typename defaults::model_t>::type;
-            using Stat = typename boost::parameter::binding<args, tag::statsfun, typename defaults::stat_t>::type;
-            using StoppingCriteria = typename boost::parameter::binding<args, tag::stopcrit, typename defaults::stop_t>::type;
+            using init_function_t = init_t;
+            using acquisition_function_t = acqui_t;
+            using model_t = model_type;
 
             using stopping_criteria_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type;
             using stat_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
@@ -271,7 +244,7 @@ namespace limbo {
             void _update_stats(BO& bo, const AggregatorFunction& afun)
             { // not const, because some stat class
                 // modify the optimizer....
-                boost::fusion::for_each(_stat, RefreshStat_f<BO, AggregatorFunction>(bo, afun));
+                boost::fusion::for_each(stat_, RefreshStat_f<BO, AggregatorFunction>(bo, afun));
             }
 
             void _make_res_dir()
@@ -279,15 +252,15 @@ namespace limbo {
                 if (!Params::bayes_opt_bobase::stats_enabled())
                     return;
                 _res_dir = tools::hostname() + "_" + tools::date() + "_" + tools::getpid();
-                boost::filesystem::path my_path(_res_dir);
-                boost::filesystem::create_directory(my_path);
+                std::filesystem::path my_path(_res_dir);
+                std::filesystem::create_directory(my_path);
             }
 
             std::string _res_dir;
             int _current_iteration;
             int _total_iterations;
             stopping_criteria_t _stopping_criteria;
-            stat_t _stat;
+            stat_t stat_;
 
             std::vector<Eigen::VectorXd> _observations;
             std::vector<Eigen::VectorXd> _samples;

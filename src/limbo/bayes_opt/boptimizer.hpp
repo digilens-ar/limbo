@@ -50,8 +50,6 @@
 #include <iostream>
 #include <iterator>
 
-#include <boost/parameter/aux_/void.hpp>
-
 #include <Eigen/Core>
 
 #include <limbo/bayes_opt/bo_base.hpp>
@@ -72,18 +70,22 @@ namespace limbo {
         };
     }
 
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(acquiopt)
-
     namespace bayes_opt {
 
-        using boptimizer_signature = boost::parameter::parameters<boost::parameter::optional<tag::acquiopt>,
-            boost::parameter::optional<tag::statsfun>,
-            boost::parameter::optional<tag::initfun>,
-            boost::parameter::optional<tag::acquifun>,
-            boost::parameter::optional<tag::stopcrit>,
-            boost::parameter::optional<tag::modelfun>>;
+              // defaults
+			template<typename Params>
+            struct defaults {
+#ifdef USE_NLOPT
+                using acquiopt_t = opt::NLOptNoGrad<typename Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
+#elif defined(USE_LIBCMAES)
+                using acquiopt_t = opt::Cmaes<Params>;
+#else
+#warning NO NLOpt, and NO Libcmaes: the acquisition function will be optimized by a grid search algorithm (which is usually bad). Please install at least NLOpt or libcmaes to use limbo!.
+                using acquiopt_t = opt::GridSearch<Params>;
+#endif
+            };
 
-        // clang-format off
+
         /**
         The classic Bayesian optimization algorithm.
 
@@ -105,34 +107,25 @@ namespace limbo {
         - ``opt::Cmaes<Params>`` if libcmaes was found but NLOpt was not found
         - ``opt::GridSearch<Params>`` otherwise (please do not use this: the algorithm will not work as expected!)
         */
-        template <class Params,
-          class A1 = boost::parameter::void_,
-          class A2 = boost::parameter::void_,
-          class A3 = boost::parameter::void_,
-          class A4 = boost::parameter::void_,
-          class A5 = boost::parameter::void_,
-          class A6 = boost::parameter::void_>
-        // clang-format on
-        class BOptimizer : public BoBase<Params, A1, A2, A3, A4, A5, A6> {
+		template <
+            class Params,
+        	typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
+			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
+			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
+    		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
+    		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
+			typename acqui_opt_t = typename defaults<Params>::acquiopt_t
+    	>
+        
+        class BOptimizer : public BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t> {
         public:
-            // defaults
-            struct defaults {
-#ifdef USE_NLOPT
-                using acquiopt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
-#elif defined(USE_LIBCMAES)
-                using acquiopt_t = opt::Cmaes<Params>;
-#else
-#warning NO NLOpt, and NO Libcmaes: the acquisition function will be optimized by a grid search algorithm (which is usually bad). Please install at least NLOpt or libcmaes to use limbo!.
-                using acquiopt_t = opt::GridSearch<Params>;
-#endif
-            };
+      
             /// link to the corresponding BoBase (useful for typedefs)
-            using base_t = BoBase<Params, A1, A2, A3, A4, A5, A6>;
+            using base_t = BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t>;
             using model_t = typename base_t::model_t;
             using acquisition_function_t = typename base_t::acquisition_function_t;
             // extract the types
-            using args = typename boptimizer_signature::bind<A1, A2, A3, A4, A5, A6>::type;
-            using acqui_optimizer_t = typename boost::parameter::binding<args, tag::acquiopt, typename defaults::acquiopt_t>::type;
+            using acqui_optimizer_t = acqui_opt_t;
 
             /// The main function (run the Bayesian optimization algorithm)
             template <typename StateFunction, typename AggregatorFunction = FirstElem>
@@ -199,17 +192,17 @@ namespace limbo {
             template <typename Params>
             using model_t = model::GPOpt<Params>;
             template <typename Params>
-            using acqui_t = acqui::UCB<Params, model_t<Params>>;
+            using acqui_t = acqui::UCB<typename Params::acqui_ucb, model_t<Params>>;
         }
 
         /// A shortcut for a BOptimizer with UCB + GPOpt
         /// The acquisition function and the model CANNOT be tuned (use BOptimizer for this)
         template <class Params,
-            class A1 = boost::parameter::void_,
-            class A2 = boost::parameter::void_,
-            class A3 = boost::parameter::void_,
-            class A4 = boost::parameter::void_>
-        using BOptimizerHPOpt = BOptimizer<Params, modelfun<_default_hp::model_t<Params>>, acquifun<_default_hp::acqui_t<Params>>, A1, A2, A3, A4>;
+			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
+    		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
+    		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
+			typename acqui_opt_t = typename defaults<Params>::acquiopt_t>
+        using BOptimizerHPOpt = BOptimizer<Params, _default_hp::model_t<Params>, _default_hp::acqui_t<Params>, init_t, StoppingCriteria, Stat, acqui_opt_t>;
     }
 }
 #endif

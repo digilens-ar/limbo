@@ -53,8 +53,8 @@ namespace limbo {
         namespace multi_gp {
             ///@ingroup model_opt
             ///optimize each GP independently in parallel using HyperParamsOptimizer
-            template <typename Params, typename HyperParamsOptimizer = limbo::model::gp::NoLFOpt<Params>>
-            struct ParallelLFOpt : public limbo::model::gp::HPOpt<Params> {
+            template <typename HyperParamsOptimizer = limbo::model::gp::NoLFOpt>
+            struct ParallelLFOpt : public limbo::model::gp::HPOpt {
             public:
                 template <typename GP>
                 void operator()(GP& gp)

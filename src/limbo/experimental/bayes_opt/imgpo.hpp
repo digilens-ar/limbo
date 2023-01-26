@@ -72,14 +72,14 @@ namespace limbo {
                 std::vector<Eigen::VectorXd> x_max, x_min, x, f;
                 std::vector<bool> leaf, samp;
             };
-            // clang-format off
+            
         template <class Params,
           class A1 = boost::parameter::void_,
           class A2 = boost::parameter::void_,
           class A3 = boost::parameter::void_,
           class A4 = boost::parameter::void_,
           class A5 = boost::parameter::void_>
-            // clang-format on
+            
             // Bayesian Optimization with Exponential Convergence (NIPS 2015 paper)
             // Kenji Kawaguchi, Leslie Pack Kaelbling, Tomás Lozano-Pérez
             // http://papers.nips.cc/paper/5715-bayesian-optimization-with-exponential-convergence

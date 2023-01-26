@@ -49,86 +49,88 @@
 
 using namespace limbo;
 
-struct Params {
+namespace {
+    struct Params {
 
-    struct opt_rprop : public defaults::opt_rprop {
-    };
+        struct opt_rprop : public defaults::opt_rprop {
+        };
 
 #ifdef USE_NLOPT
-    struct opt_nloptnograd : public defaults::opt_nloptnograd {
-    };
+        struct opt_nloptnograd : public defaults::opt_nloptnograd {
+        };
 #elif defined(USE_LIBCMAES)
-    struct opt_cmaes : public defaults::opt_cmaes {
-    };
+        struct opt_cmaes : public defaults::opt_cmaes {
+        };
 #endif
 
-    struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-        BO_PARAM(bool, stats_enabled, false);
+        struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
+            BO_PARAM(bool, stats_enabled, false);
+        };
+
+        struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+            BO_DYN_PARAM(int, hp_period);
+        };
+
+        struct stop_maxiterations {
+            BO_PARAM(int, iterations, 200);
+        };
+
+        struct kernel : public defaults::kernel {
+            BO_PARAM(double, noise, 1e-8);
+        };
+
+        struct kernel_exp : public defaults::kernel_exp {
+            BO_PARAM(double, l, 0.2);
+            BO_PARAM(double, sigma_sq, 0.25);
+        };
+
+        struct kernel_squared_exp_ard : public defaults::kernel_squared_exp_ard {
+            BO_PARAM(double, sigma_sq, 0.25);
+        };
+
+        struct acqui_ucb {
+            BO_PARAM(double, alpha, 1.0);
+        };
+
+        struct acqui_ei {
+            BO_PARAM(double, jitter, 0.001);
+        };
+
+        struct init_randomsampling {
+            BO_PARAM(int, samples, 50);
+        };
+
+        struct opt_parallelrepeater : defaults::opt_parallelrepeater {
+        };
     };
 
-    struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
-        BO_DYN_PARAM(int, hp_period);
+    BO_DECLARE_DYN_PARAM(int, Params::bayes_opt_boptimizer, hp_period);
+
+    template <typename Params, int obs_size = 1>
+    struct eval2 {
+        BO_PARAM(size_t, dim_in, 2);
+        BO_PARAM(size_t, dim_out, obs_size);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            Eigen::Vector2d opt(0.25, 0.75);
+            return tools::make_vector(-(x - opt).squaredNorm());
+        }
     };
-
-    struct stop_maxiterations {
-        BO_PARAM(int, iterations, 200);
-    };
-
-    struct kernel : public defaults::kernel {
-        BO_PARAM(double, noise, 1e-8);
-    };
-
-    struct kernel_exp : public defaults::kernel_exp {
-        BO_PARAM(double, l, 0.2);
-        BO_PARAM(double, sigma_sq, 0.25);
-    };
-
-    struct kernel_squared_exp_ard : public defaults::kernel_squared_exp_ard {
-        BO_PARAM(double, sigma_sq, 0.25);
-    };
-
-    struct acqui_ucb {
-        BO_PARAM(double, alpha, 1.0);
-    };
-
-    struct acqui_ei {
-        BO_PARAM(double, jitter, 0.001);
-    };
-
-    struct init_randomsampling {
-        BO_PARAM(int, samples, 50);
-    };
-
-    struct opt_parallelrepeater : defaults::opt_parallelrepeater {
-    };
-};
-
-BO_DECLARE_DYN_PARAM(int, Params::bayes_opt_boptimizer, hp_period);
-
-template <typename Params, int obs_size = 1>
-struct eval2 {
-    BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, obs_size);
-
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        Eigen::Vector2d opt(0.25, 0.75);
-        return tools::make_vector(-(x - opt).squaredNorm());
-    }
-};
 
 #ifdef USE_LIBCMAES
-template <typename Params, int obs_size = 1>
-struct eval_unbounded {
-    BO_PARAM(size_t, dim_in, 1);
-    BO_PARAM(size_t, dim_out, obs_size);
+    template <typename Params, int obs_size = 1>
+    struct eval_unbounded {
+        BO_PARAM(size_t, dim_in, 1);
+        BO_PARAM(size_t, dim_out, obs_size);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
-    {
-        return tools::make_vector(-std::pow(x(0) - 2.5, 2.0));
-    }
-};
+        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        {
+            return tools::make_vector(-std::pow(x(0) - 2.5, 2.0));
+        }
+    };
 #endif
+}
 
 TEST(Limbo_Boptimizer, bo_inheritance)
 {
@@ -142,20 +144,20 @@ TEST(Limbo_Boptimizer, bo_inheritance)
 
     Params::bayes_opt_boptimizer::set_hp_period(-1);
 
-    using Kernel_t = kernel::Exp<Params>;
+    using Kernel_t = kernel::Exp<Params::kernel, Params::kernel_exp>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters>>;
-    using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
-    using Init_t = init::NoInit<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters::stop_maxiterations>>;
+    using Mean_t = mean::Data;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
+    using Init_t = init::NoInit;
+    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
 
     ASSERT_TRUE(opt.total_iterations() == 1);
@@ -202,20 +204,20 @@ TEST(Limbo_Boptimizer, bo_gp)
 
     Params::bayes_opt_boptimizer::set_hp_period(-1);
 
-    using Kernel_t = kernel::Exp<Params>;
+    using Kernel_t = kernel::Exp<Params::kernel, Params::kernel_exp>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
-    using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
-    using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t>;
-    using Acqui_t = acqui::EI<Params, GP_t>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
+    using Mean_t = mean::Data;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
+    using Init_t = init::RandomSampling<Params::init_randomsampling>;
+    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using Acqui_t = acqui::EI<Params::acqui_ei, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
 
     Eigen::VectorXd sol(2);
@@ -229,20 +231,20 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
 
     Params::bayes_opt_boptimizer::set_hp_period(50);
 
-    using Kernel_t = kernel::SquaredExpARD<Params>;
+    using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
-    using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
-    using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params>>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
+    using Mean_t = mean::Data;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
+    using Init_t = init::RandomSampling<Params::init_randomsampling>;
+    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
 
     Eigen::VectorXd sol(2);
@@ -256,20 +258,20 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
 
     Params::bayes_opt_boptimizer::set_hp_period(50);
 
-    using Kernel_t = kernel::SquaredExpARD<Params>;
+    using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
-    using Mean_t = mean::FunctionARD<Params, mean::Data<Params>>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
-    using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::MeanLFOpt<Params>>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
+    using Mean_t = mean::FunctionARD<mean::Data>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
+    using Init_t = init::RandomSampling<Params::init_randomsampling>;
+    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::MeanLFOpt<Params::opt_rprop>>;
+    using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt;
     opt.optimize(eval2<Params>());
 
     Eigen::VectorXd sol(2);

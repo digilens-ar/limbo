@@ -57,7 +57,6 @@ namespace limbo {
           Base struct for mean definition.
           \endrst
         */
-        template <typename Params>
         struct BaseMean {
             BaseMean(size_t dim_out = 1) {}
 

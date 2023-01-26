@@ -122,12 +122,12 @@ struct SecondElem {
 
 int main()
 {
-    using Kernel_t = kernel::MaternFiveHalves<Params>;
-    using Mean_t = mean::Data<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t>;
-    using Acqui_t = acqui::GP_UCB<Params, GP_t>;
+    using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
+    using Mean_t = mean::Data;
+    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using Acqui_t = acqui::GP_UCB<Params::acqui_gpucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, acquifun<Acqui_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt;
 
     std::cout << "Optimize using  Average aggregator" << std::endl;
     opt.optimize(StateEval(), Average());

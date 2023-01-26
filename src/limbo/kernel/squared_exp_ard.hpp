@@ -78,16 +78,16 @@ namespace limbo {
         Reference: :cite:`Rasmussen2006`, p. 106 & :cite:`brochu2010tutorial`, p. 10
         \endrst
         */
-        template <typename Params>
-        struct SquaredExpARD : public BaseKernel<Params, SquaredExpARD<Params>> {
-            SquaredExpARD(int dim = 1) : _ell(dim), _A(dim, Params::kernel_squared_exp_ard::k()), _input_dim(dim)
+        template <typename kernel_opt, typename kernel_squared_exp_ard>
+        struct SquaredExpARD : public BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>> {
+            SquaredExpARD(int dim = 1) : _ell(dim), _A(dim, kernel_squared_exp_ard::k()), _input_dim(dim)
             {
-                Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell.size() + _ell.size() * Params::kernel_squared_exp_ard::k() + 1);
-                p(p.size() - 1) = std::log(std::sqrt(Params::kernel_squared_exp_ard::sigma_sq()));
+                Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell.size() + _ell.size() * kernel_squared_exp_ard::k() + 1);
+                p(p.size() - 1) = std::log(std::sqrt(kernel_squared_exp_ard::sigma_sq()));
                 this->set_params(p);
             }
 
-            size_t params_size() const { return _ell.size() + _ell.size() * Params::kernel_squared_exp_ard::k() + 1; }
+            size_t params_size() const { return _ell.size() + _ell.size() * kernel_squared_exp_ard::k() + 1; }
 
             // Return the hyper parameters in log-space
             Eigen::VectorXd params() const { return _h_params; }
@@ -98,7 +98,7 @@ namespace limbo {
                 _h_params = p;
                 for (size_t i = 0; i < _input_dim; ++i)
                     _ell(i) = std::exp(p(i));
-                for (size_t j = 0; j < (unsigned int)Params::kernel_squared_exp_ard::k(); ++j)
+                for (size_t j = 0; j < (unsigned int)kernel_squared_exp_ard::k(); ++j)
                     for (size_t i = 0; i < _input_dim; ++i)
                         _A(i, j) = p((j + 1) * _input_dim + i);
                 _sf2 = std::exp(2.0 * p(params_size() - 1));
@@ -106,7 +106,7 @@ namespace limbo {
 
             Eigen::VectorXd gradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
-                if (Params::kernel_squared_exp_ard::k() > 0) {
+                if (kernel_squared_exp_ard::k() > 0) {
                     Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size());
                     Eigen::MatrixXd K = (_A * _A.transpose());
                     K.diagonal() += (Eigen::MatrixXd)(_ell.array().inverse().square());
@@ -115,7 +115,7 @@ namespace limbo {
 
                     grad.head(_input_dim) = (x1 - x2).cwiseQuotient(_ell).array().square() * k;
 
-                    for (size_t j = 0; j < (unsigned int)Params::kernel_squared_exp_ard::k(); ++j) {
+                    for (size_t j = 0; j < (unsigned int)kernel_squared_exp_ard::k(); ++j) {
                         Eigen::VectorXd G = -((x1 - x2).transpose() * _A.col(j))(0) * (x1 - x2) * k;
                         grad.segment((j + 1) * _input_dim, _input_dim) = G;
                     }
@@ -139,7 +139,7 @@ namespace limbo {
             {
                 assert(x1.size() == _ell.size());
                 double z;
-                if (Params::kernel_squared_exp_ard::k() > 0) {
+                if (kernel_squared_exp_ard::k() > 0) {
                     Eigen::MatrixXd K = (_A * _A.transpose());
                     K.diagonal() += (Eigen::MatrixXd)(_ell.array().inverse().square());
                     z = ((x1 - x2).transpose() * K * (x1 - x2));
