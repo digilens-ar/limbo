@@ -175,8 +175,8 @@ TEST(Limbo_Kernel, grad_matern_three)
 TEST(Limbo_Kernel, grad_matern_five)
 {
     for (int i = 1; i <= 10; i++) {
-        check_kernel<kernel::MaternFiveHalves<Params>>(i, 100);
-        check_kernel<kernel::MaternFiveHalves<ParamsNoise>>(i, 100);
+        check_kernel<kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>>(i, 100);
+        check_kernel<kernel::MaternFiveHalves<ParamsNoise::kernel, ParamsNoise::kernel_maternfivehalves>>(i, 100);
     }
 }
 

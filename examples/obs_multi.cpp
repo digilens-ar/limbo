@@ -122,7 +122,7 @@ struct SecondElem {
 
 int main()
 {
-    using Kernel_t = kernel::MaternFiveHalves<Params>;
+    using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
     using Mean_t = mean::Data;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::GP_UCB<Params::acqui_gpucb, GP_t>;
