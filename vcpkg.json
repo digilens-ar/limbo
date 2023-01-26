@@ -5,7 +5,6 @@
   "dependencies": [
     "nlopt",
     "boost-filesystem",
-    "boost-system",
     "tbb",
     "gtest",
     "eigen3"
