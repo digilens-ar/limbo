@@ -7,7 +7,6 @@
     "boost-filesystem",
     "boost-system",
     "boost-program-options",
-    "boost-thread",
     "tbb",
     "gtest",
     "eigen3"
