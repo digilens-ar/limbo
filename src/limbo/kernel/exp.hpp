@@ -71,7 +71,7 @@ namespace limbo {
           \endrst
         */
         template <typename kernel_opt, typename kernel_exp>
-        struct Exp : public BaseKernel<typename kernel_opt, Exp<kernel_opt, kernel_exp>> {
+        struct Exp : public BaseKernel<kernel_opt, Exp<kernel_opt, kernel_exp>> {
             Exp(size_t dim = 1) : _sf2(kernel_exp::sigma_sq()), _l(kernel_exp::l())
             {
                 _h_params = Eigen::VectorXd(2);

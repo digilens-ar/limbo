@@ -79,7 +79,7 @@ namespace limbo {
         \endrst
         */
         template <typename kernel_opt, typename kernel_maternthreehalves>
-        struct MaternThreeHalves : public BaseKernel<typename kernel_opt, MaternThreeHalves<kernel_opt, kernel_maternthreehalves>> {
+        struct MaternThreeHalves : public BaseKernel<kernel_opt, MaternThreeHalves<kernel_opt, kernel_maternthreehalves>> {
             MaternThreeHalves(size_t dim = 1) : _sf2(kernel_maternthreehalves::sigma_sq()), _l(kernel_maternthreehalves::l())
             {
                 _h_params = Eigen::VectorXd(2);
