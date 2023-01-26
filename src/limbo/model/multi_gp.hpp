@@ -60,7 +60,7 @@ namespace limbo {
         template <typename Params, template <typename, typename, typename, typename> class GPClass, typename KernelFunction, typename MeanFunction, class HyperParamsOptimizer = limbo::model::gp::NoLFOpt<Params>>
         class MultiGP {
         public:
-            using GP_t = GPClass<Params, KernelFunction, limbo::mean::NullFunction<Params>, limbo::model::gp::NoLFOpt<Params>>;
+            using GP_t = GPClass<Params, KernelFunction, limbo::mean::NullFunction, limbo::model::gp::NoLFOpt<Params>>;
 
             /// useful because the model might be created before knowing anything about the process
             MultiGP() : _dim_in(-1), _dim_out(-1) {}

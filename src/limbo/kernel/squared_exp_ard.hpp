@@ -79,7 +79,7 @@ namespace limbo {
         \endrst
         */
         template <typename Params>
-        struct SquaredExpARD : public BaseKernel<Params, SquaredExpARD<Params>> {
+        struct SquaredExpARD : public BaseKernel<typename Params::kernel, SquaredExpARD<Params>> {
             SquaredExpARD(int dim = 1) : _ell(dim), _A(dim, Params::kernel_squared_exp_ard::k()), _input_dim(dim)
             {
                 Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell.size() + _ell.size() * Params::kernel_squared_exp_ard::k() + 1);

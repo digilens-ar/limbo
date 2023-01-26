@@ -104,8 +104,7 @@ namespace limbo {
             return x(0);
         }
     };
-    class EvaluationError : public std::exception {
-    };
+    class EvaluationError : public std::exception {};
 
     // we use optimal named template parameters
     // see:

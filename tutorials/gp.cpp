@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 
     // the type of the GP
     using Kernel_t = kernel::Exp<Params>;
-    using Mean_t = mean::Data<Params>;
+    using Mean_t = mean::Data;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
 
     // 1-D inputs, 1-D outputs
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     // an alternative is to optimize the hyper-parameters
     // in that case, we need a kernel with hyper-parameters that are designed to be optimized
     using Kernel2_t = kernel::SquaredExpARD<Params>;
-    using Mean_t = mean::Data<Params>;
+    using Mean_t = mean::Data;
     using GP2_t = model::GP<Params, Kernel2_t, Mean_t, model::gp::KernelLFOpt<Params>>;
 
     GP2_t gp_ard(1, 1);

@@ -79,7 +79,7 @@ namespace limbo {
         \endrst
         */
         template <typename Params>
-        struct MaternThreeHalves : public BaseKernel<Params, MaternThreeHalves<Params>> {
+        struct MaternThreeHalves : public BaseKernel<typename Params::kernel, MaternThreeHalves<Params>> {
             MaternThreeHalves(size_t dim = 1) : _sf2(Params::kernel_maternthreehalves::sigma_sq()), _l(Params::kernel_maternthreehalves::l())
             {
                 _h_params = Eigen::VectorXd(2);

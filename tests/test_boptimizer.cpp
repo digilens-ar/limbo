@@ -151,7 +151,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters::stop_maxiterations>>;
-    using Mean_t = mean::Data<Params>;
+    using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::NoInit;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
@@ -211,7 +211,7 @@ TEST(Limbo_Boptimizer, bo_gp)
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
-    using Mean_t = mean::Data<Params>;
+    using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
@@ -238,7 +238,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
-    using Mean_t = mean::Data<Params>;
+    using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params>>;
@@ -265,7 +265,7 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
-    using Mean_t = mean::FunctionARD<Params, mean::Data<Params>>;
+    using Mean_t = mean::FunctionARD<mean::Data>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::MeanLFOpt<Params>>;

@@ -115,7 +115,7 @@ TEST(Limbo_Mean, mean_constant)
 {
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
-            check_mean<mean::Constant<Params>>(k, i, 100);
+            check_mean<mean::Constant<Params::mean_constant>>(k, i, 100);
         }
     }
 }
@@ -126,7 +126,7 @@ TEST(Limbo_Mean, mean_function_ard)
     // also has tunable parameters
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
-            check_mean<mean::FunctionARD<Params, mean::Constant<Params>>>(k, i, 100);
+            check_mean<mean::FunctionARD<mean::Constant<Params::mean_constant>>>(k, i, 100);
         }
     }
 }
@@ -137,7 +137,7 @@ TEST(Limbo_Mean, mean_function_ard_dummy)
     // has no tunable parameters
     for (int k = 1; k <= 10; k++) {
         for (int i = 1; i <= 10; i++) {
-            check_mean<mean::FunctionARD<Params, mean::NullFunction<Params>>>(k, i, 100);
+            check_mean<mean::FunctionARD<mean::NullFunction>>(k, i, 100);
         }
     }
 }

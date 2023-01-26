@@ -122,7 +122,7 @@ struct fit_eval {
 int main()
 {
     using Kernel_t = kernel::MaternFiveHalves<Params>;
-    using Mean_t = mean::Data<Params>;
+    using Mean_t = mean::Data;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
     using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
