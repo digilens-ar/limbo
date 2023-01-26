@@ -244,7 +244,7 @@ namespace limbo {
             void _update_stats(BO& bo, const AggregatorFunction& afun)
             { // not const, because some stat class
                 // modify the optimizer....
-                boost::fusion::for_each(_stat, RefreshStat_f<BO, AggregatorFunction>(bo, afun));
+                boost::fusion::for_each(stat_, RefreshStat_f<BO, AggregatorFunction>(bo, afun));
             }
 
             void _make_res_dir()
@@ -260,7 +260,7 @@ namespace limbo {
             int _current_iteration;
             int _total_iterations;
             stopping_criteria_t _stopping_criteria;
-            stat_t _stat;
+            stat_t stat_;
 
             std::vector<Eigen::VectorXd> _observations;
             std::vector<Eigen::VectorXd> _samples;
