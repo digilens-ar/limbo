@@ -106,7 +106,7 @@ namespace {
 TEST(Limbo_Init_Functions, no_init)
 {
     std::cout << "NoInit" << std::endl;
-    using Init_t = init::NoInit<Params>;
+    using Init_t = init::NoInit;
     using Opt_t = bayes_opt::BOptimizer<Params, initfun<Init_t>>;
 
     Opt_t opt;
@@ -124,7 +124,7 @@ TEST(Limbo_Init_Functions, random_lhs)
         };
     };
 
-    using Init_t = init::LHS<MyParams>;
+    using Init_t = init::LHS<MyParams::init_lhs>;
     using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
 
     Opt_t opt;
@@ -179,7 +179,7 @@ TEST(Limbo_Init_Functions, random_sampling_grid)
         };
     };
 
-    using Init_t = init::RandomSamplingGrid<MyParams>;
+    using Init_t = init::RandomSamplingGrid<MyParams::init_randomsamplinggrid>;
     using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
 
     Opt_t opt;
@@ -206,7 +206,7 @@ TEST(Limbo_Init_Functions, grid_sampling)
         };
     };
 
-    using Init_t = init::GridSampling<MyParams>;
+    using Init_t = init::GridSampling<MyParams::init_gridsampling>;
     using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
 
     Opt_t opt;

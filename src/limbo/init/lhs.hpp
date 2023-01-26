@@ -67,16 +67,16 @@ namespace limbo {
             - ``int samples`` (total number of samples)
           \endrst
         */
-        template <typename Params>
+        template <typename init_lhs>
         struct LHS {
             template <typename StateFunction, typename AggregatorFunction, typename Opt>
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
-                assert(Params::bayes_opt_bobase::bounded());
+                assert(Opt::params_t::bayes_opt_bobase::bounded());
 
-                Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), Params::init_lhs::samples());
+                Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), init_lhs::samples());
 
-                for (int i = 0; i < Params::init_lhs::samples(); i++) {
+                for (int i = 0; i < init_lhs::samples(); i++) {
                     opt.eval_and_add(seval, H.row(i));
                 }
             }

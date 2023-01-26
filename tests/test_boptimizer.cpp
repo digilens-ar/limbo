@@ -153,7 +153,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters::stop_maxiterations>>;
     using Mean_t = mean::Data<Params>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
-    using Init_t = init::NoInit<Params>;
+    using Init_t = init::NoInit;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
 

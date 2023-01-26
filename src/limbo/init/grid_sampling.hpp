@@ -66,7 +66,7 @@ namespace limbo {
             - ``int bins`` (number of bins)
           \endrst
         */
-        template <typename Params>
+        template <typename init_gridsampling>
         struct GridSampling {
             template <typename StateFunction, typename AggregatorFunction, typename Opt>
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
@@ -80,7 +80,7 @@ namespace limbo {
             void _explore(int dim_in, const StateFunction& seval, const Eigen::VectorXd& current,
                 Opt& opt) const
             {
-                for (double x = 0; x <= 1.0f; x += 1.0f / (double)Params::init_gridsampling::bins()) {
+                for (double x = 0; x <= 1.0f; x += 1.0f / (double)init_gridsampling::bins()) {
                     Eigen::VectorXd point = current;
                     point[dim_in] = x;
                     if (dim_in == current.size() - 1) {
