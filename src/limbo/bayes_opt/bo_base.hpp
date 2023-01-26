@@ -187,7 +187,7 @@ namespace limbo {
                 // WARNING: you have to specify the acquisition  function
                 // if you use a custom model
                 using acqui_t = acqui::UCB<Params, model_t>; // 3
-                using stat_t = boost::fusion::vector<stat::Samples<Params>, stat::AggregatedObservations<Params>, stat::ConsoleSummary<Params>>; // 4
+                using stat_t = boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>; // 4
                 using stop_t = boost::fusion::vector<stop::MaxIterations<Params>>; // 5
             };
 

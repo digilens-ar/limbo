@@ -110,7 +110,7 @@ struct Eval {
 };
 
 template <typename Params>
-struct WorstObservation : public stat::StatBase<Params> {
+struct WorstObservation : public limbo::stat::StatBase {
     template <typename BO, typename AggregatorFunction>
     void operator()(const BO& bo, const AggregatorFunction& afun)
     {
@@ -145,9 +145,9 @@ int main()
     // we use the default acquisition function / model / stat / etc.
 
     // define a special list of statistics which include our new statistics class
-    using stat_t = boost::fusion::vector<stat::ConsoleSummary<Params>,
-        stat::Samples<Params>,
-        stat::Observations<Params>,
+    using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
+        limbo::stat::Samples,
+        limbo::stat::Observations,
         WorstObservation<Params>>;
 
     /// remmeber to use the new statistics vector via statsfun<>!

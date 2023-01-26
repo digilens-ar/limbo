@@ -152,7 +152,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters>>;
     using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::NoInit<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
@@ -212,7 +212,7 @@ TEST(Limbo_Boptimizer, bo_gp)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
     using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::EI<Params, GP_t>;
@@ -239,7 +239,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
     using Mean_t = mean::Data<Params>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params>>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
@@ -266,7 +266,7 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
 #endif
     using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
     using Mean_t = mean::FunctionARD<Params, mean::Data<Params>>;
-    using Stat_t = boost::fusion::vector<limbo::stat::Samples<Params>, limbo::stat::Observations<Params>>;
+    using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::MeanLFOpt<Params>>;
     using Acqui_t = acqui::UCB<Params, GP_t>;

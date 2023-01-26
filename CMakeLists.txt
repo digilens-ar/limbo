@@ -11,17 +11,28 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(Boost REQUIRED COMPONENTS filesystem program_options thread system)
 find_package(TBB CONFIG REQUIRED)
-find_package(NLopt CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
+
+option(LIMBO_USE_NLOPT "" ON)
+option(LIMBO_USE_CMAES "" OFF)
 
 add_library(limbo INTERFACE)
 target_include_directories(limbo INTERFACE "${CMAKE_SOURCE_DIR}/src")
 target_compile_definitions(limbo INTERFACE "NOMINMAX")  # This prevents windows.h from defining unwanted macros
-target_compile_definitions(limbo INTERFACE "USE_NLOPT")
-#target_compile_definitions(limbo INTERFACE "USE_SFERES") # I think these are mutually exclusive with NLOPT
-#target_compile_definitions(limbo INTERFACE "USE_LIBCMAES")
-target_link_libraries(limbo INTERFACE NLopt::nlopt)
-target_link_libraries(limbo INTERFACE NLopt::nlopt Boost::boost Boost::filesystem Boost::system Boost::program_options Boost::thread)
+#target_compile_definitions(limbo INTERFACE "USE_SFERES")
+target_link_libraries(limbo INTERFACE Boost::boost Boost::filesystem Boost::system Boost::program_options Boost::thread)
+
+if(LIMBO_USE_NLOPT)
+	find_package(NLopt CONFIG REQUIRED)
+	target_compile_definitions(limbo INTERFACE "USE_NLOPT")
+	target_link_libraries(limbo INTERFACE NLopt::nlopt)
+endif()
+
+if(LIMBO_USE_CMAES)
+	find_package(libcmaes CONFIG REQUIRED)
+	target_compile_definitions(limbo INTERFACE "USE_LIBCMAES")
+	target_link_libraries(limbo INTERFACE libcmaes)
+endif()
 
 option(LIMBO_USE_TBB "Use Intel TBB for parallelization" OFF)
 if (LIMBO_USE_TBB)
@@ -34,4 +45,9 @@ option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)
 if(LIMBO_BUILD_TESTS)
 	find_package(GTest CONFIG REQUIRED)
 	add_subdirectory(tests)
+endif()
+
+option(LIMBO_BUILD_TUTORIALS "Build tutorials for limbo" OFF)
+if(LIMBO_BUILD_TUTORIALS)
+	add_subdirectory(tutorials)
 endif()

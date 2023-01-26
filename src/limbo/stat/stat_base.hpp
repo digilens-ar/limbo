@@ -51,6 +51,12 @@
 
 #include <memory>
 
+namespace
+{
+	template<typename T>
+	constexpr bool always_false = false;
+}
+
 namespace limbo {
     namespace stat {
         /**
@@ -68,15 +74,14 @@ namespace limbo {
           This method allocates an attribute `_log_file` (type: `std::shared_ptr<std::ofstream>`) if it has not been created yet, and does nothing otherwise. This method is designed so that you can safely call it in operator() while being 'guaranteed' that the file exists. Using this method is not mandatory for a statistics class.
           \endrst
         */
-        template <typename Params>
         struct StatBase {
             StatBase() {}
 
             /// main method (to be written in derived classes)
-            template <typename BO>
-            void operator()(const BO& bo)
+            template <typename BO , typename AggregatorFunc>
+            void operator()(const BO& bo, const AggregatorFunc& afun)
             {
-                assert(false);
+                static_assert(always_false<BO>);
             }
 
         protected:
@@ -91,6 +96,7 @@ namespace limbo {
                     assert(_log_file->good());
                 }
             }
+
         };
     }
 }

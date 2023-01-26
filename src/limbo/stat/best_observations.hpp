@@ -53,8 +53,7 @@ namespace limbo {
         ///@ingroup stat
         /// Write the best observation so far
         ///filename: `best_observations.dat"`
-        template <typename Params>
-        struct BestObservations : public StatBase<Params> {
+        struct BestObservations : public StatBase {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
