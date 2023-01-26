@@ -53,8 +53,8 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
-            template <typename Params, typename Optimizer = opt::Rprop<typename Params::opt_rprop>>
-            struct KernelLFOpt : public HPOpt<Params, Optimizer> {
+            template <typename opt_rprop, typename Optimizer = opt::Rprop<typename opt_rprop>>
+            struct KernelLFOpt : public HPOpt {
             public:
                 template <typename GP>
                 void operator()(GP& gp)

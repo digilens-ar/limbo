@@ -55,7 +55,6 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///base class for optimization of the hyper-parameters of a GP
-            template <typename Params, typename Optimizer = opt::Rprop<typename Params::opt_rprop>>
             struct HPOpt {
             public:
                 HPOpt() : _called(false) {}

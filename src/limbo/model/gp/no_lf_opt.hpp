@@ -53,7 +53,6 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///do not optimize anything
-            template <typename Params>
             struct NoLFOpt {
                 template <typename GP>
                 void operator()(GP&) const

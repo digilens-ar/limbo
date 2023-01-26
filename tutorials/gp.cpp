@@ -113,7 +113,7 @@ int main(int argc, char** argv)
     // in that case, we need a kernel with hyper-parameters that are designed to be optimized
     using Kernel2_t = kernel::SquaredExpARD<Params>;
     using Mean_t = mean::Data;
-    using GP2_t = model::GP<Params, Kernel2_t, Mean_t, model::gp::KernelLFOpt<Params>>;
+    using GP2_t = model::GP<Params, Kernel2_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
 
     GP2_t gp_ard(1, 1);
     // do not forget to call the optimization!

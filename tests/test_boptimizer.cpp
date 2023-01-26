@@ -241,7 +241,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params>>;
+    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
 
     bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
@@ -268,7 +268,7 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
     using Mean_t = mean::FunctionARD<mean::Data>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::MeanLFOpt<Params>>;
+    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::MeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
 
     bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
