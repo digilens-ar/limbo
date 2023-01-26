@@ -48,8 +48,6 @@
 
 #include <iostream>
 
-#include <boost/parameter/aux_/void.hpp>
-
 #include <Eigen/Core>
 
 #include <limbo/tools/macros.hpp>
@@ -63,11 +61,13 @@ namespace limbo {
         };
     }
     namespace stop {
+        struct void_{}; // Placeholder for no argument
+
         ///@ingroup stop
         ///Stop once the value for the best sample is above : ratio * (best value predicted by the model)
         ///
         ///Parameter: double ratio
-        template <typename stop_maxpredictedvalue, typename Optimizer = boost::parameter::void_>
+        template <typename stop_maxpredictedvalue, typename Optimizer = void_>
         struct MaxPredictedValue {
 
             MaxPredictedValue() {}
@@ -130,7 +130,7 @@ namespace limbo {
             }
 
             template <typename BoAcquiOpt>
-            inline BoAcquiOpt _get_optimizer(const BoAcquiOpt& bo_acqui_opt, boost::parameter::void_) const
+            inline BoAcquiOpt _get_optimizer(const BoAcquiOpt& bo_acqui_opt, void_) const
             {
                 return bo_acqui_opt;
             }

@@ -56,7 +56,6 @@
 #include <boost/fusion/include/accumulate.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/include/vector.hpp>
-#include <boost/parameter.hpp>
 #define BOOST_NO_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 
@@ -110,21 +109,8 @@ namespace limbo {
     // see:
     // http://www.boost.org/doc/libs/1_55_0/libs/parameter/doc/html/index.html#parameter-enabled-class-templates
 
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(initfun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(acquifun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(modelfun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(statsfun)
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(stopcrit)
-
     namespace bayes_opt {
 
-        using bobase_signature = boost::parameter::parameters<boost::parameter::optional<tag::statsfun>,
-            boost::parameter::optional<tag::initfun>,
-            boost::parameter::optional<tag::acquifun>,
-            boost::parameter::optional<tag::stopcrit>,
-            boost::parameter::optional<tag::modelfun>>;
-
-        
         /**
         \rst
 

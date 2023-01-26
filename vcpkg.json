@@ -8,7 +8,6 @@
     "boost-system",
     "boost-program-options",
     "boost-thread",
-    "boost-parameter",
     "tbb",
     "gtest",
     "eigen3"

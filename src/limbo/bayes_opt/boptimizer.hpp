@@ -50,8 +50,6 @@
 #include <iostream>
 #include <iterator>
 
-#include <boost/parameter/aux_/void.hpp>
-
 #include <Eigen/Core>
 
 #include <limbo/bayes_opt/bo_base.hpp>
@@ -72,8 +70,6 @@ namespace limbo {
         };
     }
 
-    BOOST_PARAMETER_TEMPLATE_KEYWORD(acquiopt)
-
     namespace bayes_opt {
 
               // defaults
@@ -89,12 +85,6 @@ namespace limbo {
 #endif
             };
 
-        using boptimizer_signature = boost::parameter::parameters<boost::parameter::optional<tag::acquiopt>,
-            boost::parameter::optional<tag::statsfun>,
-            boost::parameter::optional<tag::initfun>,
-            boost::parameter::optional<tag::acquifun>,
-            boost::parameter::optional<tag::stopcrit>,
-            boost::parameter::optional<tag::modelfun>>;
 
         /**
         The classic Bayesian optimization algorithm.
