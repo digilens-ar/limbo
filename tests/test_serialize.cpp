@@ -213,6 +213,6 @@ TEST(Limbo_Serialize, bin_archive)
 
 TEST(Limbo_Serialize, multi_gp_save) 
 {
-    using GP_Multi_t = limbo::model::MultiGP<Params, limbo::model::GP, limbo::kernel::Exp<Params::kernel, Params::kernel_exp>, limbo::mean::NullFunction>;
+    using GP_Multi_t = limbo::model::MultiGP<limbo::model::GP, limbo::kernel::Exp<Params::kernel, Params::kernel_exp>, limbo::mean::NullFunction>;
     test_gp<GP_Multi_t, GP_Multi_t, limbo::serialize::TextArchive>(rootDir + "/gp_multi_text", false);
 }
