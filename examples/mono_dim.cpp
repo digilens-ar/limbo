@@ -130,7 +130,8 @@ int main()
         limbo::stat::Observations,
         limbo::stat::GP<Params::stat_gp>>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, statsfun<stat_t>, acquifun<Acqui_t>> opt;
+    using BD = bayes_opt::BOptimizer<Params>;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt;
     opt.optimize(fit_eval());
     std::cout << opt.best_observation() << " res  "
               << opt.best_sample().transpose() << std::endl;

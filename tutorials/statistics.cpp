@@ -151,7 +151,8 @@ int main()
         WorstObservation<Params>>;
 
     /// remmeber to use the new statistics vector via statsfun<>!
-    bayes_opt::BOptimizer<Params, statsfun<stat_t>> boptimizer;
+    using BD = bayes_opt::BOptimizer<Params>; // Default
+    bayes_opt::BOptimizer<Params, BD::model_t, BD::acquisition_function_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> boptimizer;
 
     // run the evaluation
     boptimizer.optimize(Eval());

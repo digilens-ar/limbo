@@ -125,14 +125,6 @@ namespace limbo {
             boost::parameter::optional<tag::modelfun>>;
 
         
-        template <class Params,
-          class A1 = boost::parameter::void_,
-          class A2 = boost::parameter::void_,
-          class A3 = boost::parameter::void_,
-          class A4 = boost::parameter::void_,
-          class A5 = boost::parameter::void_,
-          class A6 = boost::parameter::void_>
-        
         /**
         \rst
 
@@ -176,27 +168,23 @@ namespace limbo {
           - ``bayes_opt::BOptimizer<Params, modelfun<GP_t>, acquifun<Acqui_t>> opt;``
 
         */
+                
+        template <
+            class Params,
+			typename init_t = init::RandomSampling<Params>,
+    		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
+    		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
+    		typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
+			typename acqui_t = acqui::UCB<Params, model_type>
+    	>
         class BoBase {
         public:
             using params_t = Params;
-            // defaults
-            struct defaults {
-                using init_t = init::RandomSampling<Params>; // 1
-                using model_t = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>; // 2 // TODO using defaults here is a temporary fix until we get rid of boost::parameters
-                // WARNING: you have to specify the acquisition  function
-                // if you use a custom model
-                using acqui_t = acqui::UCB<Params, model_t>; // 3
-                using stat_t = boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>; // 4
-                using stop_t = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>; // 5
-            };
 
             // extract the types
-            using args = typename bobase_signature::bind<A1, A2, A3, A4, A5, A6>::type;
-            using init_function_t = typename boost::parameter::binding<args, tag::initfun, typename defaults::init_t>::type;
-            using acquisition_function_t = typename boost::parameter::binding<args, tag::acquifun, typename defaults::acqui_t>::type;
-            using model_t = typename boost::parameter::binding<args, tag::modelfun, typename defaults::model_t>::type;
-            using Stat = typename boost::parameter::binding<args, tag::statsfun, typename defaults::stat_t>::type;
-            using StoppingCriteria = typename boost::parameter::binding<args, tag::stopcrit, typename defaults::stop_t>::type;
+            using init_function_t = init_t;
+            using acquisition_function_t = acqui_t;
+            using model_t = model_type;
 
             using stopping_criteria_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type;
             using stat_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;

@@ -127,7 +127,7 @@ int main()
     using GP_t = model::GP<Kernel_t, Mean_t>;
     using Acqui_t = acqui::GP_UCB<Params::acqui_gpucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, modelfun<GP_t>, acquifun<Acqui_t>> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt;
 
     std::cout << "Optimize using  Average aggregator" << std::endl;
     opt.optimize(StateEval(), Average());

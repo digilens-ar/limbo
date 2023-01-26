@@ -106,8 +106,10 @@ namespace {
 TEST(Limbo_Init_Functions, no_init)
 {
     std::cout << "NoInit" << std::endl;
+    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Acqui_t = acqui::UCB<Params, Model_t>;
     using Init_t = init::NoInit;
-    using Opt_t = bayes_opt::BOptimizer<Params, initfun<Init_t>>;
+    using Opt_t = bayes_opt::BOptimizer<Params, Model_t, Acqui_t, Init_t>;
 
     Opt_t opt;
     opt.optimize(fit_eval());
@@ -124,8 +126,10 @@ TEST(Limbo_Init_Functions, random_lhs)
         };
     };
 
+    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Acqui_t = acqui::UCB<MyParams, Model_t>;
     using Init_t = init::LHS<MyParams::init_lhs>;
-    using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
+    using Opt_t = bayes_opt::BOptimizer<MyParams, Model_t, Acqui_t, Init_t>;
 
     Opt_t opt;
     opt.optimize(fit_eval());
@@ -151,8 +155,10 @@ TEST(Limbo_Init_Functions, random_sampling)
         };
     };
 
+    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Acqui_t = acqui::UCB<MyParams, Model_t>;
     using Init_t = init::RandomSampling<MyParams>;
-    using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
+    using Opt_t = bayes_opt::BOptimizer<MyParams, Model_t, Acqui_t, Init_t>;
 
     Opt_t opt;
     opt.optimize(fit_eval());
@@ -179,8 +185,10 @@ TEST(Limbo_Init_Functions, random_sampling_grid)
         };
     };
 
+    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Acqui_t = acqui::UCB<MyParams, Model_t>;
     using Init_t = init::RandomSamplingGrid<MyParams::init_randomsamplinggrid>;
-    using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
+    using Opt_t = bayes_opt::BOptimizer<MyParams, Model_t, Acqui_t, Init_t>;
 
     Opt_t opt;
     opt.optimize(fit_eval());
@@ -206,8 +214,10 @@ TEST(Limbo_Init_Functions, grid_sampling)
         };
     };
 
+    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Acqui_t = acqui::UCB<MyParams, Model_t>;
     using Init_t = init::GridSampling<MyParams::init_gridsampling>;
-    using Opt_t = bayes_opt::BOptimizer<MyParams, initfun<Init_t>>;
+    using Opt_t = bayes_opt::BOptimizer<MyParams, Model_t, Acqui_t, Init_t>;
 
     Opt_t opt;
     opt.optimize(fit_eval());
