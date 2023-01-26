@@ -6,7 +6,6 @@
     "nlopt",
     "boost-filesystem",
     "boost-system",
-    "boost-program-options",
     "tbb",
     "gtest",
     "eigen3"
