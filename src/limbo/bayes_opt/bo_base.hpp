@@ -182,7 +182,7 @@ namespace limbo {
             // defaults
             struct defaults {
                 using init_t = init::RandomSampling<Params>; // 1
-                using model_t = model::GP<Params, kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>; // 2 // TODO using defaults here is a temporary fix until we get rid of boost::parameters
+                using model_t = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>; // 2 // TODO using defaults here is a temporary fix until we get rid of boost::parameters
                 // WARNING: you have to specify the acquisition  function
                 // if you use a custom model
                 using acqui_t = acqui::UCB<Params, model_t>; // 3
