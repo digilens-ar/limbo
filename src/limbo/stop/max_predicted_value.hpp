@@ -67,7 +67,7 @@ namespace limbo {
         ///Stop once the value for the best sample is above : ratio * (best value predicted by the model)
         ///
         ///Parameter: double ratio
-        template <typename Params, typename Optimizer = boost::parameter::void_>
+        template <typename stop_maxpredictedvalue, typename Optimizer = boost::parameter::void_>
         struct MaxPredictedValue {
 
             MaxPredictedValue() {}
@@ -86,11 +86,11 @@ namespace limbo {
                 auto x = optimizer(model_optimization, starting_point, true);
                 double val = afun(bo.model().mu(x));
 
-                if (bo.observations().size() == 0 || afun(bo.best_observation(afun)) <= Params::stop_maxpredictedvalue::ratio() * val)
+                if (bo.observations().size() == 0 || afun(bo.best_observation(afun)) <= stop_maxpredictedvalue::ratio() * val)
                     return false;
                 else {
                     std::cout << "stop caused by Max predicted value reached. Threshold: "
-                              << Params::stop_maxpredictedvalue::ratio() * val
+                              << stop_maxpredictedvalue::ratio() * val
                               << " max observations: " << afun(bo.best_observation(afun)) << std::endl;
                     return true;
                 }

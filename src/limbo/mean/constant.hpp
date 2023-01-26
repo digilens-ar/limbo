@@ -64,7 +64,7 @@ namespace limbo {
             - ``double constant`` (the value of the constant)
         */
         template <typename Params>
-        struct Constant : public BaseMean<Params> {
+        struct Constant : public BaseMean {
             Constant(size_t dim_out = 1) : _dim_out(dim_out), _constant(Params::mean_constant::constant()) {}
 
             template <typename GP>

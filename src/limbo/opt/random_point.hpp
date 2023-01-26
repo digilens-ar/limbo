@@ -55,7 +55,6 @@ namespace limbo {
         /// - return a random point in [0, 1]
         /// - no parameters
         /// - useful for control experiments (do not use this otherwise!)
-        template <typename Params>
         struct RandomPoint {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const

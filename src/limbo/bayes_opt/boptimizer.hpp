@@ -117,7 +117,7 @@ namespace limbo {
             // defaults
             struct defaults {
 #ifdef USE_NLOPT
-                using acquiopt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+                using acquiopt_t = opt::NLOptNoGrad<typename Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #elif defined(USE_LIBCMAES)
                 using acquiopt_t = opt::Cmaes<Params>;
 #else

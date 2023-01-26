@@ -73,19 +73,19 @@ namespace limbo {
         ///
         /// Parameters:
         /// - int repeats
-        template <typename Params, typename Optimizer>
+        template <typename opt_parallelrepeater, typename Optimizer>
         struct ParallelRepeater {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
-                assert(Params::opt_parallelrepeater::repeats() > 0);
-                assert(Params::opt_parallelrepeater::epsilon() > 0.);
+                assert(opt_parallelrepeater::repeats() > 0);
+                assert(opt_parallelrepeater::epsilon() > 0.);
                 tools::par::init();
                 using pair_t = std::pair<Eigen::VectorXd, double>;
 
                 auto body = [&](int i) {
                     
-                    Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * Params::opt_parallelrepeater::epsilon() - Params::opt_parallelrepeater::epsilon();
+                    Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
                     Eigen::VectorXd v = Optimizer()(f, init + r_deviation, bounded);
                     double val = opt::eval(f, v);
 
@@ -100,7 +100,7 @@ namespace limbo {
                 };
 
                 pair_t init_v = std::make_pair(init, -std::numeric_limits<float>::max());
-                auto m = tools::par::max(init_v, Params::opt_parallelrepeater::repeats(), body, comp);
+                auto m = tools::par::max(init_v, opt_parallelrepeater::repeats(), body, comp);
 
                 return m.first;
             };

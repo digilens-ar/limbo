@@ -104,8 +104,8 @@ namespace limbo {
          - double fun_tolerance
          - double xrel_tolerance
         */
-        template <typename Params, nlopt::algorithm Algorithm = nlopt::LD_LBFGS>
-        struct NLOptGrad : public NLOptBase<Params, Algorithm> {
+        template <typename opt_nloptgrad, nlopt::algorithm Algorithm = nlopt::LD_LBFGS>
+        struct NLOptGrad : public NLOptBase<Algorithm> {
         public:
             void initialize(int dim) override
             {
@@ -122,11 +122,11 @@ namespace limbo {
                     Algorithm == nlopt::LD_CCSAQ, "NLOptGrad accepts gradient-based nlopt algorithms only");
                 
 
-                NLOptBase<Params, Algorithm>::initialize(dim);
+                NLOptBase<Algorithm>::initialize(dim);
 
-                this->_opt.set_maxeval(Params::opt_nloptgrad::iterations());
-                this->_opt.set_ftol_rel(Params::opt_nloptgrad::fun_tolerance());
-                this->_opt.set_xtol_rel(Params::opt_nloptgrad::xrel_tolerance());
+                this->_opt.set_maxeval(opt_nloptgrad::iterations());
+                this->_opt.set_ftol_rel(opt_nloptgrad::fun_tolerance());
+                this->_opt.set_xtol_rel(opt_nloptgrad::xrel_tolerance());
             }
         };
     } // namespace opt

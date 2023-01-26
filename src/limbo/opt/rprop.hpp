@@ -78,12 +78,12 @@ namespace limbo {
         /// Parameters:
         /// - int iterations
         /// - double eps_stop
-        template <typename Params>
+        template <typename opt_rprop>
         struct Rprop {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
-                assert(Params::opt_rprop::eps_stop() >= 0.);
+                assert(opt_rprop::eps_stop() >= 0.);
 
                 size_t param_dim = init.size();
                 double delta0 = 0.1;
@@ -91,7 +91,7 @@ namespace limbo {
                 double deltamax = 50;
                 double etaminus = 0.5;
                 double etaplus = 1.2;
-                double eps_stop = Params::opt_rprop::eps_stop();
+                double eps_stop = opt_rprop::eps_stop();
 
                 Eigen::VectorXd delta = Eigen::VectorXd::Ones(param_dim) * delta0;
                 Eigen::VectorXd grad_old = Eigen::VectorXd::Zero(param_dim);
@@ -109,7 +109,7 @@ namespace limbo {
                 Eigen::VectorXd best_params = params;
                 double best = log(0);
 
-                for (int i = 0; i < Params::opt_rprop::iterations(); ++i) {
+                for (int i = 0; i < opt_rprop::iterations(); ++i) {
                     auto perf = opt::eval_grad(f, params);
                     double lik = opt::fun(perf);
                     if (lik > best) {

@@ -53,7 +53,7 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
-            template <typename Params, typename Optimizer = opt::Rprop<Params>>
+            template <typename Params, typename Optimizer = opt::Rprop<typename Params::opt_rprop>>
             struct KernelLooOpt : public HPOpt<Params, Optimizer> {
             public:
                 template <typename GP>

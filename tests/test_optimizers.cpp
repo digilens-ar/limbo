@@ -121,7 +121,7 @@ TEST(Limbo_Optimizers, random_mono_dim)
 {
     using namespace limbo;
 
-    opt::RandomPoint<Params> optimizer;
+    opt::RandomPoint optimizer;
 
     monodim_calls = 0;
     for (int i = 0; i < 1000; i++) {
@@ -136,7 +136,7 @@ TEST(Limbo_Optimizers, random_bi_dim)
 {
     using namespace limbo;
 
-    opt::RandomPoint<Params> optimizer;
+    opt::RandomPoint optimizer;
 
     bidim_calls = 0;
     for (int i = 0; i < 1000; i++) {
@@ -153,7 +153,7 @@ TEST(Limbo_Optimizers, grid_search_mono_dim)
 {
     using namespace limbo;
 
-    opt::GridSearch<Params> optimizer;
+    opt::GridSearch<Params::opt_gridsearch> optimizer;
 
     monodim_calls = 0;
     Eigen::VectorXd best_point = optimizer(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), true);
@@ -167,7 +167,7 @@ TEST(Limbo_Optimizers, grid_search_bi_dim)
 {
     using namespace limbo;
 
-    opt::GridSearch<Params> optimizer;
+    opt::GridSearch<Params::opt_gridsearch> optimizer;
 
     bidim_calls = 0;
     Eigen::VectorXd best_point = optimizer(FakeAcquiBi(), Eigen::VectorXd::Constant(2, 0.5), true);
@@ -183,7 +183,7 @@ TEST(Limbo_Optimizers, gradient)
 {
     using namespace limbo;
 
-    opt::Rprop<Params> optimizer;
+    opt::Rprop<Params::opt_rprop> optimizer;
 
     simple_calls = 0;
     check_grad = true;
@@ -214,11 +214,11 @@ TEST(Limbo_Optimizers, classic_optimizers)
         };
     };
 
-    opt::Rprop<Params> rprop;
-    opt::Adam<Params> adam;
-    opt::GradientAscent<Params> gradient_ascent;
-    opt::GradientAscent<MomentumParams> gradient_ascent_momentum;
-    opt::GradientAscent<NesterovParams> gradient_ascent_nesterov;
+    opt::Rprop<Params::opt_rprop> rprop;
+    opt::Adam<Params::opt_adam> adam;
+    opt::GradientAscent<Params::opt_gradient_ascent> gradient_ascent;
+    opt::GradientAscent<MomentumParams::opt_gradient_ascent> gradient_ascent_momentum;
+    opt::GradientAscent<NesterovParams::opt_gradient_ascent> gradient_ascent_nesterov;
 
     simple_calls = 0;
     check_grad = true;
@@ -278,7 +278,7 @@ TEST(Limbo_Optimizers, parallel_repeater)
 #endif
     using namespace limbo;
 
-    opt::ParallelRepeater<Params, opt::Rprop<Params>> optimizer;
+    opt::ParallelRepeater<Params::opt_parallelrepeater, opt::Rprop<Params::opt_rprop>> optimizer;
 
     simple_calls = 0;
     check_grad = false;
@@ -299,11 +299,11 @@ TEST(Limbo_Optimizers, chained)
 {
     using namespace limbo;
 
-    using opt_1_t = opt::GridSearch<Params>;
-    using opt_2_t = opt::RandomPoint<Params>;
-    using opt_3_t = opt::GridSearch<Params>;
-    using opt_4_t = opt::GridSearch<Params>;
-    opt::Chained<Params, opt_1_t, opt_2_t, opt_3_t, opt_4_t> optimizer;
+    using opt_1_t = opt::GridSearch<Params::opt_gridsearch>;
+    using opt_2_t = opt::RandomPoint;
+    using opt_3_t = opt::GridSearch<Params::opt_gridsearch>;
+    using opt_4_t = opt::GridSearch<Params::opt_gridsearch>;
+    opt::Chained<opt_1_t, opt_2_t, opt_3_t, opt_4_t> optimizer;
 
     monodim_calls = 0;
     Eigen::VectorXd best_point = optimizer(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), true);

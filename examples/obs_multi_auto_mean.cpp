@@ -120,7 +120,7 @@ protected:
 };
 
 template <typename Params>
-struct MeanOffset : public mean::BaseMean<Params> {
+struct MeanOffset : public mean::BaseMean {
     MeanOffset(size_t dim_out = 1) {}
 
     template <typename GP>
@@ -139,7 +139,7 @@ struct MeanOffset : public mean::BaseMean<Params> {
 };
 
 template <typename Params>
-struct MeanRotation : public mean::BaseMean<Params> {
+struct MeanRotation : public mean::BaseMean {
     MeanRotation(size_t dim_out = 1) {}
 
     template <typename GP>
@@ -163,7 +163,7 @@ struct MeanRotation : public mean::BaseMean<Params> {
 };
 
 template <typename Params>
-struct MeanComplet : public mean::BaseMean<Params> {
+struct MeanComplet : public mean::BaseMean {
     MeanComplet(size_t dim_out = 1) {}
 
     template <typename GP>

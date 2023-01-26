@@ -188,7 +188,7 @@ namespace limbo {
                 // if you use a custom model
                 using acqui_t = acqui::UCB<Params, model_t>; // 3
                 using stat_t = boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>; // 4
-                using stop_t = boost::fusion::vector<stop::MaxIterations<Params>>; // 5
+                using stop_t = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>; // 5
             };
 
             // extract the types

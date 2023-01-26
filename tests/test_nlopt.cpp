@@ -98,7 +98,7 @@ namespace {
 
 TEST(Limbo_NLOpt, nlopt_grad_simple)
 {
-    opt::NLOptGrad<Params, nlopt::LD_MMA> optimizer;
+    opt::NLOptGrad<Params::opt_nloptgrad, nlopt::LD_MMA> optimizer;
     Eigen::VectorXd g = optimizer(my_function, tools::random_vector(2), false);
 
     ASSERT_LE(g(0), 0.00000001);
@@ -107,7 +107,7 @@ TEST(Limbo_NLOpt, nlopt_grad_simple)
 
 TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 {
-    opt::NLOptNoGrad<Params, nlopt::LN_COBYLA> optimizer;
+    opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA> optimizer;
     Eigen::VectorXd best(2);
     best << 1, 1;
     size_t N = 10;
@@ -124,7 +124,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 
 TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
 {
-    opt::NLOptNoGrad<Params, nlopt::LN_COBYLA> optimizer;
+    opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA> optimizer;
     optimizer.initialize(2);
     optimizer.add_equality_constraint(my_constraint);
 

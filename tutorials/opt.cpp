@@ -85,14 +85,14 @@ int main(int argc, char** argv)
 {
 #ifdef USE_NLOPT
     // the type of the optimizer (here NLOpt with the LN_LBGFGS algorithm)
-    opt::NLOptGrad<ParamsGrad, nlopt::LD_LBFGS> lbfgs;
+    opt::NLOptGrad<ParamsGrad::opt_nloptgrad, nlopt::LD_LBFGS> lbfgs;
     // we start from a random point (in 2D), and the search is not bounded
     Eigen::VectorXd res_lbfgs = lbfgs(my_function, tools::random_vector(2), false);
     std::cout << "Result with LBFGS:\t" << res_lbfgs.transpose()
               << " -> " << my_function(res_lbfgs).first << std::endl;
 
     // we can also use a gradient-free algorith, like DIRECT
-    opt::NLOptNoGrad<ParamsNoGrad, nlopt::GN_DIRECT> direct;
+    opt::NLOptNoGrad<ParamsNoGrad::opt_nloptnograd, nlopt::GN_DIRECT> direct;
     // we start from a random point (in 2D), and the search is bounded in [0,1]
     // be careful that DIRECT does not support unbounded search
     Eigen::VectorXd res_direct = direct(my_function, tools::random_vector(2), true);

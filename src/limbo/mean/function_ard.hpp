@@ -56,7 +56,7 @@ namespace limbo {
         /// It incorporates the hyperparameters of the underlying mean function, if any
         /// @see limbo::model::gp::KernelMeanLFOpt, limbo::model::gp::MeanLFOpt
         template <typename Params, typename MeanFunction>
-        struct FunctionARD : public BaseMean<Params> {
+        struct FunctionARD : public BaseMean {
             FunctionARD(size_t dim_out = 1)
                 : _mean_function(dim_out), _tr(dim_out, dim_out + 1)
             {

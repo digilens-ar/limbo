@@ -53,7 +53,7 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of both the kernel and the mean (try to align the mean function)
-            template <typename Params, typename Optimizer = opt::Rprop<Params>>
+            template <typename Params, typename Optimizer = opt::Rprop<typename Params::opt_rprop>>
             struct KernelMeanLFOpt : public HPOpt<Params, Optimizer> {
             public:
                 template <typename GP>

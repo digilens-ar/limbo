@@ -80,13 +80,13 @@ namespace limbo {
           - `double delta` (a small number in [0,1], e.g. 0.1)
         \endrst
         */
-        template <typename Params, typename Model>
+        template <typename acqui_gpucb, typename Model>
         class GP_UCB {
         public:
             GP_UCB(const Model& model, int iteration) : _model(model)
             {
                 double nt = std::pow(iteration, dim_in() / 2.0 + 2.0);
-                static constexpr double delta3 = Params::acqui_gpucb::delta() * 3;
+                static constexpr double delta3 = acqui_gpucb::delta() * 3;
                 static constexpr double pi2 = M_PI * M_PI;
                 _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3));
             }

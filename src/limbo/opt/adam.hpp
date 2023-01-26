@@ -90,22 +90,22 @@ namespace limbo {
         /// - double b1
         /// - double b2
         /// - double eps_stop
-        template <typename Params>
+        template <typename opt_adam>
         struct Adam {
             template <typename F>
             Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
-                assert(Params::opt_adam::b1() >= 0. && Params::opt_adam::b1() < 1.);
-                assert(Params::opt_adam::b2() >= 0. && Params::opt_adam::b2() < 1.);
-                assert(Params::opt_adam::alpha() >= 0.);
+                assert(opt_adam::b1() >= 0. && opt_adam::b1() < 1.);
+                assert(opt_adam::b2() >= 0. && opt_adam::b2() < 1.);
+                assert(opt_adam::alpha() >= 0.);
 
                 size_t param_dim = init.size();
-                double b1 = Params::opt_adam::b1();
-                double b2 = Params::opt_adam::b2();
+                double b1 = opt_adam::b1();
+                double b2 = opt_adam::b2();
                 double b1_t = b1;
                 double b2_t = b2;
-                double alpha = Params::opt_adam::alpha();
-                double stop = Params::opt_adam::eps_stop();
+                double alpha = opt_adam::alpha();
+                double stop = opt_adam::eps_stop();
                 double epsilon = 1e-8;
 
                 Eigen::VectorXd m = Eigen::VectorXd::Zero(param_dim);
@@ -122,7 +122,7 @@ namespace limbo {
                     }
                 }
 
-                for (int i = 0; i < Params::opt_adam::iterations(); ++i) {
+                for (int i = 0; i < opt_adam::iterations(); ++i) {
                     Eigen::VectorXd prev_params = params;
                     auto perf = opt::eval_grad(f, params);
 

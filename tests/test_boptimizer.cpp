@@ -146,11 +146,11 @@ TEST(Limbo_Boptimizer, bo_inheritance)
 
     using Kernel_t = kernel::Exp<Params>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters>>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters::stop_maxiterations>>;
     using Mean_t = mean::Data<Params>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::NoInit<Params>;
@@ -206,16 +206,16 @@ TEST(Limbo_Boptimizer, bo_gp)
 
     using Kernel_t = kernel::Exp<Params>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
     using Mean_t = mean::Data<Params>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t>;
-    using Acqui_t = acqui::EI<Params, GP_t>;
+    using Acqui_t = acqui::EI<Params::acqui_ei, GP_t>;
 
     bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
     opt.optimize(eval2<Params>());
@@ -233,11 +233,11 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
 
     using Kernel_t = kernel::SquaredExpARD<Params>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
     using Mean_t = mean::Data<Params>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;
@@ -260,11 +260,11 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
 
     using Kernel_t = kernel::SquaredExpARD<Params>;
 #ifdef USE_NLOPT
-    using AcquiOpt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
+    using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params::stop_maxiterations>>;
     using Mean_t = mean::FunctionARD<Params, mean::Data<Params>>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params>;

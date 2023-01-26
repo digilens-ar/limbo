@@ -107,8 +107,8 @@ namespace limbo {
          - double fun_tolerance
          - double xrel_tolerance
         */
-        template <typename Params, nlopt::algorithm Algorithm = nlopt::GN_DIRECT_L_RAND>
-        struct NLOptNoGrad : public NLOptBase<Params, Algorithm> {
+        template <typename opt_nloptnograd, nlopt::algorithm Algorithm = nlopt::GN_DIRECT_L_RAND>
+        struct NLOptNoGrad : public NLOptBase<Algorithm> {
         public:
             void initialize(int dim) override
             {
@@ -128,11 +128,11 @@ namespace limbo {
                     Algorithm == nlopt::GN_ISRES || Algorithm == nlopt::GN_ESCH, "NLOptNoGrad accepts gradient free nlopt algorithms only");
                 
 
-                NLOptBase<Params, Algorithm>::initialize(dim);
+                NLOptBase<Algorithm>::initialize(dim);
 
-                this->_opt.set_maxeval(Params::opt_nloptnograd::iterations());
-                this->_opt.set_ftol_rel(Params::opt_nloptnograd::fun_tolerance());
-                this->_opt.set_xtol_rel(Params::opt_nloptnograd::xrel_tolerance());
+                this->_opt.set_maxeval(opt_nloptnograd::iterations());
+                this->_opt.set_ftol_rel(opt_nloptnograd::fun_tolerance());
+                this->_opt.set_xtol_rel(opt_nloptnograd::xrel_tolerance());
             }
         };
     } // namespace opt

@@ -116,7 +116,7 @@ Eigen::Vector2d forward_kinematics(const Eigen::VectorXd& x)
 }
 
 template <typename Params>
-struct MeanFWModel : mean::BaseMean<Params> {
+struct MeanFWModel : mean::BaseMean {
     MeanFWModel(size_t dim_out = 1) {}
 
     template <typename GP>
