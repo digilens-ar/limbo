@@ -642,7 +642,7 @@ namespace limbo {
         /// GPOpt is a GP with a "mean data" mean function, Exponential kernel with Automatic Relevance
         /// Determination (ARD), and hyper-parameter optimization based on Rprop
         template <typename Params>
-        using GPOpt = GP<Params, kernel::SquaredExpARD<Params>, mean::Data, gp::KernelLFOpt<typename Params::opt_rprop>>;
+        using GPOpt = GP<Params, kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<typename Params::opt_rprop>>;
     } // namespace model
 } // namespace limbo
 

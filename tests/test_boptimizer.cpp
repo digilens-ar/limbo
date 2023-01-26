@@ -231,7 +231,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
 
     Params::bayes_opt_boptimizer::set_hp_period(50);
 
-    using Kernel_t = kernel::SquaredExpARD<Params>;
+    using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
 #ifdef USE_NLOPT
     using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else
@@ -258,7 +258,7 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
 
     Params::bayes_opt_boptimizer::set_hp_period(50);
 
-    using Kernel_t = kernel::SquaredExpARD<Params>;
+    using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
 #ifdef USE_NLOPT
     using AcquiOpt_t = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::GN_DIRECT_L_RAND>;
 #else

@@ -167,8 +167,8 @@ TEST(Limbo_Kernel, grad_exp)
 TEST(Limbo_Kernel, grad_matern_three)
 {
     for (int i = 1; i <= 10; i++) {
-        check_kernel<kernel::MaternThreeHalves<Params>>(i, 100);
-        check_kernel<kernel::MaternThreeHalves<ParamsNoise>>(i, 100);
+        check_kernel<kernel::MaternThreeHalves<Params::kernel, Params::kernel_maternthreehalves>>(i, 100);
+        check_kernel<kernel::MaternThreeHalves<ParamsNoise::kernel, ParamsNoise::kernel_maternthreehalves>>(i, 100);
     }
 }
 
@@ -184,13 +184,13 @@ TEST(Limbo_Kernel, grad_SE_ARD)
 {
     Params::kernel_squared_exp_ard::set_k(0);
     for (int i = 1; i <= 10; i++) {
-        check_kernel<kernel::SquaredExpARD<Params>>(i, 100);
-        check_kernel<kernel::SquaredExpARD<ParamsNoise>>(i, 100);
+        check_kernel<kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>>(i, 100);
+        check_kernel<kernel::SquaredExpARD<ParamsNoise::kernel, ParamsNoise::kernel_squared_exp_ard>>(i, 100);
     }
 
     Params::kernel_squared_exp_ard::set_k(1);
     for (int i = 1; i <= 10; i++) {
-        check_kernel<kernel::SquaredExpARD<Params>>(i, 100);
+        check_kernel<kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>>(i, 100);
     }
 }
 
@@ -198,7 +198,7 @@ TEST(Limbo_Kernel, kernel_SE_ARD)
 {
     Params::kernel_squared_exp_ard::set_k(0);
 
-    kernel::SquaredExpARD<Params> se(2);
+    kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard> se(2);
     Eigen::VectorXd hp = Eigen::VectorXd::Zero(se.h_params_size());
 
     se.set_h_params(hp);
@@ -217,7 +217,7 @@ TEST(Limbo_Kernel, kernel_SE_ARD)
     ASSERT_TRUE(s1 < s2);
 
     Params::kernel_squared_exp_ard::set_k(1);
-    se = kernel::SquaredExpARD<Params>(2);
+    se = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>(2);
     hp = Eigen::VectorXd::Zero(se.h_params_size());
 
     se.set_h_params(hp);

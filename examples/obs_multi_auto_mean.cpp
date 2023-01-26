@@ -206,7 +206,7 @@ struct fit_eval {
 int main()
 {
 
-    using Kernel_t = kernel::SquaredExpARD<Params>;
+    using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Mean_t = mean::FunctionARD<MeanComplet<Params>>;
     using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
