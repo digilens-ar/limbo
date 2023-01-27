@@ -51,11 +51,6 @@
 
 #include <memory>
 
-namespace
-{
-	template<typename T>
-	constexpr bool always_false = false;
-}
 
 namespace limbo {
     namespace stat {
@@ -76,6 +71,9 @@ namespace limbo {
         */
         struct StatBase {
             StatBase() {}
+
+            template<typename T>
+            static constexpr bool always_false = false;
 
             /// main method (to be written in derived classes)
             template <typename BO , typename AggregatorFunc>

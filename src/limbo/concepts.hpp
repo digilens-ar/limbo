@@ -12,13 +12,14 @@ namespace limbo::concepts
 	template <typename F>
 	concept Option = Callable<F, bool>;
 
-	// Param types
+	// Param Types
 	template<typename T>
 	concept AcquiEI = requires (T a)
 	{
 		{ T::jitter() } -> std::convertible_to<double>;
 	};
 
+	//Fundamental Types
 	template<typename T>
 	concept Model = requires (T a)
 	{
@@ -32,4 +33,24 @@ namespace limbo::concepts
         { a.nb_samples() } -> std::convertible_to<int>;
         { a.samples() } -> std::convertible_to<const std::vector<Eigen::VectorXd>&>;
 	};
+
+	template <typename T>
+	concept StateFunc = Callable<T, Eigen::VectorXd, Eigen::VectorXd>
+	&&
+	requires (T a)
+	{
+		{ a.dim_out() } -> std::convertible_to<size_t>;
+		{ a.dim_in() } -> std::convertible_to<size_t>;
+	};
+
+	template <typename T>
+	concept AggregatorFunc = Callable<T, double, Eigen::VectorXd>;
+
+	template<typename T, typename StateFunction>
+	concept Optimizer = requires (T a)
+	{
+		{a.eval_and_add(StateFunction(), Eigen::VectorXd()) } -> std::convertible_to<void>;
+	}
+	&&
+		StateFunc<StateFunction>;
 }

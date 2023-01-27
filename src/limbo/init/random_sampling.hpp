@@ -50,6 +50,7 @@
 
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -69,11 +70,11 @@ namespace limbo {
         */
         template <typename InitRandomSampling>
         struct RandomSampling {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, typename Opt>
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
-                    auto new_sample = tools::random_vector(StateFunction::dim_in(), Opt::params_t::bayes_opt_bobase::bounded());
+                    auto new_sample = tools::random_vector(seval.dim_in(), Opt::params_t::bayes_opt_bobase::bounded());
                     opt.eval_and_add(seval, new_sample);
                 }
             }
