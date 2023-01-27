@@ -12,6 +12,7 @@ namespace limbo::concepts
 	template <typename F>
 	concept Option = Callable<F, bool>;
 
+	// Param types
 	template<typename T>
 	concept AcquiEI = requires (T a)
 	{
