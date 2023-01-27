@@ -108,7 +108,7 @@ namespace limbo {
          - double xrel_tolerance
         */
         template <typename opt_nloptnograd, nlopt::algorithm Algorithm = nlopt::GN_DIRECT_L_RAND>
-        struct NLOptNoGrad : public NLOptBase<Algorithm> {
+        struct NLOptNoGrad : NLOptBase<Algorithm> {
         public:
             void initialize(int dim) override
             {

@@ -75,10 +75,6 @@ namespace limbo {
         public:
             UCB(const Model& model, int iteration = 0) : _model(model) {}
 
-            size_t dim_in() const { return _model.dim_in(); }
-
-            size_t dim_out() const { return _model.dim_out(); }
-
             template <typename AggregatorFunction>
             opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
             {

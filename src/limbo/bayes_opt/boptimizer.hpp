@@ -119,7 +119,6 @@ namespace limbo {
         
         class BOptimizer : public BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t> {
         public:
-      
             /// link to the corresponding BoBase (useful for typedefs)
             using base_t = BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t>;
             using model_t = typename base_t::model_t;
@@ -143,8 +142,7 @@ namespace limbo {
                 while (!this->_stop(*this, afun)) {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
-                    auto acqui_optimization =
-                        [&](const Eigen::VectorXd& x, bool g) { return acqui(x, afun, g); };
+                    auto acqui_optimization = [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); };
                     Eigen::VectorXd starting_point = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
                     Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
                     this->eval_and_add(sfun, new_sample);
