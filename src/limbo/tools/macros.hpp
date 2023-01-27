@@ -51,7 +51,7 @@
 #include <regex>
 
 #define BO_PARAM(Type, Name, Value) \
-    static constexpr Type Name() { return Value; }
+    static constexpr auto Name = []()constexpr -> Type { return Value; };
 
 #define BO_REQUIRED_PARAM(Type, Name)                                         \
     static const Type Name()                                                  \

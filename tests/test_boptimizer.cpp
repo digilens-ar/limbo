@@ -132,15 +132,15 @@ namespace {
 #endif
 }
 
+struct InheritParameters {
+    struct stop_maxiterations {
+        BO_PARAM(int, iterations, 1);
+    };
+};
+
 TEST(Limbo_Boptimizer, bo_inheritance)
 {
     using namespace limbo;
-
-    struct Parameters {
-        struct stop_maxiterations {
-            BO_PARAM(int, iterations, 1);
-        };
-    };
 
     Params::bayes_opt_boptimizer::set_hp_period(-1);
 
@@ -150,7 +150,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
 #else
     using AcquiOpt_t = opt::Cmaes<Params>;
 #endif
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Parameters::stop_maxiterations>>;
+    using Stop_t = boost::fusion::vector<stop::MaxIterations<InheritParameters::stop_maxiterations>>;
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::NoInit;

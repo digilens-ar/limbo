@@ -52,6 +52,8 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
+#include <limbo/concepts.hpp>
+
 
 #ifdef _WIN32
 #include <corecrt_math_defines.h>
@@ -76,7 +78,7 @@ namespace limbo {
           - ``double jitter`` - :math:`\xi`
         \endrst
         */
-        template <typename acqui_ei, typename Model>
+        template <concepts::AcquiEI AcquiEI, concepts::Model Model>
         class EI {
         public:
             EI(const Model& model, int iteration = 0) : _model(model), _nb_samples(-1) {}
@@ -111,7 +113,7 @@ namespace limbo {
                     _f_max = *std::max_element(rewards.begin(), rewards.end());
                 }
                 // Calculate Z and \Phi(Z) and \phi(Z)
-                double X = afun(mu) - _f_max - acqui_ei::jitter();
+                double X = afun(mu) - _f_max - AcquiEI::jitter();
                 double Z = X / sigma;
                 double phi = std::exp(-0.5 * std::pow(Z, 2.0)) / std::sqrt(2.0 * M_PI);
                 double Phi = 0.5 * std::erfc(-Z / std::sqrt(2)); //0.5 * (1.0 + std::erf(Z / std::sqrt(2)));

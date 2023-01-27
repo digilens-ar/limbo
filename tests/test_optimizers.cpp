@@ -193,26 +193,27 @@ TEST(Limbo_Optimizers, gradient)
     ASSERT_EQ(simple_calls, Params::opt_rprop::iterations());
 }
 
+
+struct MomentumParams {
+    struct opt_gradient_ascent : public defaults::opt_gradient_ascent {
+        BO_PARAM(int, iterations, 150);
+        BO_PARAM(double, alpha, 0.1);
+        BO_PARAM(double, gamma, 0.8);
+    };
+};
+
+struct NesterovParams {
+    struct opt_gradient_ascent : public defaults::opt_gradient_ascent {
+        BO_PARAM(int, iterations, 150);
+        BO_PARAM(double, alpha, 0.1);
+        BO_PARAM(double, gamma, 0.8);
+        BO_PARAM(bool, nesterov, true);
+    };
+};
+
 TEST(Limbo_Optimizers, classic_optimizers)
 {
     using namespace limbo;
-
-    struct MomentumParams {
-        struct opt_gradient_ascent : public defaults::opt_gradient_ascent {
-            BO_PARAM(int, iterations, 150);
-            BO_PARAM(double, alpha, 0.1);
-            BO_PARAM(double, gamma, 0.8);
-        };
-    };
-
-    struct NesterovParams {
-        struct opt_gradient_ascent : public defaults::opt_gradient_ascent {
-            BO_PARAM(int, iterations, 150);
-            BO_PARAM(double, alpha, 0.1);
-            BO_PARAM(double, gamma, 0.8);
-            BO_PARAM(bool, nesterov, true);
-        };
-    };
 
     opt::Rprop<Params::opt_rprop> rprop;
     opt::Adam<Params::opt_adam> adam;
