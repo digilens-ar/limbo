@@ -109,7 +109,7 @@ namespace limbo {
         */
 		template <
             class Params,
-        	typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
+        	typename model_type = model::GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
 			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
