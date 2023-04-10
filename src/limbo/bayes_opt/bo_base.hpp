@@ -76,6 +76,7 @@
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/math.hpp>
 #include <limbo/tools/sys.hpp>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -160,7 +161,7 @@ namespace limbo {
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
-    		typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
+    		concepts::Model model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
 			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>
     	>
         class BoBase {
@@ -212,14 +213,14 @@ namespace limbo {
             }
 
             /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
-            template <typename StateFunction>
+            template <concepts::StateFunc StateFunction>
             void eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
             {
                 this->add_new_sample(sample, seval(sample));
             }
 
         protected:
-            template <typename StateFunction, typename AggregatorFunction>
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction>
             void _init(const StateFunction& seval, const AggregatorFunction& afun, bool reset = true)
             {
                 this->_current_iteration = 0;

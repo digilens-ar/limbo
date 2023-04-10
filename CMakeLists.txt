@@ -17,7 +17,7 @@ option(LIMBO_USE_NLOPT "" ON)
 option(LIMBO_USE_CMAES "" OFF)
 
 add_library(limbo INTERFACE)
-target_include_directories(limbo INTERFACE "${CMAKE_SOURCE_DIR}/src")
+target_include_directories(limbo INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_compile_definitions(limbo INTERFACE "NOMINMAX")  # This prevents windows.h from defining unwanted macros
 target_compile_definitions(limbo INTERFACE "_CRT_SECURE_NO_WARNINGS")  # This prevents windows from pointless deprecation warnings.
 #target_compile_definitions(limbo INTERFACE "USE_SFERES")
@@ -44,6 +44,7 @@ endif()
 
 option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)
 if(LIMBO_BUILD_TESTS)
+	include(CTest)  # This enables testing
 	find_package(GTest CONFIG REQUIRED)
 	add_subdirectory(tests)
 endif()

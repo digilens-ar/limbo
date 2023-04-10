@@ -51,7 +51,7 @@
 #include <regex>
 
 #define BO_PARAM(Type, Name, Value) \
-    static constexpr Type Name() { return Value; }
+    static constexpr auto Name = []()constexpr -> Type { return Value; };
 
 #define BO_REQUIRED_PARAM(Type, Name)                                         \
     static const Type Name()                                                  \
@@ -65,6 +65,7 @@
     static Type Name() { return _##Name; } \
     static void set_##Name(const Type& v) { _##Name = v; }
 
+#define BO_DECLARE_DYN_PARAM_INIT(Type, Namespace, Name, Value) Type Namespace::_##Name = Value;
 #define BO_DECLARE_DYN_PARAM(Type, Namespace, Name) Type Namespace::_##Name;
 
 #define NUMARGS(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value

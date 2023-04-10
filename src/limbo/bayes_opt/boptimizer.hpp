@@ -109,7 +109,7 @@ namespace limbo {
         */
 		template <
             class Params,
-        	typename model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
+        	concepts::Model model_type = model::GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
 			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
@@ -119,7 +119,6 @@ namespace limbo {
         
         class BOptimizer : public BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t> {
         public:
-      
             /// link to the corresponding BoBase (useful for typedefs)
             using base_t = BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t>;
             using model_t = typename base_t::model_t;
@@ -128,7 +127,7 @@ namespace limbo {
             using acqui_optimizer_t = acqui_opt_t;
 
             /// The main function (run the Bayesian optimization algorithm)
-            template <typename StateFunction, typename AggregatorFunction = FirstElem>
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
             void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
                 this->_init(sfun, afun, reset);
@@ -136,16 +135,15 @@ namespace limbo {
                 if (!this->_observations.empty())
                     _model.compute(this->_samples, this->_observations);
                 else
-                    _model = model_t(StateFunction::dim_in(), StateFunction::dim_out());
+                    _model = model_t(sfun.dim_in(), sfun.dim_out());
 
                 acqui_optimizer_t acqui_optimizer;
 
                 while (!this->_stop(*this, afun)) {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
-                    auto acqui_optimization =
-                        [&](const Eigen::VectorXd& x, bool g) { return acqui(x, afun, g); };
-                    Eigen::VectorXd starting_point = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
+                    auto acqui_optimization = [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); };
+                    Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_bobase::bounded());
                     Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
                     this->eval_and_add(sfun, new_sample);
 
@@ -163,7 +161,7 @@ namespace limbo {
             }
 
             /// return the best observation so far (i.e. max(f(x)))
-            template <typename AggregatorFunction = FirstElem>
+            template <concepts::AggregatorFunc AggregatorFunction = FirstElem>
             const Eigen::VectorXd& best_observation(const AggregatorFunction& afun = AggregatorFunction()) const
             {
                 auto rewards = std::vector<double>(this->_observations.size());
@@ -173,7 +171,7 @@ namespace limbo {
             }
 
             /// return the best sample so far (i.e. the argmax(f(x)))
-            template <typename AggregatorFunction = FirstElem>
+            template <concepts::AggregatorFunc AggregatorFunction = FirstElem>
             const Eigen::VectorXd& best_sample(const AggregatorFunction& afun = AggregatorFunction()) const
             {
                 auto rewards = std::vector<double>(this->_observations.size());

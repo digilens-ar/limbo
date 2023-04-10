@@ -85,15 +85,11 @@ namespace limbo {
         public:
             GP_UCB(const Model& model, int iteration) : _model(model)
             {
-                double nt = std::pow(iteration, dim_in() / 2.0 + 2.0);
+                double nt = std::pow(iteration, _model.dim_in() / 2.0 + 2.0);
                 static constexpr double delta3 = acqui_gpucb::delta() * 3;
                 static constexpr double pi2 = M_PI * M_PI;
                 _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3));
             }
-
-            size_t dim_in() const { return _model.dim_in(); }
-
-            size_t dim_out() const { return _model.dim_out(); }
 
             template <typename AggregatorFunction>
             opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const

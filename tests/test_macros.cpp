@@ -53,6 +53,7 @@
 namespace {
     struct Params {
         struct test {
+            // static constexpr auto a = []() constexpr -> double {return 1;};
             BO_PARAM(double, a, 1);
             BO_DYN_PARAM(int, b);
             BO_PARAM_ARRAY(double, c, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
