@@ -66,7 +66,7 @@
 namespace limbo {
     namespace defaults {
         struct bayes_opt_boptimizer {
-            BO_PARAM(int, hp_period, -1);
+            BO_PARAM(int, hp_period, -1); // If this is a positive number the model will `optimize_hyperparameters` every `hp_period` iterations
         };
     }
 
@@ -114,7 +114,7 @@ namespace limbo {
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
-			typename acqui_opt_t = typename defaults<Params>::acquiopt_t
+			concepts::Optimizer acqui_opt_t = typename defaults<Params>::acquiopt_t
     	>
         
         class BOptimizer : public BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t> {
@@ -137,14 +137,14 @@ namespace limbo {
                 else
                     _model = model_t(sfun.dim_in(), sfun.dim_out());
 
-                acqui_optimizer_t acqui_optimizer;
+                acqui_optimizer_t acqui_optimizer = acqui_optimizer_t::create(sfun.dim_in());
 
                 while (!this->_stop(*this, afun)) {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
                     auto acqui_optimization = [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); };
                     Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_bobase::bounded());
-                    Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
+                    Eigen::VectorXd new_sample = acqui_optimizer.optimize(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
                     this->eval_and_add(sfun, new_sample);
 
                     this->_update_stats(*this, afun);

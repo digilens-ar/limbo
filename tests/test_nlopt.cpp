@@ -98,8 +98,8 @@ namespace {
 
 TEST(Limbo_NLOpt, nlopt_grad_simple)
 {
-    opt::NLOptGrad<Params::opt_nloptgrad, nlopt::LD_MMA> optimizer;
-    Eigen::VectorXd g = optimizer(my_function, tools::random_vector(2), false);
+	auto optimizer = opt::NLOptGrad<Params::opt_nloptgrad, nlopt::LD_MMA>::create(2);
+    Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), false);
 
     ASSERT_LE(g(0), 0.00000001);
     ASSERT_LE(g(1), 0.00000001);
@@ -107,12 +107,12 @@ TEST(Limbo_NLOpt, nlopt_grad_simple)
 
 TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 {
-    opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA> optimizer;
+    auto optimizer = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA>::create(2);
     Eigen::VectorXd best(2);
     best << 1, 1;
     size_t N = 10;
     for (size_t i = 0; i < N; i++) {
-        Eigen::VectorXd g = optimizer(my_function, tools::random_vector(2), false);
+        Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), false);
         if (g.norm() < best.norm()) {
             best = g;
         }
@@ -124,8 +124,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_simple)
 
 TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
 {
-    opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA> optimizer;
-    optimizer.initialize(2);
+    auto optimizer = opt::NLOptNoGrad<Params::opt_nloptnograd, nlopt::LN_COBYLA>::create(2);
     optimizer.add_equality_constraint(my_constraint);
 
     Eigen::VectorXd best = tools::random_vector(2).array() * 50.; // some random big value
@@ -133,7 +132,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
     target << 1., 3.;
     size_t N = 10;
     for (size_t i = 0; i < N; i++) {
-        Eigen::VectorXd g = optimizer(my_function, tools::random_vector(2), false);
+        Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), false);
         if ((g - target).norm() < (best - target).norm()) {
             best = g;
         }

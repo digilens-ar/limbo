@@ -80,8 +80,13 @@ namespace limbo {
         /// - double eps_stop
         template <typename opt_rprop>
         struct Rprop {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            static Rprop create(int dims)
+            {
+                return Rprop();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
                 assert(opt_rprop::eps_stop() >= 0.);
 

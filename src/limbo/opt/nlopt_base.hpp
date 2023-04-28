@@ -58,103 +58,95 @@
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
 
-namespace limbo {
-    namespace opt {
-        /**
-          @ingroup opt
-        Base class for NLOpt wrappers
-        */
-        template <nlopt::algorithm Algorithm>
-        struct NLOptBase {
-        public:
-            virtual void initialize(int dim)
-            {
-                _opt = nlopt::opt(Algorithm, dim);
-                _initialized = true;
+namespace limbo::opt {
+    /**
+      @ingroup opt
+    Base class for NLOpt wrappers
+    */
+    class NLOptBase {
+    public:
+        template <concepts::EvalFunc F>
+        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded)
+        {
+            assert(init.size() == dim_);
+
+            _opt.set_max_objective(nlopt_func<F>, (void*)&f);
+
+            std::vector<double> x(dim_);
+            Eigen::VectorXd::Map(&x[0], dim_) = init;
+
+            if (bounded) {
+                _opt.set_lower_bounds(std::vector<double>(dim_, 0));
+                _opt.set_upper_bounds(std::vector<double>(dim_, 1));
             }
 
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded)
-            {
-                int dim = init.size();
-                if (!_initialized)
-                    initialize(dim);
+            double max;
 
-                _opt.set_max_objective(nlopt_func<F>, (void*)&f);
-
-                std::vector<double> x(dim);
-                Eigen::VectorXd::Map(&x[0], dim) = init;
-
-                if (bounded) {
-                    _opt.set_lower_bounds(std::vector<double>(dim, 0));
-                    _opt.set_upper_bounds(std::vector<double>(dim, 1));
-                }
-
-                double max;
-
-                try {
-                    _opt.optimize(x, max);
-                }
-                catch (nlopt::roundoff_limited& e) {
-                    // In theory it's ok to ignore this error
-                    std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-                }
-                catch (std::invalid_argument& e) {
-                    // In theory it's ok to ignore this error
-                    std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-                }
-                catch (std::runtime_error& e) {
-                    // In theory it's ok to ignore this error
-                    std::cerr << "[NLOptGrad]: " << e.what() << std::endl;
-                }
-
-                return Eigen::VectorXd::Map(x.data(), x.size());
+            try {
+                _opt.optimize(x, max);
+            }
+            catch (nlopt::roundoff_limited& e) {
+                // In theory it's ok to ignore this error
+                std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
+            }
+            catch (std::invalid_argument& e) {
+                // In theory it's ok to ignore this error
+                std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
+            }
+            catch (std::runtime_error& e) {
+                // In theory it's ok to ignore this error
+                std::cerr << "[NLOptGrad]: " << e.what() << std::endl;
             }
 
-            // Inequality constraints of the form f(x) <= 0
-            template <typename F>
-            void add_inequality_constraint(const F& f, double tolerance = 1e-8)
-            {
-                if (_initialized)
-                    _opt.add_inequality_constraint(nlopt_func<F>, (void*)&f, tolerance);
-                else
-                    std::cerr << "[NLOptNoGrad]: Trying to set an inequality constraint without having initialized the optimizer! Nothing will be done!" << std::endl;
-            }
+            return Eigen::VectorXd::Map(x.data(), x.size());
+        }
 
-            // Equality constraints of the form f(x) = 0
-            template <typename F>
-            void add_equality_constraint(const F& f, double tolerance = 1e-8)
-            {
-                if (_initialized)
-                    _opt.add_equality_constraint(nlopt_func<F>, (void*)&f, tolerance);
-                else
-                    std::cerr << "[NLOptNoGrad]: Trying to set an equality constraint without having initialized the optimizer! Nothing will be done!" << std::endl;
-            }
+        // Inequality constraints of the form f(x) <= 0
+        template <typename F>
+        void add_inequality_constraint(const F& f, double tolerance = 1e-8)
+        {
+            _opt.add_inequality_constraint(nlopt_func<F>, (void*)&f, tolerance);
+        }
 
-        protected:
-            nlopt::opt _opt;
-            bool _initialized = false;
+        // Equality constraints of the form f(x) = 0
+        template <typename F>
+        void add_equality_constraint(const F& f, double tolerance = 1e-8)
+        {
+            _opt.add_equality_constraint(nlopt_func<F>, (void*)&f, tolerance);
+		}
 
-            template <typename F>
-            static double nlopt_func(const std::vector<double>& x, std::vector<double>& grad, void* my_func_data)
-            {
-                F* f = (F*)(my_func_data);
-                Eigen::VectorXd params = Eigen::VectorXd::Map(x.data(), x.size());
-                double v;
-                if (!grad.empty()) {
-                    auto r = eval_grad(*f, params);
-                    v = opt::fun(r);
-                    Eigen::VectorXd g = opt::grad(r);
-                    Eigen::VectorXd::Map(&grad[0], g.size()) = g;
-                }
-                else {
-                    v = eval(*f, params);
-                }
-                return v;
+    protected:
+
+        NLOptBase(nlopt::algorithm algorithm, int dim) :
+            dim_(dim)
+        {
+            _opt = nlopt::opt(algorithm, dim);
+        }
+
+        nlopt::opt _opt;
+
+    private:
+        template <concepts::EvalFunc F>
+        static double nlopt_func(const std::vector<double>& x, std::vector<double>& grad, void* my_func_data)
+        {
+            F* f = (F*)(my_func_data);
+            Eigen::VectorXd params = Eigen::VectorXd::Map(x.data(), x.size());
+            double v;
+            if (!grad.empty()) {
+                auto r = eval_grad(*f, params);
+                v = opt::fun(r);
+                Eigen::VectorXd g = opt::grad(r);
+                Eigen::VectorXd::Map(&grad[0], g.size()) = g;
             }
-        };
-    } // namespace opt
-} // namespace limbo
+            else {
+                v = eval(*f, params);
+            }
+            return v;
+        }
+
+        int dim_;
+    };
+} // namespace limbo::opt
 
 #endif
 #endif

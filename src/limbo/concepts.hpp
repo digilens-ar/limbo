@@ -43,14 +43,34 @@ namespace limbo::concepts
 		{ a.dim_in() } -> std::convertible_to<size_t>;
 	};
 
+	struct StateFuncArchetype
+	{
+		Eigen::VectorXd operator()(Eigen::VectorXd const&) { return Eigen::VectorXd(1); }
+		size_t dim_out() const { return 1; }
+		size_t dim_in() const { return 1; }
+	};
+
 	template <typename T>
 	concept AggregatorFunc = Callable<T, double, Eigen::VectorXd>;
 
-	template<typename T, typename StateFunction>
+	template<typename T>
+	concept BayesOptimizer = requires (T a)
+	{
+		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<void>;
+	};
+
+	template<typename T>
+	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
+
+	struct EvalFuncArchetype
+	{
+		std::pair<double, std::optional<Eigen::VectorXd>> operator()(Eigen::VectorXd, bool) { return std::pair { 0.0, std::nullopt }; }
+	};
+
+	template<typename T>
 	concept Optimizer = requires (T a)
 	{
-		{a.eval_and_add(StateFunction(), Eigen::VectorXd()) } -> std::convertible_to<void>;
-	}
-	&&
-		StateFunc<StateFunction>;
+		{ T::create(3) } -> std::convertible_to<T>;
+		{ a.optimize(EvalFuncArchetype{}, Eigen::VectorXd{}, true) } -> std::convertible_to<Eigen::VectorXd>;
+	};
 }

@@ -70,8 +70,13 @@ namespace limbo {
         template <typename opt_gridsearch>
         struct GridSearch {
         public:
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            static GridSearch create(int dims)
+            {
+                return GridSearch();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
                 // Grid search does not support unbounded search
                 assert(bounded);
@@ -80,7 +85,7 @@ namespace limbo {
             }
 
         protected:
-            template <typename F>
+            template <concepts::EvalFunc F>
             Eigen::VectorXd _inner_search(const F& f, size_t depth, const Eigen::VectorXd& current) const
             {
                 size_t dim = current.size();

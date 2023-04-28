@@ -53,7 +53,7 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the mean only (try to align the mean function)
-            template <typename opt_rprop, typename Optimizer = opt::Rprop<opt_rprop>>
+            template <typename opt_rprop, concepts::Optimizer Optimizer = opt::Rprop<opt_rprop>>
             struct MeanLFOpt : public HPOpt {
             public:
                 template <typename GP>
@@ -61,8 +61,8 @@ namespace limbo {
                 {
                     this->_called = true;
                     MeanLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
-                    Eigen::VectorXd params = optimizer(optimization, gp.mean_function().h_params(), false);
+                    Optimizer optimizer = Optimizer::create(gp.mean_function().h_params().size());
+                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.mean_function().h_params(), false);
                     gp.mean_function().set_h_params(params);
                     gp.recompute(true, false);
                     gp.compute_log_lik();

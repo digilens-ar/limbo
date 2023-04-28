@@ -73,10 +73,16 @@ namespace limbo {
         ///
         /// Parameters:
         /// - int repeats
-        template <typename opt_parallelrepeater, typename Optimizer>
+        template <typename opt_parallelrepeater, concepts::Optimizer Optimizer>
         struct ParallelRepeater {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+
+            static ParallelRepeater create(int dims)
+            {
+                return ParallelRepeater();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
                 assert(opt_parallelrepeater::repeats() > 0);
                 assert(opt_parallelrepeater::epsilon() > 0.);
@@ -86,7 +92,7 @@ namespace limbo {
                 auto body = [&](int i) {
                     
                     Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
-                    Eigen::VectorXd v = Optimizer()(f, init + r_deviation, bounded);
+                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, init + r_deviation, bounded);
                     double val = opt::eval(f, v);
 
                     return std::make_pair(v, val);

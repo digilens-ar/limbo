@@ -53,7 +53,7 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
-            template <typename opt_rprop, typename Optimizer = opt::Rprop<opt_rprop>>
+            template <typename opt_rprop, concepts::Optimizer Optimizer = opt::Rprop<opt_rprop>>
             struct KernelLFOpt : HPOpt {
             public:
                 template <typename GP>
@@ -61,8 +61,8 @@ namespace limbo {
                 {
                     this->_called = true;
                     KernelLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
-                    Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), false);
+                    Optimizer optimizer = Optimizer::create(gp.kernel_function().h_params().size());
+                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.kernel_function().h_params(), false);
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
                     gp.compute_log_lik();

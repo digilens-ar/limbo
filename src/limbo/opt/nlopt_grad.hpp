@@ -105,9 +105,9 @@ namespace limbo {
          - double xrel_tolerance
         */
         template <typename opt_nloptgrad, nlopt::algorithm Algorithm = nlopt::LD_LBFGS>
-        struct NLOptGrad : public NLOptBase<Algorithm> {
+        class NLOptGrad : public NLOptBase {
         public:
-            void initialize(int dim) override
+            static NLOptGrad create(int dim)
             {
                 // Assert that the algorithm is gradient-based
                 // TO-DO: Add support for MLSL (Multi-Level Single-Linkage)
@@ -120,14 +120,17 @@ namespace limbo {
                     Algorithm == nlopt::GD_STOGO_RAND || Algorithm == nlopt::LD_LBFGS_NOCEDAL ||
                     Algorithm == nlopt::LD_AUGLAG || Algorithm == nlopt::LD_AUGLAG_EQ ||
                     Algorithm == nlopt::LD_CCSAQ, "NLOptGrad accepts gradient-based nlopt algorithms only");
-                
 
-                NLOptBase<Algorithm>::initialize(dim);
+                NLOptGrad opt(Algorithm, dim);
 
-                this->_opt.set_maxeval(opt_nloptgrad::iterations());
-                this->_opt.set_ftol_rel(opt_nloptgrad::fun_tolerance());
-                this->_opt.set_xtol_rel(opt_nloptgrad::xrel_tolerance());
+                opt._opt.set_maxeval(opt_nloptgrad::iterations());
+                opt._opt.set_ftol_rel(opt_nloptgrad::fun_tolerance());
+                opt._opt.set_xtol_rel(opt_nloptgrad::xrel_tolerance());
+                return opt;
             }
+
+        protected:
+            using NLOptBase::NLOptBase;
         };
     } // namespace opt
 } // namespace limbo
