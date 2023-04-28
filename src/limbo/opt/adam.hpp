@@ -92,8 +92,14 @@ namespace limbo {
         /// - double eps_stop
         template <typename opt_adam>
         struct Adam {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+
+            static Adam create(int dims)
+            {
+                return Adam();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
                 assert(opt_adam::b1() >= 0. && opt_adam::b1() < 1.);
                 assert(opt_adam::b2() >= 0. && opt_adam::b2() < 1.);

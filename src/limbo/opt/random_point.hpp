@@ -56,8 +56,13 @@ namespace limbo {
         /// - no parameters
         /// - useful for control experiments (do not use this otherwise!)
         struct RandomPoint {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            static RandomPoint create(int dims)
+            {
+                return RandomPoint();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
                 // Random point does not support unbounded search
                 assert(bounded);

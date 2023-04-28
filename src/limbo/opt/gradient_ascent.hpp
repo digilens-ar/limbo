@@ -92,8 +92,14 @@ namespace limbo {
         /// - double eps_stop
         template <typename opt_gradient_ascent>
         struct GradientAscent {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+
+            static GradientAscent create(int dims)
+            {
+                return GradientAscent();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
             {
                 assert(opt_gradient_ascent::gamma() >= 0. && opt_gradient_ascent::gamma() < 1.);
                 assert(opt_gradient_ascent::alpha() >= 0.);

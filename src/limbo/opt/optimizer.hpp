@@ -50,6 +50,7 @@
 
 #include <Eigen/Core>
 #include <optional>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     ///\defgroup opt_tools
@@ -80,7 +81,7 @@ namespace limbo {
 
         ///@ingroup opt_tools
         /// Evaluate f without gradient (to be called from the optimization algorithms that do not use the gradient)
-        template <typename F>
+        template <concepts::EvalFunc F>
         inline double eval(const F& f, const Eigen::VectorXd& x)
         {
             return std::get<0>(f(x, false));
@@ -88,7 +89,7 @@ namespace limbo {
 
         ///@ingroup opt_tools
         /// Evaluate f with gradient (to be called from the optimization algorithms that use the gradient)
-        template <typename F>
+        template <concepts::EvalFunc F>
         inline eval_t eval_grad(const F& f, const Eigen::VectorXd& x)
         {
             return f(x, true);

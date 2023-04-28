@@ -61,24 +61,44 @@ namespace limbo {
         };
 
         // Base case: just 1 optimizer to call
-        template <typename Optimizer>
+        template <concepts::Optimizer Optimizer>
         struct Chained<Optimizer> {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Chained(int dims): dims_(dims) {}
+
+        	static Chained create(int dims)
             {
-                return Optimizer()(f, init, bounded);
+                return Chained(dims);
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            {
+                return Optimizer::create(dims_).optimize(f, init, bounded);
             };
+
+        protected:
+            int dims_;
         };
 
         // Recursive case: call current optimizer, and pass result as init value for the next one
-        template <typename Optimizer, typename... Optimizers>
+        template <concepts::Optimizer Optimizer, concepts::Optimizer... Optimizers>
         struct Chained<Optimizer, Optimizers...> : Chained<Optimizers...> {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Chained(int dims):
+				Chained<Optimizers...>(dims)
+        	{}
+
+            static Chained create(int dims)
             {
-                return Chained<Optimizers...>::operator()(f, Optimizer()(f, init, bounded), bounded);
+                return Chained(dims);
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            {
+                return Chained<Optimizers...>::optimize(f, Optimizer::create(Chained<Optimizers...>::dims_).optimize(f, init, bounded), bounded);
             };
         };
+
     }
 }
 
