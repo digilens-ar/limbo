@@ -81,7 +81,7 @@ namespace limbo {
                     point[dim_in] = x;
                     if (dim_in == current.size() - 1) {
                         auto q = bo.model().query(point);
-                        double acqui = opt::fun(typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(point, afun, false));
+                        auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(point, afun, false);
                         ofs << point.transpose() << " "
                             << std::get<0>(q).transpose() << " "
                             << std::get<1>(q) << " "

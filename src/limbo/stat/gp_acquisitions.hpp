@@ -66,17 +66,11 @@ namespace limbo {
                 if (bo.total_iterations() == 0)
                     (*this->_log_file) << "#iteration mu sigma acquisition" << std::endl;
 
-                Eigen::VectorXd mu;
-                double sigma, acqui;
-
                 if (!bo.samples().empty()) {
-                    std::tie(mu, sigma) = bo.model().query(bo.samples().back());
-                    acqui = opt::fun(typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(bo.samples().back(), afun, false));
+                    auto [mu, sigma] = bo.model().query(bo.samples().back());
+                    auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(bo.samples().back(), afun, false);
+                    (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
                 }
-                else
-                    return;
-
-                (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
             }
         };
     }

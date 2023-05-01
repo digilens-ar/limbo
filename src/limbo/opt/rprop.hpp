@@ -115,13 +115,12 @@ namespace limbo {
                 double best = log(0);
 
                 for (int i = 0; i < opt_rprop::iterations(); ++i) {
-                    auto perf = opt::eval_grad(f, params);
-                    double lik = opt::fun(perf);
-                    if (lik > best) {
-                        best = lik;
+                    auto [funcVal, gradient] = f(params, true);
+                    if (funcVal > best) {
+                        best = funcVal;
                         best_params = params;
                     }
-                    Eigen::VectorXd grad = -opt::grad(perf);
+                    Eigen::VectorXd grad = -gradient.value();
                     grad_old = grad_old.cwiseProduct(grad);
 
                     for (int j = 0; j < grad_old.size(); ++j) {

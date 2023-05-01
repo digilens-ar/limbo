@@ -140,10 +140,9 @@ namespace limbo {
                             }
                         }
                     }
-                    auto perf = opt::eval_grad(f, query_params);
+                    auto [funcVal, gradient] = f(query_params, true);
 
-                    Eigen::VectorXd grad = opt::grad(perf);
-                    v = gamma * v.array() + alpha * grad.array();
+                    v = gamma * v.array() + alpha * gradient.value().array();
 
                     params.array() += v.array();
 

@@ -59,6 +59,7 @@ namespace limbo::concepts
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<void>;
 	};
 
+	//An "Evaluation function" takes a coordinate and a true/false of whether to calculate the gradient as input. Returns the value and gradient at that coordinate.
 	template<typename T>
 	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
 

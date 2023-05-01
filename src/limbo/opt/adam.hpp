@@ -130,11 +130,10 @@ namespace limbo {
 
                 for (int i = 0; i < opt_adam::iterations(); ++i) {
                     Eigen::VectorXd prev_params = params;
-                    auto perf = opt::eval_grad(f, params);
+                    auto [funcVal, gradient] = f(params, true);
 
-                    Eigen::VectorXd grad = opt::grad(perf);
-                    m = b1 * m.array() + (1. - b1) * grad.array();
-                    v = b2 * v.array() + (1. - b2) * grad.array().square();
+                    m = b1 * m.array() + (1. - b1) * gradient.value().array();
+                    v = b2 * v.array() + (1. - b2) * gradient.value().array().square();
 
                     Eigen::VectorXd m_hat = m.array() / (1. - b1_t);
                     Eigen::VectorXd v_hat = v.array() / (1. - b2_t);

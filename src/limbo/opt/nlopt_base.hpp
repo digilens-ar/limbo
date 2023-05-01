@@ -133,10 +133,9 @@ namespace limbo::opt {
             Eigen::VectorXd params = Eigen::VectorXd::Map(x.data(), x.size());
             double v;
             if (!grad.empty()) {
-                auto r = eval_grad(*f, params);
-                v = opt::fun(r);
-                Eigen::VectorXd g = opt::grad(r);
-                Eigen::VectorXd::Map(&grad[0], g.size()) = g;
+                auto [funcVal, gradient] = (*f)(params, true);
+                v = funcVal;
+                Eigen::VectorXd::Map(&grad[0], gradient.value().size()) = gradient.value();
             }
             else {
                 v = eval(*f, params);
