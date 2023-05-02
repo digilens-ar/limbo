@@ -171,12 +171,7 @@ namespace limbo {
         class BOptimizer {
         public:
             // Public types
-            using init_function_t = init_t;
             using acquisition_function_t = acqui_t;
-            using model_t = model_type;
-            using acqui_optimizer_t = acqui_opt_t;
-            using stopping_criteria_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type;
-            using stat_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
 
             /// default constructor
             BOptimizer() = default;
@@ -196,22 +191,24 @@ namespace limbo {
                 }
 
                 if (this->_total_iterations == 0) {
-                    init_function_t()(sfun, afun, *this);
+                    init_t()(sfun, afun, *this);
                 }
 
                 if (!this->_observations.empty())
                     _model.compute(this->_samples, this->_observations);
                 else
-                    _model = model_t(sfun.dim_in(), sfun.dim_out());
+                    _model = model_type(sfun.dim_in(), sfun.dim_out());
 
-                acqui_optimizer_t acqui_optimizer = acqui_optimizer_t::create(sfun.dim_in());
+                acqui_opt_t acqui_optimizer = acqui_opt_t::create(sfun.dim_in());
 
                 while (!this->_stop(afun)) {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
-                    auto acqui_optimization = [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); };
                     Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
-                    Eigen::VectorXd new_sample = acqui_optimizer.optimize(acqui_optimization, starting_point, Params::bayes_opt_boptimizer::bounded());
+                    Eigen::VectorXd new_sample = acqui_optimizer.optimize(
+                        [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); },
+                        starting_point, 
+                        Params::bayes_opt_boptimizer::bounded());
                     this->eval_and_add(sfun, new_sample);
 
                     if (Params::bayes_opt_boptimizer::stats_enabled()) {
@@ -249,7 +246,7 @@ namespace limbo {
                 return this->_samples[std::distance(rewards.begin(), max_e)];
             }
 
-            const model_t& model() const { return _model; }
+            const model_type& model() const { return _model; }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
             const std::vector<Eigen::VectorXd>& observations() const { return _observations; }
@@ -298,11 +295,11 @@ namespace limbo {
 
             int _current_iteration = 0;
             int _total_iterations = 0;
-            stopping_criteria_t _stopping_criteria;
-            stat_t stat_;
+            typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type _stopping_criteria;
+            typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type stat_;
             std::vector<Eigen::VectorXd> _observations;
             std::vector<Eigen::VectorXd> _samples;
-            model_t _model;
+            model_type _model;
         };
 
         namespace _default_hp {

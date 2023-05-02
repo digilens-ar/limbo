@@ -67,7 +67,7 @@ namespace limbo {
         ///Stop once the value for the best sample is above : ratio * (best value predicted by the model)
         ///
         ///Parameter: double ratio
-        template <typename stop_maxpredictedvalue, typename Optimizer = void_>
+        template <typename stop_maxpredictedvalue, concepts::Optimizer Optimizer>
         struct MaxPredictedValue {
 
             MaxPredictedValue() {}
@@ -79,11 +79,9 @@ namespace limbo {
                 if (bo.observations().size() == 0)
                     return false;
 
-                auto optimizer = _get_optimizer(typename BO::acqui_optimizer_t(), Optimizer());
                 Eigen::VectorXd starting_point = tools::random_vector(bo.model().dim_in());
-                auto model_optimization =
-                    [&](const Eigen::VectorXd& x, bool g) { return opt::no_grad(afun(bo.model().mu(x))); };
-                auto x = optimizer(model_optimization, starting_point, true);
+                auto model_optimization = [&](const Eigen::VectorXd& x, bool g) { return opt::no_grad(afun(bo.model().mu(x))); };
+                auto x = Optimizer::create(bo.model().dim_in())(model_optimization, starting_point, true);
                 double val = afun(bo.model().mu(x));
 
                 if (bo.observations().size() == 0 || afun(bo.best_observation(afun)) <= stop_maxpredictedvalue::ratio() * val)
@@ -127,18 +125,6 @@ namespace limbo {
             inline ModelMeanOptimization<Model, AggregatorFunction> _make_model_mean_optimization(const Model& model, const AggregatorFunction& afun, const Eigen::VectorXd& init) const
             {
                 return ModelMeanOptimization<Model, AggregatorFunction>(model, afun, init);
-            }
-
-            template <typename BoAcquiOpt>
-            inline BoAcquiOpt _get_optimizer(const BoAcquiOpt& bo_acqui_opt, void_) const
-            {
-                return bo_acqui_opt;
-            }
-
-            template <typename BoAcquiOpt, typename CurrentOpt>
-            inline CurrentOpt _get_optimizer(const BoAcquiOpt&, const CurrentOpt& current_opt) const
-            {
-                return current_opt;
             }
         };
     }
