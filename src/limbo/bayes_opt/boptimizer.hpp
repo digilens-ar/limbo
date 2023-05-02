@@ -171,7 +171,6 @@ namespace limbo {
         class BOptimizer {
         public:
             // Public types
-            using params_t = Params;
             using init_function_t = init_t;
             using acquisition_function_t = acqui_t;
             using model_t = model_type;
@@ -180,19 +179,25 @@ namespace limbo {
             using stat_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
 
             /// default constructor
-            BOptimizer() : _total_iterations(0) {}
+            BOptimizer() = default;
 
-            /// copy is disabled (dangerous and useless)
-            BOptimizer(const BOptimizer& other) = delete;
-            /// copy is disabled (dangerous and useless)
-            BOptimizer& operator=(const BOptimizer& other) = delete;
-
+            BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
+            BOptimizer& operator=(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
             void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
-                this->_init(sfun, afun, reset);
+                this->_current_iteration = 0;
+                if (reset) {
+                    this->_total_iterations = 0;
+                    this->_samples.clear();
+                    this->_observations.clear();
+                }
+
+                if (this->_total_iterations == 0) {
+                    init_function_t()(sfun, afun, *this);
+                }
 
                 if (!this->_observations.empty())
                     _model.compute(this->_samples, this->_observations);
@@ -201,7 +206,7 @@ namespace limbo {
 
                 acqui_optimizer_t acqui_optimizer = acqui_optimizer_t::create(sfun.dim_in());
 
-                while (!this->_stop(*this, afun)) {
+                while (!this->_stop(afun)) {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
                     auto acqui_optimization = [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); };
@@ -257,9 +262,19 @@ namespace limbo {
 
             int total_iterations() const { return _total_iterations; }
 
+            /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
+            template <concepts::StateFunc StateFunction>
+            void eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
+            {
+                this->add_new_sample(sample, seval(sample));
+            }
+
+            bool isBounded() const { return Params::bayes_opt_boptimizer::bounded(); }
+
+        private:
             /// Add a new sample / observation pair
-            /// - does not update the model!
-            /// - we don't add NaN and inf observations
+			/// - does not update the model!
+			/// - we don't add NaN and inf observations
             void add_new_sample(const Eigen::VectorXd& s, const Eigen::VectorXd& v)
             {
                 if (!v.allFinite())
@@ -268,32 +283,10 @@ namespace limbo {
                 _observations.push_back(v);
             }
 
-            /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
-            template <concepts::StateFunc StateFunction>
-            void eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
+            template <typename AggregatorFunction>
+            bool _stop(const AggregatorFunction& afun) const
             {
-                this->add_new_sample(sample, seval(sample));
-            }
-
-        private:
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction>
-            void _init(const StateFunction& seval, const AggregatorFunction& afun, bool reset = true)
-            {
-                this->_current_iteration = 0;
-                if (reset) {
-                    this->_total_iterations = 0;
-                    this->_samples.clear();
-                    this->_observations.clear();
-                }
-
-                if (this->_total_iterations == 0)
-                    init_function_t()(seval, afun, *this);
-            }
-
-            template <typename BO, typename AggregatorFunction>
-            bool _stop(const BO& bo, const AggregatorFunction& afun) const
-            {
-                stop::ChainCriteria<BO, AggregatorFunction> chain(bo, afun);
+                stop::ChainCriteria<decltype(*this), AggregatorFunction> chain(*this, afun);
                 return boost::fusion::accumulate(_stopping_criteria, false, chain);
             }
 
@@ -303,8 +296,8 @@ namespace limbo {
                 boost::fusion::for_each(stat_, [this, &afun](concepts::StatsFunc auto& func) { func.template operator()<decltype(*this), AggregatorFunction>(*this, afun); });
             }
 
-            int _current_iteration;
-            int _total_iterations;
+            int _current_iteration = 0;
+            int _total_iterations = 0;
             stopping_criteria_t _stopping_criteria;
             stat_t stat_;
             std::vector<Eigen::VectorXd> _observations;

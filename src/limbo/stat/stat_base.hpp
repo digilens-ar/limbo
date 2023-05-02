@@ -87,7 +87,6 @@ namespace limbo {
             template <typename BO>
             void _create_log_file(const BO& bo, const std::string& name)
             {
-
                 char date[30];
                 time_t date_time;
                 time(&date_time);
