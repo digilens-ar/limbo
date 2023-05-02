@@ -81,12 +81,12 @@ namespace limbo {
     }
 
     struct FirstElem {
-        using result_type = double;
         double operator()(const Eigen::VectorXd& x) const
         {
             return x(0);
         }
     };
+
     class EvaluationError : public std::exception {};
 
     namespace bayes_opt {
@@ -264,7 +264,7 @@ namespace limbo {
             /// - we don't add NaN and inf observations
             void add_new_sample(const Eigen::VectorXd& s, const Eigen::VectorXd& v)
             {
-                if (tools::is_nan_or_inf(v))
+                if (!v.allFinite())
                     throw EvaluationError();
                 _samples.push_back(s);
                 _observations.push_back(v);

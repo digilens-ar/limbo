@@ -48,9 +48,19 @@
 
 ///@defgroup tools
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/math.hpp>
 #include <limbo/tools/parallel.hpp>
 #include <limbo/tools/random_generator.hpp>
-#include <limbo/tools/sys.hpp>
+
+namespace limbo::tools
+{
+    /// @ingroup tools
+	/// make a 1-D vector from a double (useful when we need to return vectors)
+    inline Eigen::VectorXd make_vector(double x)
+    {
+        Eigen::VectorXd res(1);
+        res(0) = x;
+        return res;
+    }
+}
 
 #endif

@@ -48,7 +48,6 @@
 
 #include <fstream>
 #include <string>
-#include <limbo/tools.hpp>
 #include <memory>
 
 
@@ -88,7 +87,13 @@ namespace limbo {
             template <typename BO>
             void _create_log_file(const BO& bo, const std::string& name)
             {
-                std::filesystem::path res_dir = "stats_" + tools::date() + "_" + tools::getpid();
+
+                char date[30];
+                time_t date_time;
+                time(&date_time);
+                strftime(date, 30, "%Y-%m-%d_%H_%M_%S", localtime(&date_time));
+
+                std::filesystem::path res_dir = "stats_" + std::string(date) + "_" + std::to_string(::_getpid());
                 if (!exists(res_dir))
                 {
                     create_directory(res_dir);

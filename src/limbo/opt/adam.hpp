@@ -52,7 +52,6 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/math.hpp>
 
 namespace limbo {
     namespace defaults {
