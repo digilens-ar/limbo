@@ -325,7 +325,7 @@ namespace limbo {
             {
                 if (!Params::bayes_opt_boptimizer::stats_enabled())
                     return;
-                _res_dir = tools::hostname() + "_" + tools::date() + "_" + tools::getpid();
+                _res_dir = "stats_" + tools::date() + "_" + tools::getpid();
                 std::filesystem::path my_path(_res_dir);
                 std::filesystem::create_directory(my_path);
             }

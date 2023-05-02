@@ -49,11 +49,6 @@
 
 #include <ctime>
 #include <string>
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
 
 namespace limbo {
     namespace tools {
@@ -66,24 +61,6 @@ namespace limbo {
             time(&date_time);
             strftime(date, 30, "%Y-%m-%d_%H_%M_%S", localtime(&date_time));
             return std::string(date);
-        }
-
-        /// @ingroup tools
-        /// easy way to get the hostame
-        inline std::string hostname()
-        {
-            char hostname[50];
-#ifdef _WIN32
-            DWORD buffCharCount = 50;
-            bool ok = GetComputerNameA(hostname, &buffCharCount);
-            assert(ok);
-#else
-            int res = gethostname(hostname, 50);
-            assert(res == 0);
-            res = 0; // avoid a warning in opt mode
-#endif
-           
-            return std::string(hostname);
         }
 
         /// @ingroup tools
