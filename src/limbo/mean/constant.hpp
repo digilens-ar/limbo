@@ -58,7 +58,7 @@ namespace limbo {
 
     namespace mean {
         /** @ingroup mean
-          A constant mean (the traditionnal choice for Bayesian optimization)
+          A constant mean (the traditional choice for Bayesian optimization)
 
           Parameter:
             - ``double constant`` (the value of the constant)
