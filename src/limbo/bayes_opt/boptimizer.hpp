@@ -47,7 +47,6 @@
 #define LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <filesystem>
 #include <Eigen/Core>
@@ -210,7 +209,9 @@ namespace limbo {
                     Eigen::VectorXd new_sample = acqui_optimizer.optimize(acqui_optimization, starting_point, Params::bayes_opt_boptimizer::bounded());
                     this->eval_and_add(sfun, new_sample);
 
-                    this->_update_stats(*this, afun);
+                    if (Params::bayes_opt_boptimizer::stats_enabled()) {
+                        this->_update_stats(afun);
+                    }
 
                     _model.add_sample(this->_samples.back(), this->_observations.back());
 
@@ -244,9 +245,6 @@ namespace limbo {
             }
 
             const model_t& model() const { return _model; }
-
-            /// return true if the statitics are enabled (they can be disabled to avoid dumping data, e.g. for unit tests)
-            bool stats_enabled() const { return Params::bayes_opt_boptimizer::stats_enabled(); }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
             const std::vector<Eigen::VectorXd>& observations() const { return _observations; }
@@ -299,10 +297,10 @@ namespace limbo {
                 return boost::fusion::accumulate(_stopping_criteria, false, chain);
             }
 
-            template <typename BO, typename AggregatorFunction>
-            void _update_stats(BO& bo, const AggregatorFunction& afun)
+            template <typename AggregatorFunction>
+            void _update_stats(const AggregatorFunction& afun)
             { // not const, because some stat class modify the optimizer....
-                boost::fusion::for_each(stat_, [&bo, &afun](concepts::StatsFunc auto& func) { func.template operator()<BO, AggregatorFunction>(bo, afun); });
+                boost::fusion::for_each(stat_, [this, &afun](concepts::StatsFunc auto& func) { func.template operator()<decltype(*this), AggregatorFunction>(*this, afun); });
             }
 
             int _current_iteration;

@@ -56,7 +56,7 @@ namespace limbo {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
-                if (!bo.stats_enabled() || bo.observations().empty())
+                if (bo.observations().empty())
                     return;
 
                 std::cout << bo.total_iterations() << " new point: "

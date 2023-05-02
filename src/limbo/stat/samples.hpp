@@ -57,7 +57,7 @@ namespace limbo {
             template <typename BO, concepts::AggregatorFunc AggregatorFunction>
             void operator()(const BO& bo,  AggregatorFunction const&)
             {
-                if (!bo.stats_enabled() || bo.samples().empty())
+                if (bo.samples().empty())
                     return;
 
                 this->_create_log_file(bo, "samples.dat");

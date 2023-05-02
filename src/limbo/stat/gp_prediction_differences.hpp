@@ -58,7 +58,7 @@ namespace limbo {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
-                if (!bo.stats_enabled() || bo.observations().empty())
+                if (bo.observations().empty())
                     return;
 
                 this->_create_log_file(bo, "gp_prediction_differences.dat");

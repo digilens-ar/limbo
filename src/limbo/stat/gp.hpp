@@ -59,8 +59,6 @@ namespace limbo {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
-                if (!bo.stats_enabled())
-                    return;
                 std::string fname = bo.res_dir() + "/" + "gp_" + std::to_string(bo.total_iterations()) + ".dat";
                 std::ofstream ofs(fname.c_str());
                 int gp_in = bo.model().dim_in();

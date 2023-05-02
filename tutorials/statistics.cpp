@@ -111,7 +111,7 @@ struct WorstObservation : public limbo::stat::StatBase {
     void operator()(const BO& bo, const AggregatorFunction& afun)
     {
         // [optional] if statistics have been disabled or if there are no observations, we do not do anything
-        if (!bo.stats_enabled() || bo.observations().empty())
+        if (bo.observations().empty())
             return;
 
         // [optional] we create a file to write / you can use your own file but remember that this method is called at each iteration (you need to create it in the constructor)

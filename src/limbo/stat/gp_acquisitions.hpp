@@ -58,9 +58,6 @@ namespace limbo {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
-                if (!bo.stats_enabled())
-                    return;
-
                 this->_create_log_file(bo, "gp_acquisitions.dat");
 
                 if (bo.total_iterations() == 0)

@@ -98,7 +98,7 @@ namespace limbo {
                 {
                     create_directory(res_dir);
                 }
-                if (!_log_file && bo.stats_enabled()) {
+                if (!_log_file) {
                     std::filesystem::path log = res_dir / name;
                     _log_file = std::make_shared<std::ofstream>(log.c_str());
                     assert(_log_file->good());
