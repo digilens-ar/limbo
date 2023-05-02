@@ -47,14 +47,15 @@
 #define LIMBO_STAT_SAMPLES_HPP
 
 #include <limbo/stat/stat_base.hpp>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `samples.dat`
         struct Samples : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction&)
+            template <typename BO, concepts::AggregatorFunc AggregatorFunction>
+            void operator()(const BO& bo,  AggregatorFunction const&)
             {
                 if (!bo.stats_enabled() || bo.samples().empty())
                     return;

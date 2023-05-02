@@ -65,6 +65,11 @@ namespace limbo::concepts
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<void>;
 	};
 
+	struct BayesOptimizerArchetype
+	{
+		void eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) {};
+	};
+
 	// An evaluationFunction takes a coordinate and a t/f if gradient needs to be calculated and returns the objective function value and optionally the gradient at that location.
 	template<typename T>
 	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
@@ -87,6 +92,13 @@ namespace limbo::concepts
 	concept AcquisitionFunc = requires (T a)
 	{
 		// { T(ModelArchetype(), 3) } -> std::convertible_to<T>;
-		{ a(Eigen::VectorXd{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
+		{ a.operator()(Eigen::VectorXd{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
+	};
+
+	//Receives data about the model and saves/logs it somewhere
+	template <typename T>
+	concept StatsFunc = requires (T a)
+	{
+		{ a.operator()(BayesOptimizerArchetype{}, AggregatorFuncArchetype{}) } -> std::convertible_to<void>;
 	};
 }

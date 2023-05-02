@@ -48,7 +48,7 @@
 
 #include <fstream>
 #include <string>
-
+#include <limbo/tools.hpp>
 #include <memory>
 
 
@@ -88,12 +88,18 @@ namespace limbo {
             template <typename BO>
             void _create_log_file(const BO& bo, const std::string& name)
             {
+                std::filesystem::path res_dir = "stats_" + tools::date() + "_" + tools::getpid();
+                if (!exists(res_dir))
+                {
+                    create_directory(res_dir);
+                }
                 if (!_log_file && bo.stats_enabled()) {
-                    std::string log = bo.res_dir() + "/" + name;
+                    std::filesystem::path log = res_dir / name;
                     _log_file = std::make_shared<std::ofstream>(log.c_str());
                     assert(_log_file->good());
                 }
             }
+
 
         };
     }

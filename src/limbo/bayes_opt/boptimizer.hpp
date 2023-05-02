@@ -80,18 +80,6 @@ namespace limbo {
         };
     }
 
-    template <typename BO, typename AggregatorFunction>
-    struct RefreshStat_f {
-        RefreshStat_f(BO& bo, const AggregatorFunction& afun)
-            : _bo(bo), _afun(afun) {}
-
-        BO& _bo;
-        const AggregatorFunction& _afun;
-
-        template <typename T>
-        void operator()(T& x) const { x(_bo, _afun); }
-    };
-
     struct FirstElem {
         using result_type = double;
         double operator()(const Eigen::VectorXd& x) const
@@ -193,7 +181,7 @@ namespace limbo {
             using stat_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
 
             /// default constructor
-            BOptimizer() : _total_iterations(0) { _make_res_dir(); }
+            BOptimizer() : _total_iterations(0) {}
 
             /// copy is disabled (dangerous and useless)
             BOptimizer(const BOptimizer& other) = delete;
@@ -260,9 +248,6 @@ namespace limbo {
             /// return true if the statitics are enabled (they can be disabled to avoid dumping data, e.g. for unit tests)
             bool stats_enabled() const { return Params::bayes_opt_boptimizer::stats_enabled(); }
 
-            /// return the name of the directory in which results (statistics) are written
-            const std::string& res_dir() const { return _res_dir; }
-
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
             const std::vector<Eigen::VectorXd>& observations() const { return _observations; }
 
@@ -316,21 +301,10 @@ namespace limbo {
 
             template <typename BO, typename AggregatorFunction>
             void _update_stats(BO& bo, const AggregatorFunction& afun)
-            { // not const, because some stat class
-                // modify the optimizer....
-                boost::fusion::for_each(stat_, RefreshStat_f<BO, AggregatorFunction>(bo, afun));
+            { // not const, because some stat class modify the optimizer....
+                boost::fusion::for_each(stat_, [&bo, &afun](concepts::StatsFunc auto& func) { func.template operator()<BO, AggregatorFunction>(bo, afun); });
             }
 
-            void _make_res_dir()
-            {
-                if (!Params::bayes_opt_boptimizer::stats_enabled())
-                    return;
-                _res_dir = "stats_" + tools::date() + "_" + tools::getpid();
-                std::filesystem::path my_path(_res_dir);
-                std::filesystem::create_directory(my_path);
-            }
-
-            std::string _res_dir;
             int _current_iteration;
             int _total_iterations;
             stopping_criteria_t _stopping_criteria;
