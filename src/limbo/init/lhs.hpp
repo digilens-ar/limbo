@@ -72,7 +72,7 @@ namespace limbo {
             template <typename StateFunction, typename AggregatorFunction, typename Opt>
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
-                assert(Opt::params_t::bayes_opt_bobase::bounded());
+                assert(Opt::params_t::bayes_opt_boptimizer::bounded());
 
                 Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), init_lhs::samples());
 

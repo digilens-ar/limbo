@@ -55,11 +55,8 @@ using namespace limbo;
 
 namespace {
     struct Params {
-        struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-            BO_PARAM(bool, stats_enabled, false);
-        };
-
         struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+            BO_PARAM(bool, stats_enabled, false);
         };
 
         struct stop_maxiterations {

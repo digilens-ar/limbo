@@ -53,15 +53,13 @@
 using namespace limbo;
 
 struct Params {
-    struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-        BO_PARAM(bool, stats_enabled, false);
-    };
     struct bayes_opt_boptimizer {
 #if defined(LIMBO_DEF_HPOPT) || defined(BAYESOPT_DEF_HPOPT)
         BO_PARAM(int, hp_period, 50);
 #else
         BO_PARAM(int, hp_period, -1);
 #endif
+        BO_PARAM(bool, stats_enabled, false);
     };
     struct stop_maxiterations {
         BO_PARAM(int, iterations, 190);

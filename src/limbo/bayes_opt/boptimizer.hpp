@@ -49,12 +49,20 @@
 #include <algorithm>
 #include <iostream>
 #include <iterator>
-
+#include <filesystem>
 #include <Eigen/Core>
+#include <boost/fusion/container.hpp>
+#include <boost/fusion/algorithm.hpp>
 
-#include <limbo/bayes_opt/bo_base.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
+#include <limbo/stat.hpp>
+
+#include "limbo/acqui/ucb.hpp"
+#include "limbo/init/random_sampling.hpp"
+#include "limbo/model/gp.hpp"
+#include "limbo/stop/chain_criteria.hpp"
+#include "limbo/stop/max_iterations.hpp"
 #ifdef USE_NLOPT
 #include <limbo/opt/nlopt_no_grad.hpp>
 #elif defined USE_LIBCMAES
@@ -67,8 +75,31 @@ namespace limbo {
     namespace defaults {
         struct bayes_opt_boptimizer {
             BO_PARAM(int, hp_period, -1); // If this is a positive number the model will `optimize_hyperparameters` every `hp_period` iterations
+            BO_PARAM(bool, stats_enabled, true);
+            BO_PARAM(bool, bounded, true);
         };
     }
+
+    template <typename BO, typename AggregatorFunction>
+    struct RefreshStat_f {
+        RefreshStat_f(BO& bo, const AggregatorFunction& afun)
+            : _bo(bo), _afun(afun) {}
+
+        BO& _bo;
+        const AggregatorFunction& _afun;
+
+        template <typename T>
+        void operator()(T& x) const { x(_bo, _afun); }
+    };
+
+    struct FirstElem {
+        using result_type = double;
+        double operator()(const Eigen::VectorXd& x) const
+        {
+            return x(0);
+        }
+    };
+    class EvaluationError : public std::exception {};
 
     namespace bayes_opt {
 
@@ -87,26 +118,60 @@ namespace limbo {
 
 
         /**
+       \rst
+
         The classic Bayesian optimization algorithm.
+
 
         \rst
         References: :cite:`brochu2010tutorial,Mockus2013`
         \endrst
+        
+       Parameters:
+         - ``bool Params::bayes_opt_boptimizer::stats_enabled``: activate / deactivate the statistics
 
-        This class takes the same template parameters as BoBase. It adds:
-        \rst
-        +---------------------+------------+----------+---------------+
-        |type                 |typedef     | argument | default       |
-        +=====================+============+==========+===============+
-        |acqui. optimizer     |acquiopt_t  | acquiopt | see below     |
-        +---------------------+------------+----------+---------------+
-        \endrst
+       This class is templated by several types with default values (thanks to boost::parameters).
 
-        The default value of acqui_opt_t is:
+		+----------------+---------+---------+---------------+
+		|type            |typedef  | argument| default       |
+		+================+=========+=========+===============+
+		|init. func.     |init_t   | initfun | RandomSampling|
+		+----------------+---------+---------+---------------+
+		|model           |model_t  | modelfun| GP<...>       |
+		+----------------+---------+---------+---------------+
+		|acquisition fun.|aqui_t   | acquifun| GP_UCB        |
+		+----------------+---------+---------+---------------+
+		|statistics      | stat_t  | statfun | see below     |
+		+----------------+---------+---------+---------------+
+		|stopping crit.  | stop_t  | stopcrit| MaxIterations |
+		+----------------+---------+---------+---------------+
+		|acqui. optimizer|acquiopt_t| acquiopt | see below |
+        +----------------+------------+----------+---------------+
+       \endrst
+
+       For GP, the default value is: ``model::GP<Params, kf_t, mean_t, opt_t>>``,
+         - with ``kf_t = kernel::SquaredExpARD<Params>``
+         - with ``mean_t = mean::Data<Params>``
+         - with ``opt_t = model::gp::KernelLFOpt<Params>``
+
+        (meaning: kernel with automatic relevance determination and mean equals to the mean of the input data, that is, center the data automatically)
+
+       The default value of acqui_opt_t is:
         - ``opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>`` if NLOpt was found in `waf configure`
         - ``opt::Cmaes<Params>`` if libcmaes was found but NLOpt was not found
         - ``opt::GridSearch<Params>`` otherwise (please do not use this: the algorithm will not work as expected!)
-        */
+
+
+       For Statistics, the default value is: ``boost::fusion::vector<stat::Samples<Params>, stat::AggregatedObservations<Params>, stat::ConsoleSummary<Params>>``
+
+       Example of customization:
+         - ``using Kernel_t = kernel::MaternFiveHalves<Params>;``
+         - ``using Mean_t = mean::Data<Params>;``
+         - ``using GP_t = model::GP<Params, Kernel_t, Mean_t>;``
+         - ``using Acqui_t = acqui::UCB<Params, GP_t>;``
+         - ``bayes_opt::BOptimizer<Params, modelfun<GP_t>, acquifun<Acqui_t>> opt;``
+
+       */
 		template <
             class Params,
         	concepts::Model model_type = model::GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
@@ -116,15 +181,25 @@ namespace limbo {
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
 			concepts::Optimizer acqui_opt_t = typename defaults<Params>::acquiopt_t
     	>
-        
-        class BOptimizer : public BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t> {
+        class BOptimizer {
         public:
-            /// link to the corresponding BoBase (useful for typedefs)
-            using base_t = BoBase<Params, init_t, StoppingCriteria, Stat, model_type, acqui_t>;
-            using model_t = typename base_t::model_t;
-            using acquisition_function_t = typename base_t::acquisition_function_t;
-            // extract the types
+            // Public types
+            using params_t = Params;
+            using init_function_t = init_t;
+            using acquisition_function_t = acqui_t;
+            using model_t = model_type;
             using acqui_optimizer_t = acqui_opt_t;
+            using stopping_criteria_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type;
+            using stat_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
+
+            /// default constructor
+            BOptimizer() : _total_iterations(0) { _make_res_dir(); }
+
+            /// copy is disabled (dangerous and useless)
+            BOptimizer(const BOptimizer& other) = delete;
+            /// copy is disabled (dangerous and useless)
+            BOptimizer& operator=(const BOptimizer& other) = delete;
+
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
@@ -143,8 +218,8 @@ namespace limbo {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
                     auto acqui_optimization = [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); };
-                    Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_bobase::bounded());
-                    Eigen::VectorXd new_sample = acqui_optimizer.optimize(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
+                    Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
+                    Eigen::VectorXd new_sample = acqui_optimizer.optimize(acqui_optimization, starting_point, Params::bayes_opt_boptimizer::bounded());
                     this->eval_and_add(sfun, new_sample);
 
                     this->_update_stats(*this, afun);
@@ -182,7 +257,86 @@ namespace limbo {
 
             const model_t& model() const { return _model; }
 
-        protected:
+            /// return true if the statitics are enabled (they can be disabled to avoid dumping data, e.g. for unit tests)
+            bool stats_enabled() const { return Params::bayes_opt_boptimizer::stats_enabled(); }
+
+            /// return the name of the directory in which results (statistics) are written
+            const std::string& res_dir() const { return _res_dir; }
+
+            /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
+            const std::vector<Eigen::VectorXd>& observations() const { return _observations; }
+
+            /// return the list of the points that have been evaluated so far (x)
+            const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
+
+            /// return the current iteration number
+            int current_iteration() const { return _current_iteration; }
+
+            int total_iterations() const { return _total_iterations; }
+
+            /// Add a new sample / observation pair
+            /// - does not update the model!
+            /// - we don't add NaN and inf observations
+            void add_new_sample(const Eigen::VectorXd& s, const Eigen::VectorXd& v)
+            {
+                if (tools::is_nan_or_inf(v))
+                    throw EvaluationError();
+                _samples.push_back(s);
+                _observations.push_back(v);
+            }
+
+            /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
+            template <concepts::StateFunc StateFunction>
+            void eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
+            {
+                this->add_new_sample(sample, seval(sample));
+            }
+
+        private:
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction>
+            void _init(const StateFunction& seval, const AggregatorFunction& afun, bool reset = true)
+            {
+                this->_current_iteration = 0;
+                if (reset) {
+                    this->_total_iterations = 0;
+                    this->_samples.clear();
+                    this->_observations.clear();
+                }
+
+                if (this->_total_iterations == 0)
+                    init_function_t()(seval, afun, *this);
+            }
+
+            template <typename BO, typename AggregatorFunction>
+            bool _stop(const BO& bo, const AggregatorFunction& afun) const
+            {
+                stop::ChainCriteria<BO, AggregatorFunction> chain(bo, afun);
+                return boost::fusion::accumulate(_stopping_criteria, false, chain);
+            }
+
+            template <typename BO, typename AggregatorFunction>
+            void _update_stats(BO& bo, const AggregatorFunction& afun)
+            { // not const, because some stat class
+                // modify the optimizer....
+                boost::fusion::for_each(stat_, RefreshStat_f<BO, AggregatorFunction>(bo, afun));
+            }
+
+            void _make_res_dir()
+            {
+                if (!Params::bayes_opt_boptimizer::stats_enabled())
+                    return;
+                _res_dir = tools::hostname() + "_" + tools::date() + "_" + tools::getpid();
+                std::filesystem::path my_path(_res_dir);
+                std::filesystem::create_directory(my_path);
+            }
+
+            std::string _res_dir;
+            int _current_iteration;
+            int _total_iterations;
+            stopping_criteria_t _stopping_criteria;
+            stat_t stat_;
+            std::vector<Eigen::VectorXd> _observations;
+            std::vector<Eigen::VectorXd> _samples;
             model_t _model;
         };
 

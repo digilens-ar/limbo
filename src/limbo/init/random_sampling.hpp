@@ -74,7 +74,7 @@ namespace limbo {
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
-                    auto new_sample = tools::random_vector(seval.dim_in(), Opt::params_t::bayes_opt_bobase::bounded());
+                    auto new_sample = tools::random_vector(seval.dim_in(), Opt::params_t::bayes_opt_boptimizer::bounded());
                     opt.eval_and_add(seval, new_sample);
                 }
             }

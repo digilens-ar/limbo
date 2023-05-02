@@ -62,13 +62,9 @@ namespace {
         struct opt_cmaes : public defaults::opt_cmaes {
         };
 #endif
-
-        struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-            BO_PARAM(bool, stats_enabled, false);
-        };
-
         struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
             BO_DYN_PARAM(int, hp_period);
+            BO_PARAM(bool, stats_enabled, false);
         };
 
         struct stop_maxiterations {
@@ -169,13 +165,11 @@ TEST(Limbo_Boptimizer, bo_unbounded)
     using namespace limbo;
 
     struct Parameters {
-        struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-            BO_PARAM(bool, stats_enabled, false);
-            BO_PARAM(bool, bounded, false);
-        };
 
         struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
             BO_PARAM(int, hp_period, -1);
+            BO_PARAM(bool, stats_enabled, false);
+            BO_PARAM(bool, bounded, false);
         };
 
         struct opt_cmaes : public defaults::opt_cmaes {

@@ -81,11 +81,9 @@ using namespace limbo;
               };
               struct kernel_exp : public defaults::kernel_exp {
               };
-              struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
-                  BO_PARAM(bool, stats_enabled, true);
-              };
 
               struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+                  BO_PARAM(bool, stats_enabled, true);
               };
 
               struct init_randomsampling {
