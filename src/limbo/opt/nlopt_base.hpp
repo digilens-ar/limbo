@@ -50,13 +50,9 @@
 #warning No NLOpt
 #else
 #include <Eigen/Core>
-
 #include <vector>
-
 #include <nlopt.hpp>
 
-#include <limbo/opt/optimizer.hpp>
-#include <limbo/tools/macros.hpp>
 
 namespace limbo::opt {
     /**
@@ -102,14 +98,14 @@ namespace limbo::opt {
         }
 
         // Inequality constraints of the form f(x) <= 0
-        template <typename F>
+        template <concepts::EvalFunc F>
         void add_inequality_constraint(const F& f, double tolerance = 1e-8)
         {
             _opt.add_inequality_constraint(nlopt_func<F>, (void*)&f, tolerance);
         }
 
         // Equality constraints of the form f(x) = 0
-        template <typename F>
+        template <concepts::EvalFunc F>
         void add_equality_constraint(const F& f, double tolerance = 1e-8)
         {
             _opt.add_equality_constraint(nlopt_func<F>, (void*)&f, tolerance);
@@ -131,16 +127,12 @@ namespace limbo::opt {
         {
             F* f = (F*)(my_func_data);
             Eigen::VectorXd params = Eigen::VectorXd::Map(x.data(), x.size());
-            double v;
-            if (!grad.empty()) {
-                auto [funcVal, gradient] = (*f)(params, true);
-                v = funcVal;
+            auto [funcVal, gradient] = (*f)(params, !grad.empty());
+
+            if (!grad.empty()) { // Copy our new gradient data to nlopt's array.
                 Eigen::VectorXd::Map(&grad[0], gradient.value().size()) = gradient.value();
             }
-            else {
-                v = eval(*f, params);
-            }
-            return v;
+            return funcVal;
         }
 
         int dim_;

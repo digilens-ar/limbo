@@ -174,7 +174,10 @@ namespace limbo {
             using acquisition_function_t = acqui_t;
 
             /// default constructor
-            BOptimizer() = default;
+            BOptimizer(int dimIn):
+				dimIn_(dimIn),
+				acqui_optimizer(acqui_opt_t::create(dimIn))
+            {}
 
             BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer& operator=(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
@@ -183,6 +186,7 @@ namespace limbo {
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
             void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
+                assert(dimIn_ == sfun.dim_in());
                 this->_current_iteration = 0;
                 if (reset) {
                     this->_total_iterations = 0;
@@ -198,9 +202,7 @@ namespace limbo {
                     _model.compute(this->_samples, this->_observations);
                 else
                     _model = model_type(sfun.dim_in(), sfun.dim_out());
-
-                acqui_opt_t acqui_optimizer = acqui_opt_t::create(sfun.dim_in());
-
+                
                 while (!this->_stop(afun)) {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
@@ -268,6 +270,8 @@ namespace limbo {
 
             bool isBounded() const { return Params::bayes_opt_boptimizer::bounded(); }
 
+            acqui_opt_t& getAcquisitionOptimizer() { return acqui_optimizer; }
+
         private:
             /// Add a new sample / observation pair
 			/// - does not update the model!
@@ -297,9 +301,11 @@ namespace limbo {
             int _total_iterations = 0;
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type _stopping_criteria;
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type stat_;
-            std::vector<Eigen::VectorXd> _observations;
+            acqui_opt_t acqui_optimizer;
+			std::vector<Eigen::VectorXd> _observations;
             std::vector<Eigen::VectorXd> _samples;
             model_type _model;
+            int dimIn_;
         };
 
         namespace _default_hp {
