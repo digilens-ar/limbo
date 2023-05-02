@@ -50,8 +50,14 @@ namespace limbo::concepts
 		size_t dim_in() const { return 1; }
 	};
 
+	// This function is responsible for taking in the multidimensional observations and converting to a scalar `score` of the objective at that observation.
 	template <typename T>
 	concept AggregatorFunc = Callable<T, double, Eigen::VectorXd>;
+
+	struct AggregatorFuncArchetype
+	{
+		double operator()(Eigen::VectorXd const& in) { return 0.0; }
+	};
 
 	template<typename T>
 	concept BayesOptimizer = requires (T a)
@@ -59,7 +65,7 @@ namespace limbo::concepts
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<void>;
 	};
 
-	//An "Evaluation function" takes a coordinate and a true/false of whether to calculate the gradient as input. Returns the value and gradient at that coordinate.
+	// An evaluationFunction takes a coordinate and a t/f if gradient needs to be calculated and returns the objective function value and optionally the gradient at that location.
 	template<typename T>
 	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
 
@@ -68,10 +74,19 @@ namespace limbo::concepts
 		std::pair<double, std::optional<Eigen::VectorXd>> operator()(Eigen::VectorXd, bool) { return std::pair { 0.0, std::nullopt }; }
 	};
 
+	/// An optimizer has an optimize method that takes an evalutionFunction, an initial coordinate, and a t/f if bounded, and returns a new optimum coordinate
 	template<typename T>
 	concept Optimizer = requires (T a)
 	{
 		{ T::create(3) } -> std::convertible_to<T>;
 		{ a.optimize(EvalFuncArchetype{}, Eigen::VectorXd{}, true) } -> std::convertible_to<Eigen::VectorXd>;
+	};
+
+	// An acquisition function acts as the objective function of the bayesian surrogate model. It is optimized upon to find the next point to evaluate the tru objective function at.
+	template <typename T>
+	concept AcquisitionFunc = requires (T a)
+	{
+		// { T(ModelArchetype(), 3) } -> std::convertible_to<T>;
+		{ a(Eigen::VectorXd{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
 	};
 }

@@ -80,7 +80,7 @@ namespace limbo {
           - `double delta` (a small number in [0,1], e.g. 0.1)
         \endrst
         */
-        template <typename acqui_gpucb, typename Model>
+        template <typename acqui_gpucb, concepts::Model Model>
         class GP_UCB {
         public:
             GP_UCB(const Model& model, int iteration) : _model(model)

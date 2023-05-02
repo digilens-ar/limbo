@@ -162,13 +162,13 @@ namespace limbo {
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
     		concepts::Model model_type = model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>,
-			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>
+			concepts::AcquisitionFunc acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>
     	>
         class BoBase {
         public:
             using params_t = Params;
 
-            // extract the types
+            // Public types
             using init_function_t = init_t;
             using acquisition_function_t = acqui_t;
             using model_t = model_type;

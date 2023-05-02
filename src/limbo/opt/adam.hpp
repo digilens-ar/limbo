@@ -158,7 +158,9 @@ namespace limbo {
 
                 return params;
             }
+
         };
+
     } // namespace opt
 } // namespace limbo
 
