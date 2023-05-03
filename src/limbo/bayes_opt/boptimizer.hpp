@@ -60,7 +60,6 @@
 #include "limbo/acqui/ucb.hpp"
 #include "limbo/init/random_sampling.hpp"
 #include "limbo/model/gp.hpp"
-#include "limbo/stop/chain_criteria.hpp"
 #include "limbo/stop/max_iterations.hpp"
 #ifdef USE_NLOPT
 #include <limbo/opt/nlopt_no_grad.hpp>
@@ -205,8 +204,10 @@ namespace limbo {
                     _model.compute(this->_samples, this->_observations);
                 else
                     _model = model_type(sfun.dim_in(), sfun.dim_out());
-                
-                while (!this->_stop(afun)) {
+
+                // While no stopping criteria return `true`
+                while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun); }))
+                {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
                     Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
@@ -217,7 +218,13 @@ namespace limbo {
                     this->eval_and_add(sfun, new_sample);
 
                     if (Params::bayes_opt_boptimizer::stats_enabled()) {
-                        this->_update_stats(afun);
+                        //update stats
+                        boost::fusion::for_each(
+                            stat_, 
+                            [this, &afun](concepts::StatsFunc auto& func)
+                            {
+	                            func.template operator()<decltype(*this), AggregatorFunction>(*this, afun);
+                            });
                     }
 
                     _model.add_sample(this->_samples.back(), this->_observations.back());
@@ -226,8 +233,8 @@ namespace limbo {
                         && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0)
                         _model.optimize_hyperparams();
 
-                    this->_current_iteration++;
-                    this->_total_iterations++;
+                    ++this->_current_iteration;
+                    ++this->_total_iterations;
                 }
             }
 
@@ -285,19 +292,6 @@ namespace limbo {
                     throw EvaluationError();
                 _samples.push_back(s);
                 _observations.push_back(v);
-            }
-
-            template <typename AggregatorFunction>
-            bool _stop(const AggregatorFunction& afun) const
-            {
-                stop::ChainCriteria<decltype(*this), AggregatorFunction> chain(*this, afun);
-                return boost::fusion::accumulate(_stopping_criteria, false, chain);
-            }
-
-            template <typename AggregatorFunction>
-            void _update_stats(const AggregatorFunction& afun)
-            { // not const, because some stat class modify the optimizer....
-                boost::fusion::for_each(stat_, [this, &afun](concepts::StatsFunc auto& func) { func.template operator()<decltype(*this), AggregatorFunction>(*this, afun); });
             }
 
             int _current_iteration = 0;

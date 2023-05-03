@@ -34,6 +34,7 @@ namespace limbo::concepts
         { a.samples() } -> std::convertible_to<const std::vector<Eigen::VectorXd>&>;
 	};
 
+	// Represents the objective function, takes in a coordinate of `dim_in` and returns a coordinate of `dim_out`.
 	template <typename T>
 	concept StateFunc = Callable<T, Eigen::VectorXd, Eigen::VectorXd>
 	&&
@@ -49,6 +50,7 @@ namespace limbo::concepts
 		size_t dim_out() const { return 1; }
 		size_t dim_in() const { return 1; }
 	};
+
 
 	// This function is responsible for taking in the multidimensional observations and converting to a scalar `score` of the objective at that observation.
 	template <typename T>
@@ -70,13 +72,26 @@ namespace limbo::concepts
 		void eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) {};
 	};
 
+	template <typename T>
+	concept StoppingCriteria = requires (T a)
+	{
+		{ a.operator()(BayesOptimizerArchetype(), AggregatorFuncArchetype()) } -> std::convertible_to<bool>;
+	};
+
 	// An evaluationFunction takes a coordinate and a t/f if gradient needs to be calculated and returns the objective function value and optionally the gradient at that location.
-	template<typename T>
+	template<typename T> // TODO this seems to be duplicate with AcquisitionFunc, just slightly different. In practice boptimizer is wrapping eval func around acquisitionfunc
 	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
 
 	struct EvalFuncArchetype
 	{
 		std::pair<double, std::optional<Eigen::VectorXd>> operator()(Eigen::VectorXd, bool) { return std::pair { 0.0, std::nullopt }; }
+	};
+
+	// An acquisition function acts as the objective function of the bayesian surrogate model. It is optimized upon to find the next point to evaluate the true objective function at.
+	template <typename T>
+	concept AcquisitionFunc = requires (T a)
+	{
+		{ a.operator()(Eigen::VectorXd{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
 	};
 
 	/// An optimizer has an optimize method that takes an evalutionFunction, an initial coordinate, and a t/f if bounded, and returns a new optimum coordinate
@@ -85,14 +100,6 @@ namespace limbo::concepts
 	{
 		{ T::create(3) } -> std::convertible_to<T>;
 		{ a.optimize(EvalFuncArchetype{}, Eigen::VectorXd{}, true) } -> std::convertible_to<Eigen::VectorXd>;
-	};
-
-	// An acquisition function acts as the objective function of the bayesian surrogate model. It is optimized upon to find the next point to evaluate the tru objective function at.
-	template <typename T>
-	concept AcquisitionFunc = requires (T a)
-	{
-		// { T(ModelArchetype(), 3) } -> std::convertible_to<T>;
-		{ a.operator()(Eigen::VectorXd{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
 	};
 
 	//Receives data about the model and saves/logs it somewhere
