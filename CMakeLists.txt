@@ -13,8 +13,8 @@ find_package(Boost REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
 
-option(LIMBO_USE_NLOPT "" ON)
-option(LIMBO_USE_CMAES "" OFF)
+option(LIMBO_USE_NLOPT "Link to NLOPT and enable its algorithms for optimization" ON)
+option(LIMBO_USE_CMAES "Link to libcmaes and enable its algorithms for optimization" OFF)
 
 add_library(limbo INTERFACE)
 target_include_directories(limbo INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
