@@ -101,7 +101,10 @@ namespace limbo::opt {
         template <concepts::EvalFunc F>
         void add_inequality_constraint(F* f, double tolerance = 1e-8)
         {
-            // TODO raise error for algorithms that don't support constraints
+            if (!supportsInequalityConstraints(_opt.get_algorithm()))
+            {
+                throw std::runtime_error("This NLOPT algorithm does not support inequality constraints");
+            }
             _opt.add_inequality_constraint(nlopt_func<F>, (void*)f, tolerance);
         }
 
@@ -109,7 +112,10 @@ namespace limbo::opt {
         template <concepts::EvalFunc F>
         void add_equality_constraint(F* f, double tolerance = 1e-8)
         {
-            // TODO raise error for algorithms that don't support constraints
+            if (!supportsEqualityConstraints(_opt.get_algorithm()))
+            {
+                throw std::runtime_error("This NLOPT algorithm does not support equality constraints");
+            }
             _opt.add_equality_constraint(nlopt_func<F>, (void*)f, tolerance);
 		}
 
@@ -135,6 +141,39 @@ namespace limbo::opt {
                 Eigen::VectorXd::Map(&grad[0], gradient.value().size()) = gradient.value();
             }
             return funcVal;
+        }
+
+        static bool supportsInequalityConstraints(nlopt::algorithm alg)
+        {
+	        switch (alg)
+	        {
+	        case nlopt::algorithm::AUGLAG:
+	        case nlopt::algorithm::AUGLAG_EQ:
+	        case nlopt::algorithm::GN_ISRES:
+	        case nlopt::algorithm::GN_AGS:
+	        case nlopt::algorithm::GN_ORIG_DIRECT:
+	        case nlopt::algorithm::LN_COBYLA:
+	        case nlopt::algorithm::LD_MMA:
+	        case nlopt::algorithm::LD_SLSQP:
+                return true;
+	        default:
+                return false;
+	        }
+        }
+
+        static bool supportsEqualityConstraints(nlopt::algorithm alg)
+        {
+            switch (alg)
+            {
+            case nlopt::algorithm::AUGLAG:
+            case nlopt::algorithm::AUGLAG_EQ:
+            case nlopt::algorithm::GN_ISRES:
+            case nlopt::algorithm::LN_COBYLA:
+            case nlopt::algorithm::LD_SLSQP:
+                return true;
+            default:
+                return false;
+            }
         }
 
         int dim_;
