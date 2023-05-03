@@ -80,7 +80,7 @@ namespace limbo {
                 // Only works with bounded BO
                 assert(opt.isBounded());
 
-                tools::rgen_int_t rgen(0, init_randomsamplinggrid::bins());
+                tools::RandomGenerator<std::uniform_int_distribution<>> rgen(0, init_randomsamplinggrid::bins());
                 for (int i = 0; i < init_randomsamplinggrid::samples(); i++) {
                     Eigen::VectorXd new_sample(StateFunction::dim_in());
                     for (size_t i = 0; i < StateFunction::dim_in(); i++)

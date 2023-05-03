@@ -47,7 +47,7 @@
 #define LIMBO_HPP
 
 #include <limbo/acqui.hpp>
-#include <limbo/bayes_opt.hpp>
+#include <limbo/bayes_opt/boptimizer.hpp>
 #include <limbo/init.hpp>
 #include <limbo/kernel.hpp>
 #include <limbo/mean.hpp>
