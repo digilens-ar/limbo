@@ -50,6 +50,8 @@
 // you can also include <limbo/limbo.hpp> but it will slow down the compilation
 #include <limbo/bayes_opt/boptimizer.hpp>
 
+#include "limbo/kernel/kernel.hpp"
+
 using namespace limbo;
 
 struct Params {
@@ -110,7 +112,7 @@ struct Eval {
 int main()
 {
     // we use the default acquisition function / model / stat / etc.
-    bayes_opt::BOptimizer<Params> boptimizer;
+    bayes_opt::BOptimizer<Params> boptimizer(1);
     // run the evaluation
     boptimizer.optimize(Eval());
     // the best sample found

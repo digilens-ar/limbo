@@ -60,7 +60,7 @@ namespace limbo {
                 if (bo.samples().empty())
                     return;
 
-                this->_create_log_file(bo, "samples.dat");
+                this->_create_log_file("samples.dat");
 
                 if (bo.total_iterations() == 0) {
                     (*this->_log_file) << "#iteration sample" << std::endl;

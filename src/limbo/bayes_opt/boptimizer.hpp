@@ -172,6 +172,9 @@ namespace limbo {
         public:
             // Public types
             using acquisition_function_t = acqui_t;
+            using init_function_t = init_t;
+            using stopping_criteria_t = StoppingCriteria;
+            using model_t = model_type;
 
             /// default constructor
             BOptimizer(int dimIn):

@@ -45,11 +45,14 @@
 //|
 #include <limbo/acqui/gp_ucb.hpp>
 #include <limbo/bayes_opt/boptimizer.hpp>
-#include <limbo/kernel/matern_five_halves.hpp>
+#include <limbo/kernel/kernel.hpp>
 #include <limbo/mean/data.hpp>
 #include <limbo/model/gp.hpp>
-#include <limbo/stat.hpp>
 #include <limbo/tools/macros.hpp>
+#include "limbo/kernel/exp.hpp"
+#include "limbo/opt/rprop.hpp"
+#include <limbo/stat.hpp>
+#include <boost/fusion/container.hpp>
 
 using namespace limbo;
 
@@ -129,13 +132,13 @@ int main()
         limbo::stat::GP<Params::stat_gp>>;
 
     using BD = bayes_opt::BOptimizer<Params>;
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2);
     opt.optimize(fit_eval());
     std::cout << opt.best_observation() << " res  "
               << opt.best_sample().transpose() << std::endl;
 
     // example with basic HP opt
-    bayes_opt::BOptimizerHPOpt<Params> opt_hp;
+    bayes_opt::BOptimizerHPOpt<Params> opt_hp(2);
     opt_hp.optimize(fit_eval());
     std::cout << opt_hp.best_observation() << " res  "
               << opt_hp.best_sample().transpose() << std::endl;

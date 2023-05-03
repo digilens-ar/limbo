@@ -59,12 +59,11 @@ namespace limbo {
             template <typename BO, typename AggregatorFunction>
             void operator()(const BO& bo, const AggregatorFunction& afun)
             {
-                std::string fname = bo.res_dir() + "/" + "gp_" + std::to_string(bo.total_iterations()) + ".dat";
-                std::ofstream ofs(fname.c_str());
+                _create_log_file("gp_" + std::to_string(bo.total_iterations()) + ".dat");
                 int gp_in = bo.model().dim_in();
                 int gp_out = bo.model().dim_out();
-                ofs << "#Point[" << gp_in << "d] mu[" << gp_out << "d] sigma[1d] acquisition[1d]" << std::endl;
-                _explore(0, ofs, bo, afun, Eigen::VectorXd::Constant(bo.model().dim_in(), 0));
+                *_log_file << "#Point[" << gp_in << "d] mu[" << gp_out << "d] sigma[1d] acquisition[1d]" << std::endl;
+                _explore(0, *_log_file, bo, afun, Eigen::VectorXd::Constant(bo.model().dim_in(), 0));
             }
 
         protected:

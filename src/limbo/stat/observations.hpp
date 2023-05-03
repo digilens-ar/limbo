@@ -59,7 +59,7 @@ namespace limbo {
                 if (bo.observations().empty())
                     return;
 
-                this->_create_log_file(bo, "observations.dat");
+                this->_create_log_file("observations.dat");
 
                 if (bo.total_iterations() == 0) {
                     (*this->_log_file) << "#iteration observation" << std::endl;

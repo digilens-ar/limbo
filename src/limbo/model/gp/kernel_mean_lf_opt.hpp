@@ -47,6 +47,7 @@
 #define LIMBO_MODEL_GP_KERNEL_MEAN_LF_OPT_HPP
 
 #include <limbo/model/gp/hp_opt.hpp>
+#include "limbo/opt/rprop.hpp"
 
 namespace limbo {
     namespace model {
@@ -69,7 +70,7 @@ namespace limbo {
                     init.head(gp.kernel_function().h_params_size()) = gp.kernel_function().h_params();
                     init.tail(gp.mean_function().h_params_size()) = gp.mean_function().h_params();
 
-                    Eigen::VectorXd params = optimizer(optimization, init, false);
+                    Eigen::VectorXd params = optimizer.optimize(optimization, init, false);
                     gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
                     gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
 

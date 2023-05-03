@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(Boost REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 option(LIMBO_USE_NLOPT "Link to NLOPT and enable its algorithms for optimization" ON)
 option(LIMBO_USE_CMAES "Link to libcmaes and enable its algorithms for optimization" OFF)

@@ -204,7 +204,7 @@ int main()
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt;
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);
     opt.optimize(fit_eval());
 
     std::cout << opt.best_observation() << " res  "

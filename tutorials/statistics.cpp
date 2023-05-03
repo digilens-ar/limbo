@@ -48,6 +48,8 @@
 #include <iostream>
 #include <limbo/limbo.hpp>
 
+#include "limbo/bayes_opt/boptimizer.hpp"
+
 using namespace limbo;
 
 struct Params {
@@ -115,7 +117,7 @@ struct WorstObservation : public limbo::stat::StatBase {
             return;
 
         // [optional] we create a file to write / you can use your own file but remember that this method is called at each iteration (you need to create it in the constructor)
-        this->_create_log_file(bo, "worst_observations.dat");
+        this->_create_log_file("worst_observations.dat");
 
         // [optional] we add a header to the file to make it easier to read later
         if (bo.total_iterations() == 0)
@@ -148,7 +150,7 @@ int main()
 
     /// remmeber to use the new statistics vector via statsfun<>!
     using BD = bayes_opt::BOptimizer<Params>; // Default
-    bayes_opt::BOptimizer<Params, BD::model_t, BD::acquisition_function_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> boptimizer;
+    bayes_opt::BOptimizer<Params, BD::model_t, BD::acquisition_function_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> boptimizer(1);
 
     // run the evaluation
     boptimizer.optimize(Eval());

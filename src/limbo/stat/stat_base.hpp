@@ -84,8 +84,7 @@ namespace limbo {
         protected:
             std::shared_ptr<std::ofstream> _log_file;
 
-            template <typename BO>
-            void _create_log_file(const BO& bo, const std::string& name)
+            void _create_log_file(const std::string& name)
             {
                 char date[30];
                 time_t date_time;
