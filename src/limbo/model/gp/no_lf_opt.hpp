@@ -57,8 +57,7 @@ namespace limbo {
                 template <typename GP>
                 void operator()(GP&) const
                 {
-                    std::cerr << "'NoLFOpt' should never be called!" << std::endl;
-                    assert(false);
+                    throw std::runtime_error("'NoLFOpt' should never be called!");
                 }
             };
         }

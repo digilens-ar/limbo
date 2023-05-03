@@ -78,37 +78,39 @@ namespace limbo::opt {
 
             double max;
 
-            try {
+            // try {
                 _opt.optimize(x, max);
-            }
-            catch (nlopt::roundoff_limited& e) {
-                // In theory it's ok to ignore this error
-                std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-            }
-            catch (std::invalid_argument& e) {
-                // In theory it's ok to ignore this error
-                std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-            }
-            catch (std::runtime_error& e) {
-                // In theory it's ok to ignore this error
-                std::cerr << "[NLOptGrad]: " << e.what() << std::endl;
-            }
+            // }
+            // catch (nlopt::roundoff_limited& e) {
+            //     // In theory it's ok to ignore this error
+            //     std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
+            // }
+            // catch (std::invalid_argument& e) {
+            //     // In theory it's ok to ignore this error
+            //     std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
+            // }
+            // catch (std::runtime_error& e) {
+            //     // In theory it's ok to ignore this error
+            //     std::cerr << "[NLOptGrad]: " << e.what() << std::endl;
+            // }
 
             return Eigen::VectorXd::Map(x.data(), x.size());
         }
 
         // Inequality constraints of the form f(x) <= 0
         template <concepts::EvalFunc F>
-        void add_inequality_constraint(const F& f, double tolerance = 1e-8)
+        void add_inequality_constraint(F* f, double tolerance = 1e-8)
         {
-            _opt.add_inequality_constraint(nlopt_func<F>, (void*)&f, tolerance);
+            // TODO raise error for algorithms that don't support constraints
+            _opt.add_inequality_constraint(nlopt_func<F>, (void*)f, tolerance);
         }
 
         // Equality constraints of the form f(x) = 0
         template <concepts::EvalFunc F>
-        void add_equality_constraint(const F& f, double tolerance = 1e-8)
+        void add_equality_constraint(F* f, double tolerance = 1e-8)
         {
-            _opt.add_equality_constraint(nlopt_func<F>, (void*)&f, tolerance);
+            // TODO raise error for algorithms that don't support constraints
+            _opt.add_equality_constraint(nlopt_func<F>, (void*)f, tolerance);
 		}
 
     protected:

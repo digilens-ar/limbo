@@ -63,7 +63,7 @@ namespace limbo {
                 ~HPOpt()
                 {
                     if (!_called) {
-                        std::cerr << "'HPOpt' was never called!" << std::endl; // TODO don't use cerr. use assert if needed.
+                        throw std::runtime_error("'HPOpt' was never called!");
                     }
                 }
 
