@@ -46,9 +46,7 @@
 #ifndef LIMBO_MODEL_GP_HP_OPT_HPP
 #define LIMBO_MODEL_GP_HP_OPT_HPP
 
-#include <Eigen/Core>
-
-#include <limbo/opt/rprop.hpp>
+#include <spdlog/spdlog.h>
 
 namespace limbo {
     namespace model {
@@ -63,7 +61,7 @@ namespace limbo {
                 ~HPOpt()
                 {
                     if (!_called) {
-                        throw std::runtime_error("'HPOpt' was never called!");
+                        spdlog::error("'HPOpt' was never called!");
                     }
                 }
 

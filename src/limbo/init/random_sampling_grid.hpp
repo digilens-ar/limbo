@@ -78,7 +78,7 @@ namespace limbo {
             void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 // Only works with bounded BO
-                assert(Opt::params_t::bayes_opt_boptimizer::bounded());
+                assert(opt.isBounded());
 
                 tools::rgen_int_t rgen(0, init_randomsamplinggrid::bins());
                 for (int i = 0; i < init_randomsamplinggrid::samples(); i++) {

@@ -21,7 +21,7 @@ target_include_directories(limbo INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_compile_definitions(limbo INTERFACE "NOMINMAX")  # This prevents windows.h from defining unwanted macros
 target_compile_definitions(limbo INTERFACE "_CRT_SECURE_NO_WARNINGS")  # This prevents windows from pointless deprecation warnings.
 #target_compile_definitions(limbo INTERFACE "USE_SFERES")
-target_link_libraries(limbo INTERFACE Boost::boost)
+target_link_libraries(limbo INTERFACE Boost::boost spdlog::spdlog)
 
 if(LIMBO_USE_NLOPT)
 	find_package(NLopt CONFIG REQUIRED)

@@ -47,6 +47,7 @@
 #define LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 
 #include <limbo/model/gp/hp_opt.hpp>
+#include <limbo/opt/rprop.hpp>
 
 namespace limbo {
     namespace model {
