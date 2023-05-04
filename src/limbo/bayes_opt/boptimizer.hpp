@@ -187,7 +187,7 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
-            void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
+            void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true, std::optional<std::function<void(double, Eigen::VectorXd, std::vector<Eigen::VectorXd> const&, std::vector<Eigen::VectorXd> const&)>> postInitCallback = std::nullopt)
             {
                 assert(dimIn_ == sfun.dim_in());
                 this->_current_iteration = 0;
@@ -205,6 +205,11 @@ namespace limbo {
                     _model.compute(this->_samples, this->_observations);
                 else
                     _model = model_type(sfun.dim_in(), sfun.dim_out());
+
+                if (postInitCallback.has_value())
+                {
+                    postInitCallback.value()(afun(best_observation(afun)), best_sample(), observations(), samples());
+                }
 
                 // While no stopping criteria return `true`
                 while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun); }))
