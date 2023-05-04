@@ -48,8 +48,6 @@
 
 #include <Eigen/Core>
 
-#include <limbo/tools/macros.hpp>
-
 namespace limbo {
     namespace mean {
         /** @ingroup mean
@@ -69,9 +67,7 @@ namespace limbo {
             template <typename GP>
             Eigen::MatrixXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {
-                // This should never be called!
-                assert(false); // TODO WTH!
-                return {};
+                throw std::runtime_error("Cannot call this base class function"); // cannot call this.
             }
         };
     } // namespace mean

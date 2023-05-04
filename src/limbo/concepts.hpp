@@ -107,5 +107,6 @@ namespace limbo::concepts
 	concept StatsFunc = requires (T a)
 	{
 		{ a.operator()(BayesOptimizerArchetype{}, AggregatorFuncArchetype{}) } -> std::convertible_to<void>;
-	};
+	} &&
+		std::is_default_constructible_v<T>;
 }

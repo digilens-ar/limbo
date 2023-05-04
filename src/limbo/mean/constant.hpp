@@ -47,6 +47,7 @@
 #define LIMBO_MEAN_CONSTANT_HPP
 
 #include <limbo/mean/mean.hpp>
+#include <limbo/tools/macros.hpp>
 
 namespace limbo {
     namespace defaults {

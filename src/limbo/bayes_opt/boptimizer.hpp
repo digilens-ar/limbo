@@ -174,6 +174,7 @@ namespace limbo {
             using init_function_t = init_t;
             using stopping_criteria_t = StoppingCriteria;
             using model_t = model_type;
+            using stats_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
 
             /// default constructor
             BOptimizer(int dimIn):
@@ -259,6 +260,7 @@ namespace limbo {
             }
 
             const model_type& model() const { return _model; }
+            stats_t& statsFunctors() { return stat_; }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
             const std::vector<Eigen::VectorXd>& observations() const { return _observations; }
@@ -297,7 +299,7 @@ namespace limbo {
             int _current_iteration = 0;
             int _total_iterations = 0;
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type _stopping_criteria;
-            typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type stat_;
+            stats_t  stat_;
             acqui_opt_t acqui_optimizer;
 			std::vector<Eigen::VectorXd> _observations;
             std::vector<Eigen::VectorXd> _samples;
