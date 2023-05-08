@@ -51,5 +51,6 @@
 
 #include <limbo/stop/max_iterations.hpp>
 #include <limbo/stop/max_predicted_value.hpp>
+#include <limbo/stop/runtime_stop_function.hpp>
 
 #endif
