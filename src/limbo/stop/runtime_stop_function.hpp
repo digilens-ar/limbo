@@ -9,7 +9,7 @@ namespace limbo::stop
 		using StopFuncT = std::function<bool(double, Eigen::VectorXd, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&)>;
 
 		template<concepts::BayesOptimizer BO, concepts::AggregatorFunc AG>
-		bool operator()(BO const& bo, AG const& ag)
+		bool operator()(BO const& bo, AG const& aggFunc) const
 		{
 			for (auto const& func : stopFuncs_)
 			{

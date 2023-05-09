@@ -53,6 +53,7 @@ namespace limbo {
         struct stop_maxiterations {
             /// @ingroup stop_defaults
             BO_PARAM(int, iterations, 190);
+            BO_PARAM(bool, enabled, true);
         };
     }
     namespace stop {
@@ -67,6 +68,8 @@ namespace limbo {
             template <typename BO, typename AggregatorFunction>
             bool operator()(const BO& bo, const AggregatorFunction&) const
             {
+                if (!Stop_MaxIterations::enabled())
+                    return false;
                 return bo.current_iteration() >= Stop_MaxIterations::iterations();
             }
         };
