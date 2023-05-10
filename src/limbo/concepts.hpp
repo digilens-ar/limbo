@@ -1,6 +1,17 @@
 #pragma once
 #include <concepts>
 
+
+namespace limbo
+{
+	enum EvaluationStatus
+	{
+		OK, // Return this if everything was successful
+		SKIP, // return this if you want evaluation of the current point to be skipped.
+		TERMINATE // return this to call for early termination of the optimization
+	};
+}
+
 namespace limbo::concepts
 {
 	template <typename F, typename Ret, class... Args >
@@ -36,7 +47,7 @@ namespace limbo::concepts
 
 	// Represents the objective function, takes in a coordinate of `dim_in` and returns a coordinate of `dim_out`.
 	template <typename T>
-	concept StateFunc = Callable<T, Eigen::VectorXd, Eigen::VectorXd>
+	concept StateFunc = Callable<T, std::tuple<EvaluationStatus, Eigen::VectorXd>, Eigen::VectorXd>
 	&&
 	requires (T a)
 	{
