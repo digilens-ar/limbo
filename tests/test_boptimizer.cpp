@@ -67,7 +67,7 @@ namespace {
             BO_PARAM(bool, stats_enabled, false);
         };
 
-        struct stop_maxiterations {
+        struct stop_maxiterations : defaults::stop_maxiterations {
             BO_PARAM(int, iterations, 200);
         };
 
@@ -107,10 +107,10 @@ namespace {
         BO_PARAM(size_t, dim_in, 2);
         BO_PARAM(size_t, dim_out, obs_size);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
         {
             Eigen::Vector2d opt(0.25, 0.75);
-            return tools::make_vector(-(x - opt).squaredNorm());
+            return { OK, tools::make_vector(-(x - opt).squaredNorm()) };
         }
     };
 
@@ -129,7 +129,7 @@ namespace {
 }
 
 struct InheritParameters {
-    struct stop_maxiterations {
+    struct stop_maxiterations : defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 1);
     };
 };

@@ -70,7 +70,7 @@ struct Params {
         BO_PARAM(double, noise, 0.001);
     };
 
-    struct kernel_maternfivehalves {
+    struct kernel_maternfivehalves : defaults::kernel_maternfivehalves{
         BO_PARAM(double, sigma_sq, 1);
         BO_PARAM(double, l, 0.2);
     };
@@ -79,11 +79,11 @@ struct Params {
         BO_PARAM(bool, stats_enabled, true);
     };
 
-    struct init_randomsampling {
+    struct init_randomsampling : defaults::init_randomsampling {
         BO_PARAM(int, samples, 5);
     };
 
-    struct stop_maxiterations {
+    struct stop_maxiterations : defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 20);
     };
 };
@@ -92,12 +92,12 @@ struct StateEval {
     BO_PARAM(size_t, dim_in, 2);
     BO_PARAM(size_t, dim_out, 2);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
     {
         Eigen::VectorXd res(2);
         res(0) = 3 * x(0) + 5;
         res(1) = -5 * x(1) + 2;
-        return res;
+        return { OK, res };
     }
 };
 

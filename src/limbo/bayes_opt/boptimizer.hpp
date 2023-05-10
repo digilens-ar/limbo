@@ -161,7 +161,7 @@ namespace limbo {
 		template <
             class Params,
         	concepts::Model model_type = model::GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
-			typename acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
+			concepts::AcquisitionFunc acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
@@ -221,7 +221,12 @@ namespace limbo {
                         [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); },
                         starting_point, 
                         Params::bayes_opt_boptimizer::bounded());
-                    this->eval_and_add(sfun, new_sample);
+
+                	auto status = this->eval_and_add(sfun, new_sample);
+                    if (status == TERMINATE)
+                    {
+                        break;
+                    }
 
                     if (Params::bayes_opt_boptimizer::stats_enabled()) {
                         //update stats
@@ -280,9 +285,14 @@ namespace limbo {
 
             /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
             template <concepts::StateFunc StateFunction>
-            void eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
+            EvaluationStatus eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
             {
-                this->add_new_sample(sample, seval(sample));
+                auto [status, observation] = seval(sample);
+                if (status == OK) // TODO if `seval` returns `SKIP` we need to do something to avoid that sample being tested again.
+                {
+                    this->add_new_sample(sample, observation);
+                }
+                return status;
             }
 
             bool isBounded() const { return Params::bayes_opt_boptimizer::bounded(); }

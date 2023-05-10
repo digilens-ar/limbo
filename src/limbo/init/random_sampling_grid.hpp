@@ -74,8 +74,8 @@ namespace limbo {
         */
         template <typename init_randomsamplinggrid>
         struct RandomSamplingGrid {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
-            void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 // Only works with bounded BO
                 assert(opt.isBounded());
@@ -85,8 +85,13 @@ namespace limbo {
                     Eigen::VectorXd new_sample(StateFunction::dim_in());
                     for (size_t i = 0; i < StateFunction::dim_in(); i++)
                         new_sample[i] = rgen.rand() / double(init_randomsamplinggrid::bins());
-                    opt.eval_and_add(seval, new_sample);
+                    auto status = opt.eval_and_add(seval, new_sample);
+                    if (status==TERMINATE)
+                    {
+                        return TERMINATE;
+                    }
                 }
+                return OK;
             }
         };
     }

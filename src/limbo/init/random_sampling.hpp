@@ -71,12 +71,22 @@ namespace limbo {
         template <typename InitRandomSampling>
         struct RandomSampling {
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
-            void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
-                    auto new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
-                    opt.eval_and_add(seval, new_sample);
+                    EvaluationStatus status = EvaluationStatus::SKIP;
+                    do
+                    {
+                        auto new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                        status = opt.eval_and_add(seval, new_sample);
+                    } while (status == EvaluationStatus::SKIP);
+
+					if (status == EvaluationStatus::TERMINATE)
+					{
+                        return EvaluationStatus::TERMINATE;
+					}
                 }
+                return EvaluationStatus::OK;
             }
         };
     }

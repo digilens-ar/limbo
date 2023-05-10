@@ -69,16 +69,21 @@ namespace limbo {
         */
         template <typename init_lhs>
         struct LHS {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
-            void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 assert(opt.isBounded());
 
                 Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), init_lhs::samples());
 
                 for (int i = 0; i < init_lhs::samples(); i++) {
-                    opt.eval_and_add(seval, H.row(i));
+                    auto status = opt.eval_and_add(seval, H.row(i));
+                    if (status == TERMINATE)
+                    {
+                        return TERMINATE;
+                    }
                 }
+                return OK;
             }
         };
     } // namespace init

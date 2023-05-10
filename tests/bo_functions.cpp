@@ -119,10 +119,10 @@ namespace {
         BO_PARAM(size_t, dim_in, 2);
         BO_PARAM(size_t, dim_out, 1);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
         {
             Eigen::Vector2d opt(0.5, 0.5);
-            return tools::make_vector(-(x - opt).squaredNorm());
+            return { OK, tools::make_vector(-(x - opt).squaredNorm())};
         }
     };
 
@@ -130,14 +130,14 @@ namespace {
         BO_PARAM(size_t, dim_in, 2);
         BO_PARAM(size_t, dim_out, 1);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
         {
             Eigen::Vector2d opt(0.5, 0.5);
             Eigen::Vector2d z = t_osz(x - opt);
             double r = 0;
             for (size_t i = 0; i < dim_in(); ++i)
                 r += std::pow(10, ((double)i) / (dim_in() - 1.0)) * z(i) * z(i) + 1;
-            return tools::make_vector(-r);
+            return { OK, tools::make_vector(-r) };
         }
     };
 
@@ -145,12 +145,12 @@ namespace {
         BO_PARAM(size_t, dim_in, 4);
         BO_PARAM(size_t, dim_out, 1);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
         {
             double f = 10 * x.size();
             for (int i = 0; i < x.size(); ++i)
                 f += x(i) * x(i) - 10 * cos(2 * M_PI * x(i));
-            return tools::make_vector(-f);
+            return { OK, tools::make_vector(-f) };
         }
     };
 
@@ -159,7 +159,7 @@ namespace {
         BO_PARAM(size_t, dim_in, 3);
         BO_PARAM(size_t, dim_out, 1);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
         {
             Eigen::Matrix<double, 4, 3> a, p;
             a << 3.0, 10, 30, 0.1, 10, 35, 3.0, 10, 30, 0.1, 10, 36;
@@ -176,7 +176,7 @@ namespace {
                 }
                 res += alpha(i) * exp(-s);
             }
-            return tools::make_vector(res);
+            return { OK, tools::make_vector(res) };
         }
     };
 
@@ -185,7 +185,7 @@ namespace {
         BO_PARAM(size_t, dim_in, 6);
         BO_PARAM(size_t, dim_out, 1);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
         {
             Eigen::Matrix<double, 4, 6> a, p;
             a << 10, 3, 17, 3.5, 1.7, 8, 0.05, 10, 17, 0.1, 8, 14, 3, 3.5, 1.7, 10, 17,
@@ -205,7 +205,7 @@ namespace {
                 }
                 res += alpha(i) * exp(-s);
             }
-            return tools::make_vector(res);
+            return { OK, tools::make_vector(res) };
         }
     };
 
@@ -215,12 +215,12 @@ namespace {
         BO_PARAM(size_t, dim_in, 2);
         BO_PARAM(size_t, dim_out, 1);
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd& xx) const
+        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& xx) const
         {
             Eigen::VectorXd x = (4.0 * xx).array() - 2.0;
             double r = (1 + (x(0) + x(1) + 1) * (x(0) + x(1) + 1) * (19 - 14 * x(0) + 3 * x(0) * x(0) - 14 * x(1) + 6 * x(0) * x(1) + 3 * x(1) * x(1))) * (30 + (2 * x(0) - 3 * x(1)) * (2 * x(0) - 3 * x(1)) * (18 - 32 * x(0) + 12 * x(0) * x(0) + 48 * x(1) - 36 * x(0) * x(1) + 27 * x(1) * x(1)));
 
-            return tools::make_vector(-log(r) + 5);
+            return { OK, tools::make_vector(-log(r) + 5) };
         }
     };
 
@@ -234,7 +234,7 @@ namespace {
             BO_PARAM(int, samples, 10);
         };
 
-        struct stop_maxiterations {
+        struct stop_maxiterations: defaults::stop_maxiterations {
             BO_PARAM(int, iterations, 40);
         };
 
@@ -338,7 +338,7 @@ int main(int argc, char** argv)
                 Opt_t opt(Sphere::dim_in());
                 opt.optimize(Sphere());
                 Eigen::Vector2d s_val(0.5, 0.5);
-                double x_opt = FirstElem()(Sphere()(s_val));
+                double x_opt = FirstElem()(std::get<1>(Sphere()(s_val)));
                 add_to_results("Sphere", results, std::make_pair(x_opt, opt.best_observation()(0)));
             
         });
@@ -349,7 +349,7 @@ int main(int argc, char** argv)
                 Opt_t opt(Ellipsoid::dim_in());
                 opt.optimize(Ellipsoid());
                 Eigen::Vector2d s_val(0.5, 0.5);
-                double x_opt = FirstElem()(Ellipsoid()(s_val));
+                double x_opt = FirstElem()(std::get<1>(Ellipsoid()(s_val)));
                 add_to_results("Ellipsoid", results, std::make_pair(x_opt, opt.best_observation()(0)));
             
         });
@@ -360,7 +360,7 @@ int main(int argc, char** argv)
                 Opt_t opt(Rastrigin::dim_in());
                 opt.optimize(Rastrigin());
                 Eigen::Vector4d s_val(0, 0, 0, 0);
-                double x_opt = FirstElem()(Rastrigin()(s_val));
+                double x_opt = FirstElem()(std::get<1>(Rastrigin()(s_val)));
                 add_to_results("Rastrigin", results, std::make_pair(x_opt, opt.best_observation()(0)));
             
         });
@@ -372,7 +372,7 @@ int main(int argc, char** argv)
                 opt.optimize(Hartman3());
                 // double s_max = 3.86278;
                 Eigen::Vector3d s_val(0.114614, 0.555549, 0.852547);
-                double x_opt = FirstElem()(Hartman3()(s_val));
+                double x_opt = FirstElem()(std::get<1>(Hartman3()(s_val)));
                 add_to_results("Hartman 3", results, std::make_pair(x_opt, opt.best_observation()(0)));
             
         });
@@ -385,7 +385,7 @@ int main(int argc, char** argv)
                 Eigen::Matrix<double, 6, 1> s_val;
                 s_val << 0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573;
                 //double s_max = 3.32237;
-                double x_opt = FirstElem()(Hartman6()(s_val));
+                double x_opt = FirstElem()(std::get<1>(Hartman6()(s_val)));
                 add_to_results("Hartman 6", results, std::make_pair(x_opt, opt.best_observation()(0)));
             
         });
@@ -397,7 +397,7 @@ int main(int argc, char** argv)
                 opt.optimize(GoldenPrice());
                 //    double s_max = -log(3);
                 Eigen::Vector2d s_val(0.5, 0.25);
-                double x_opt = FirstElem()(GoldenPrice()(s_val));
+                double x_opt = FirstElem()(std::get<1>(GoldenPrice()(s_val)));
                 add_to_results("Golden Price", results, std::make_pair(x_opt, opt.best_observation()(0)));
             
         });

@@ -58,7 +58,7 @@ struct Params {
         BO_PARAM(int, stats_enabled, true);
     };
 
-    struct stop_maxiterations {
+    struct stop_maxiterations : defaults::stop_maxiterations{
         BO_PARAM(int, iterations, 100);
     };
     struct stop_mintolerance {

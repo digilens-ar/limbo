@@ -61,7 +61,7 @@ struct Params {
 #endif
         BO_PARAM(bool, stats_enabled, false);
     };
-    struct stop_maxiterations {
+    struct stop_maxiterations : defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 190);
     };
     struct kernel : public defaults::kernel {

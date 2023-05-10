@@ -87,7 +87,7 @@ struct Params {
         BO_PARAM(int, samples, 5);
     };
 
-    struct stop_maxiterations {
+    struct stop_maxiterations : defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 100);
     };
 };
@@ -183,7 +183,7 @@ struct fit_eval {
     BO_PARAM(size_t, dim_in, 2);
     BO_PARAM(size_t, dim_out, 2);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
     {
         Eigen::VectorXd res(2);
         res(0) = 0;
@@ -192,7 +192,7 @@ struct fit_eval {
             res(0) += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
             res(1) += 1 - (x[i] - 0.3) * (x[i] - 0.3) * 0.4;
         }
-        return res;
+        return { OK, res };
     }
 };
 

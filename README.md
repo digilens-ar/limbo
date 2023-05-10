@@ -14,4 +14,6 @@ Notable Changes
  - C++20 `concepts` are used to make the templated code easier to read and write.
  - Assumption that printing messages to std::cerr is ok is replaced with usage of exceptions.
  - many instances of `operator()` are replaced with named methods.
+ - Support for non-linear constraints is enhanced.
+ - Added `EvaluationStatus` to allow objective functions to request a gracely end of optimization or skipping of sample.
 

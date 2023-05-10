@@ -85,7 +85,7 @@ struct Params {
     };
 
     // we stop after 40 iterations
-    struct stop_maxiterations {
+    struct stop_maxiterations: defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 40);
     };
 
@@ -101,11 +101,11 @@ struct Eval {
     BO_PARAM(size_t, dim_out, 1);
 
     // the function to be optimized
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
     {
         double y = -((5 * x(0) - 2.5) * (5 * x(0) - 2.5)) + 5;
         // we return a 1-dimensional vector
-        return tools::make_vector(y);
+        return {OK, tools::make_vector(y)};
     }
 };
 

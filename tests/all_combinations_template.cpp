@@ -112,7 +112,7 @@ struct Params {
         BO_PARAM(int, bins, 5);
     };
 
-    struct stop_maxiterations {
+    struct stop_maxiterations : defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 20);
     };
 
