@@ -198,7 +198,11 @@ namespace limbo {
                 }
 
                 if (this->_total_iterations == 0) {
-                    init_t()(sfun, afun, *this);
+                    EvaluationStatus initStatus = init_t()(sfun, afun, *this);
+                    if (initStatus == TERMINATE)
+                    {
+                        return;
+                    }
                 }
 
                 if (!this->_observations.empty())
