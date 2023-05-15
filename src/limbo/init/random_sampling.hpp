@@ -74,19 +74,24 @@ namespace limbo {
             EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
-                    EvaluationStatus status = EvaluationStatus::SKIP;
+                    Eigen::VectorXd new_sample;
+                    do
+                    { // Find a sample that satisfies the constraints
+                        new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                    } while (!opt.constraintsAreSatisfied(new_sample));
+
+                    EvaluationStatus status = SKIP;
                     do
                     {
-                        auto new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
-                        status = opt.eval_and_add(seval, new_sample);
-                    } while (status == EvaluationStatus::SKIP);
+						status = opt.eval_and_add(seval, new_sample);
+                    } while (status == SKIP);
 
-					if (status == EvaluationStatus::TERMINATE)
+					if (status == TERMINATE)
 					{
-                        return EvaluationStatus::TERMINATE;
+                        return TERMINATE;
 					}
                 }
-                return EvaluationStatus::OK;
+                return OK;
             }
         };
     }

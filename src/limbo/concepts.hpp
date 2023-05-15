@@ -17,12 +17,6 @@ namespace limbo::concepts
 	template <typename F, typename Ret, class... Args >
 	concept Callable = std::invocable<F, Args...> && std::same_as<Ret, std::invoke_result_t<F, Args...>>;
 
-	template <typename F>
-	concept DoubleParam = Callable<F, double>;
-
-	template <typename F>
-	concept Option = Callable<F, bool>;
-
 	// Param Types
 	template<typename T>
 	concept AcquiEI = requires (T a)
@@ -75,19 +69,41 @@ namespace limbo::concepts
 
 	static_assert(AggregatorFunc<AggregatorFuncArchetype>);
 
+	// An evaluationFunction takes a coordinate and a t/f if gradient needs to be calculated and returns the objective function value and optionally the gradient at that location.
+	template<typename T>
+	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
+
+	struct EvalFuncArchetype
+	{
+		std::pair<double, std::optional<Eigen::VectorXd>> operator()(Eigen::VectorXd, bool) { return std::pair{ 0.0, std::nullopt }; }
+	};
+
 	template<typename T>
 	concept BayesOptimizer = requires (T a)
 	{
+		{a.optimize(StateFuncArchetype{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<void>;
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<EvaluationStatus>;
+		{a.isBounded()} -> std::convertible_to<bool>;
+		{a.addInequalityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
+		{a.addEqualityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
+		{a.constraintsAreSatisfied(Eigen::VectorXd{})} -> std::convertible_to<bool>;
+		{a.hasConstraints()} -> std::convertible_to<bool>;
 	};
 
 	struct BayesOptimizerArchetype
 	{
-		EvaluationStatus eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) { return OK; };
+		EvaluationStatus eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) { return OK; }
+		void optimize(StateFuncArchetype stateFunc, AggregatorFuncArchetype aggFunc, bool reset) {}
+		bool isBounded() { return true; }
+		void addInequalityConstraint(EvalFuncArchetype arch) {}
+		void addEqualityConstraint(EvalFuncArchetype arch) {}
+		bool constraintsAreSatisfied(Eigen::VectorXd sampleLoc) { return true; }
+		bool hasConstraints() {return true;}
 	};
 
 	static_assert(BayesOptimizer<BayesOptimizerArchetype>);
 
+	// A function which generates the initial samples to create the baysian model.
 	template<typename T>
 	concept InitFunc = requires (T a)
 	{
@@ -98,15 +114,6 @@ namespace limbo::concepts
 	concept StoppingCriteria = requires (T a)
 	{
 		{ a(BayesOptimizerArchetype(), AggregatorFuncArchetype()) } -> std::convertible_to<bool>;
-	};
-
-	// An evaluationFunction takes a coordinate and a t/f if gradient needs to be calculated and returns the objective function value and optionally the gradient at that location.
-	template<typename T> // TODO this seems to be duplicate with AcquisitionFunc, just slightly different. In practice boptimizer is wrapping eval func around acquisitionfunc
-	concept EvalFunc = Callable<T, std::pair<double, std::optional<Eigen::VectorXd>>, Eigen::VectorXd, bool>;
-
-	struct EvalFuncArchetype
-	{
-		std::pair<double, std::optional<Eigen::VectorXd>> operator()(Eigen::VectorXd, bool) { return std::pair { 0.0, std::nullopt }; }
 	};
 
 	// An acquisition function acts as the objective function of the bayesian surrogate model. It is optimized upon to find the next point to evaluate the true objective function at.

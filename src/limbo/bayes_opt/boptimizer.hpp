@@ -175,6 +175,7 @@ namespace limbo {
             using stopping_criteria_t = StoppingCriteria;
             using model_t = model_type;
             using stats_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
+            using constraint_func_t = std::function<std::pair<double, Eigen::VectorXd>(Eigen::VectorXd, bool)>;
 
             /// default constructor
             BOptimizer(int dimIn):
@@ -187,7 +188,7 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
-            void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true, std::optional<std::function<void(double, Eigen::VectorXd, std::vector<Eigen::VectorXd> const&, std::vector<Eigen::VectorXd> const&)>> postInitCallback = std::nullopt)
+            void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
                 assert(dimIn_ == sfun.dim_in());
                 this->_current_iteration = 0;
@@ -209,11 +210,6 @@ namespace limbo {
                     _model.compute(this->_samples, this->_observations);
                 else
                     _model = model_type(sfun.dim_in(), sfun.dim_out());
-
-                if (postInitCallback.has_value())
-                {
-                    postInitCallback.value()(afun(best_observation(afun)), best_sample(), observations(), samples());
-                }
 
                 // While no stopping criteria return `true`
                 while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun); }))
@@ -287,6 +283,8 @@ namespace limbo {
 
             int total_iterations() const { return _total_iterations; }
 
+            acqui_opt_t const& acquisitionOptimizer() const { return acqui_optimizer; }
+
             /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
             template <concepts::StateFunc StateFunction>
             EvaluationStatus eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
@@ -301,7 +299,45 @@ namespace limbo {
 
             bool isBounded() const { return Params::bayes_opt_boptimizer::bounded(); }
 
-            acqui_opt_t& getAcquisitionOptimizer() { return acqui_optimizer; }
+            template<concepts::EvalFunc Func>
+            void addInequalityConstraint(Func func)
+            {
+                auto& it = inequalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(func));
+                acqui_optimizer.add_inequality_constraint(it.get());
+            }
+
+            template<concepts::EvalFunc Func>
+            void addEqualityConstraint(Func func)
+            {
+                auto it = equalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(func));
+                acqui_optimizer.add_equality_constraint(it.get());
+            }
+
+            bool hasConstraints() const
+            {
+                return !equalityConstraints_.empty() || !inequalityConstraints_.empty();
+            }
+
+            bool constraintsAreSatisfied(Eigen::VectorXd const& sampleLocation) const
+            {
+	            for (auto const& ineq : inequalityConstraints_)
+	            {
+                    auto [val, gradient] = ineq->operator()(sampleLocation, false);
+                    if (val >= 0)
+                    {
+                        return false;
+                    }
+	            }
+                for (auto const& eq : equalityConstraints_)
+                {
+                    auto [val, gradient] = eq->operator()(sampleLocation, false);
+                    if (std::abs(val) > 1e-8) // Ideally the value should be 0 but we use 1e-8 to give a little wiggle room.
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
 
         private:
             /// Add a new sample / observation pair
@@ -322,6 +358,8 @@ namespace limbo {
             acqui_opt_t acqui_optimizer;
 			std::vector<Eigen::VectorXd> _observations;
             std::vector<Eigen::VectorXd> _samples;
+            std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
+            std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
             model_type _model;
             int dimIn_;
         };

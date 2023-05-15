@@ -68,9 +68,13 @@ namespace limbo {
         */
         template <typename init_gridsampling>
         struct GridSampling {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
+            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
             EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
+                if (opt.hasConstraints())
+                {
+                    throw std::runtime_error("This initializer does not support constrained problems.");
+                }
                 return _explore(0, seval, Eigen::VectorXd::Constant(seval.dim_in(), 0), opt);
             }
 

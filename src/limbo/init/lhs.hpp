@@ -73,6 +73,10 @@ namespace limbo {
             EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 assert(opt.isBounded());
+                if (opt.hasConstraints())
+                {
+                    throw std::runtime_error("This initializer does not support constrained problems.");
+                }
 
                 Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), init_lhs::samples());
 
