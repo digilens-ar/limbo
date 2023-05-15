@@ -634,6 +634,7 @@ namespace limbo {
                 return k;
             }
         };
+
         /// GPBasic is a GP with a "mean data" mean function, Exponential kernel,
         /// and NO hyper-parameter optimization
         template <typename Params>

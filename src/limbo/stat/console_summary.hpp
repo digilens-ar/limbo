@@ -47,6 +47,7 @@
 #define LIMBO_STAT_CONSOLE_SUMMARY_HPP
 
 #include <limbo/stat/stat_base.hpp>
+#include <iostream>
 
 namespace limbo {
     namespace stat {
