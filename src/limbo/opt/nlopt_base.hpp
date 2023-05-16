@@ -62,7 +62,7 @@ namespace limbo::opt {
     class NLOptBase {
     public:
         template <concepts::EvalFunc F>
-        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded)
+        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
         {
             assert(init.size() == dim_);
 
@@ -127,7 +127,7 @@ namespace limbo::opt {
             _opt = nlopt::opt(algorithm, dim);
         }
 
-        nlopt::opt _opt;
+        mutable nlopt::opt _opt;
 
     private:
         template <concepts::EvalFunc F>

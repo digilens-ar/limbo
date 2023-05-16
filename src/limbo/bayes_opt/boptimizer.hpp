@@ -175,7 +175,7 @@ namespace limbo {
             using stopping_criteria_t = StoppingCriteria;
             using model_t = model_type;
             using stats_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
-            using constraint_func_t = std::function<std::pair<double, Eigen::VectorXd>(Eigen::VectorXd, bool)>;
+            using constraint_func_t = std::function<std::pair<double, std::optional<Eigen::VectorXd>>(Eigen::VectorXd, bool)>;
 
             /// default constructor
             BOptimizer(int dimIn):
@@ -302,14 +302,14 @@ namespace limbo {
             template<concepts::EvalFunc Func>
             void addInequalityConstraint(Func func)
             {
-                auto& it = inequalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(func));
+                auto& it = inequalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(std::move(func)));
                 acqui_optimizer.add_inequality_constraint(it.get());
             }
 
             template<concepts::EvalFunc Func>
             void addEqualityConstraint(Func func)
             {
-                auto it = equalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(func));
+                auto& it = equalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(std::move(func)));
                 acqui_optimizer.add_equality_constraint(it.get());
             }
 
