@@ -47,7 +47,7 @@
 #define LIMBO_STAT_CONSOLE_SUMMARY_HPP
 
 #include <limbo/stat/stat_base.hpp>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace limbo {
     namespace stat {
@@ -60,10 +60,11 @@ namespace limbo {
                 if (bo.observations().empty())
                     return;
 
-                std::cout << bo.total_iterations() << " new point: "
-                          << bo.samples().back().transpose()
-                          << " value: " << afun(bo.observations().back())
-                          << " best:" << afun(bo.best_observation(afun)) << std::endl;
+                spdlog::info("{} new point: {} value: {} best: {}", 
+                    bo.total_iterations(),
+                    bo.samples().back().transpose(),
+                    afun(bo.observations().back()), 
+                    afun(bo.best_observation(afun)));
             }
         };
     }

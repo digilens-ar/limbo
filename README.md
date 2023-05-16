@@ -16,4 +16,5 @@ Notable Changes
  - many instances of `operator()` are replaced with named methods.
  - Support for non-linear constraints is enhanced.
  - Added `EvaluationStatus` to allow objective functions to request a gracely end of optimization or skipping of sample.
+ - Replaced usages of std::cout with `spdlog` logging library.
 

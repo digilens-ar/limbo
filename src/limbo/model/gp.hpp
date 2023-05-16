@@ -65,6 +65,7 @@
 #include <limbo/model/gp/kernel_lf_opt.hpp>
 #include <limbo/model/gp/no_lf_opt.hpp>
 #include <limbo/tools.hpp>
+#include <spdlog/spdlog.h>
 #ifdef _WIN32
 #include <corecrt_math_defines.h>
 #endif
@@ -219,9 +220,7 @@ namespace limbo {
             Eigen::VectorXd max_observation() const
             {
                 if (_observations.cols() > 1)
-                    std::cout << "WARNING max_observation with multi dimensional "
-                                 "observations doesn't make sense"
-                              << std::endl;
+                    spdlog::error("WARNING max_observation with multi dimensional observations doesn't make sense");
                 return tools::make_vector(_observations.maxCoeff());
             }
 

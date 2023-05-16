@@ -87,9 +87,7 @@ namespace limbo {
                 if (afun(bo.best_observation(afun)) <= stop_maxpredictedvalue::ratio() * val)
                     return false;
                 else {
-                    std::cout << "stop caused by Max predicted value reached. Threshold: "
-                              << stop_maxpredictedvalue::ratio() * val
-                              << " max observations: " << afun(bo.best_observation(afun)) << std::endl;
+                    spdlog::info("Stop caused by Max predicted value reached. Threshold: {} Max Observation: {}", stop_maxpredictedvalue::ratio() * val, afun(bo.best_observation(afun)));
                     return true;
                 }
             }

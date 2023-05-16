@@ -51,6 +51,7 @@
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
 #include <limbo/concepts.hpp>
+#include <spdlog/spdlog.h>
 
 namespace limbo {
     namespace defaults {
@@ -75,9 +76,15 @@ namespace limbo {
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
                     Eigen::VectorXd new_sample;
+                    int cnt = 0;
                     do
                     { // Find a sample that satisfies the constraints
                         new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                        if (cnt++ > 1000)
+                        {
+                            spdlog::error("Limbo RandomSampling: Failed to find a random sample that satisfies constraints after 1000 attempts");
+                            break;
+                        }
                     } while (!opt.constraintsAreSatisfied(new_sample));
 
                     EvaluationStatus status = SKIP;
