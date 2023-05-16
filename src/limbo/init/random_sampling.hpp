@@ -80,9 +80,9 @@ namespace limbo {
                     do
                     { // Find a sample that satisfies the constraints
                         new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
-                        if (cnt++ > 1000)
+                        if (cnt++ > 1000000)
                         {
-                            spdlog::error("Limbo RandomSampling: Failed to find a random sample that satisfies constraints after 1000 attempts");
+                            spdlog::error("Limbo RandomSampling: Failed to find a random sample that satisfies constraints after 1000000 attempts");
                             break;
                         }
                     } while (!opt.constraintsAreSatisfied(new_sample));
