@@ -1,6 +1,6 @@
 #pragma once
 #include <concepts>
-
+#include <Eigen/Dense>
 
 namespace limbo
 {
