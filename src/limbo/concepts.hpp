@@ -17,12 +17,6 @@ namespace limbo::concepts
 	template <typename F, typename Ret, class... Args >
 	concept Callable = std::invocable<F, Args...> && std::same_as<Ret, std::invoke_result_t<F, Args...>>;
 
-	// Param Types
-	template<typename T>
-	concept AcquiEI = requires (T a)
-	{
-		{ T::jitter() } -> std::convertible_to<double>;
-	};
 
 	//Fundamental Types
 	template<typename T>
@@ -32,7 +26,7 @@ namespace limbo::concepts
         { a.add_sample(Eigen::VectorXd{}, Eigen::VectorXd{}) } -> std::convertible_to<void>;
         { a.query(Eigen::VectorXd{}) } -> std::convertible_to<std::tuple<Eigen::VectorXd, double>>;
         { a.mu(Eigen::VectorXd{}) } -> std::convertible_to<Eigen::VectorXd>;
-        { a.sigma(Eigen::VectorXd{}) } -> std::convertible_to<double>;
+        { a.sigma_sq(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.dim_in() } -> std::convertible_to<int>;
         { a.dim_out() } -> std::convertible_to<int>;
         { a.nb_samples() } -> std::convertible_to<int>;

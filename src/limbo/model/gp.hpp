@@ -167,7 +167,7 @@ namespace limbo {
                         _kernel_function(v, v) + _kernel_function.noise());
 
                 Eigen::VectorXd k = _compute_k(v);
-                return std::make_tuple(_mu(v, k), _sigma(v, k) + _kernel_function.noise());
+                return std::make_tuple(_mu(v, k), _sigma_sq(v, k) + _kernel_function.noise());
             }
 
             /**
@@ -187,11 +187,11 @@ namespace limbo {
              return :math:`\sigma^2` (un-normalized). If there is no sample, return the max :math:`\sigma^2`.
              \\endrst
             */
-            double sigma(const Eigen::VectorXd& v) const
+            double sigma_sq(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
                     return _kernel_function(v, v) + _kernel_function.noise();
-                return _sigma(v, _compute_k(v)) + _kernel_function.noise();
+                return _sigma_sq(v, _compute_k(v)) + _kernel_function.noise();
             }
 
             /// return the number of dimensions of the input
@@ -617,7 +617,7 @@ namespace limbo {
                 return (k.transpose() * _alpha) + _mean_function(v, *this).transpose();
             }
 
-            double _sigma(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
+            double _sigma_sq(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
             {
                 Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k);
                 double res = _kernel_function(v, v) - z.dot(z);

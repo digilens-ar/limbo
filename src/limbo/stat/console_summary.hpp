@@ -48,6 +48,11 @@
 
 #include <limbo/stat/stat_base.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
+template<typename T>
+    requires std::is_base_of_v<Eigen::DenseBase<T>, T>
+struct fmt::formatter<T> : fmt::ostream_formatter {}; // Enable operator<< streaming for eigen with spdlog
 
 namespace limbo {
     namespace stat {

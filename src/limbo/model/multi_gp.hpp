@@ -224,7 +224,7 @@ namespace limbo {
                 Eigen::VectorXd sigma(_dim_out);
 
                 limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                    sigma(i) = _gp_models[i].sigma(v);
+                    sigma(i) = _gp_models[i].sigma_sq(v);
                 });
 
                 return sigma;

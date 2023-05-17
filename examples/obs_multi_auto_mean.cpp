@@ -105,7 +105,7 @@ public:
         // std::tie(mu, sigma) = _model.query(v);
         // return (mu + Params::ucb::alpha() * sqrt(sigma));
 
-        return limbo::opt::no_grad(std::sqrt(_model.sigma(v)));
+        return limbo::opt::no_grad(std::sqrt(_model.sigma_sq(v)));
     }
 
 protected:
