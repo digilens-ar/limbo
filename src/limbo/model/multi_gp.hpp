@@ -271,7 +271,7 @@ namespace limbo {
                 }
 
                 for (int i = 0; i < _dim_out; i++) {
-                    _gp_models[i].template save(A(archive.directory() + "/gp_" + std::to_string(i)));
+                    _gp_models[i].save(A(archive.directory() + "/gp_" + std::to_string(i)));
                 }
             }
 
@@ -294,7 +294,7 @@ namespace limbo {
                 if (out._mean_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "mean_params");
-                    assert(h_params.size() == (int)_mean_function.h_params_size());
+                    assert(h_params.size() == (int)out._mean_function.h_params_size());
                     out._mean_function.set_h_params(h_params);
                 }
 

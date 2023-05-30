@@ -94,10 +94,8 @@ namespace limbo {
                 assert(_dim_out == observations[0].size());
 
                 _samples = samples;
-                _observations.resize(observations.size(), _dim_out);
-                for (int i = 0; i < _observations.rows(); ++i)
-                    _observations.row(i) = observations[i];
-
+                _observations = observations;
+            
                 this->_compute_obs_mean();
                 if (compute_kernel)
                     this->_compute_full_kernel();
@@ -117,8 +115,7 @@ namespace limbo {
                 assert(observation.size() == _dim_out);
 
                 _samples.push_back(sample);
-                _observations.conservativeResize(_observations.rows() + 1, _dim_out);
-                _observations.bottomRows<1>() = observation.transpose();
+                _observations.push_back(observation);
 
                 this->_compute_obs_mean();
                 this->_compute_incremental_kernel();
@@ -183,21 +180,20 @@ namespace limbo {
 
             MeanFunction& mean_function() { return _mean_function; }
 
-            /// return the maximum observation (only call this if the output of the GP is of dimension 1)
-            Eigen::VectorXd max_observation() const
-            {
-                if (_observations.cols() > 1)
-                    spdlog::error("WARNING max_observation with multi dimensional observations doesn't make sense");
-                return tools::make_vector(_observations.maxCoeff());
-            }
-
             /// return the mean observation (only call this if the output of the GP is of dimension 1)
             Eigen::VectorXd mean_observation() const
             {
                 assert(_dim_out > 0);
-                Eigen::VectorXd mean_observation = _observations.colwise().mean();
-                return _samples.size() > 0 ? mean_observation
-                                           : Eigen::VectorXd::Zero(_dim_out);
+                if (_samples.size() > 0) {
+                    Eigen::VectorXd mean_observation = Eigen::VectorXd::Zero(_dim_out);
+                    for (auto const& obs : _observations)
+                    {
+                        mean_observation += obs;
+                    }
+                    mean_observation /= _observations.size();
+                    return mean_observation;
+                }
+                return Eigen::VectorXd::Zero(_dim_out);
             }
 
             /// return the number of samples used to compute the GP
@@ -365,14 +361,9 @@ namespace limbo {
             const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
 
             /// return the list of observations
-            std::vector<Eigen::VectorXd> observations() const
+            std::vector<Eigen::VectorXd> const& observations() const
             {
-                std::vector<Eigen::VectorXd> observations;
-                for (int i = 0; i < _observations.rows(); i++) {
-                    observations.push_back(_observations.row(i));
-                }
-
-                return observations;
+                return _observations;
             }
 
             bool inv_kernel_computed() { return _inv_kernel_updated; }
@@ -402,17 +393,17 @@ namespace limbo {
                 std::vector<Eigen::VectorXd> samples;
                 archive.load(samples, "samples");
 
-                Eigen::MatrixXd observations;
+                std::vector<Eigen::VectorXd> observations;
                 archive.load(observations, "observations");
 
-                GP out(samples[0].size(), observations.cols());
+                GP out(samples[0].size(), observations.at(0).size());
                 out._samples = samples;
                 out._observations = observations;
 
                 if (out._kernel_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "kernel_params");
-                    assert(h_params.size() == (int)_kernel_function.h_params_size());
+                    assert(h_params.size() == (int)out._kernel_function.h_params_size());
                     out._kernel_function.set_h_params(h_params);
                 }
 
@@ -421,7 +412,7 @@ namespace limbo {
                 if (out._mean_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "mean_params");
-                    assert(h_params.size() == (int)_mean_function.h_params_size());
+                    assert(h_params.size() == (int)out._mean_function.h_params_size());
                     out._mean_function.set_h_params(h_params);
                 }
 
@@ -442,7 +433,7 @@ namespace limbo {
             MeanFunction _mean_function;
 
             std::vector<Eigen::VectorXd> _samples;
-            Eigen::MatrixXd _observations;
+            std::vector<Eigen::VectorXd> _observations;
             Eigen::MatrixXd _obs_mean;
 
             Eigen::MatrixXd _alpha;
@@ -457,15 +448,13 @@ namespace limbo {
             void _compute_obs_mean()
             {
                 assert(!_samples.empty());
-                Eigen::MatrixXd mean_vector;
-                mean_vector.resize(_samples.size(), _dim_out);
-                for (int i = 0; i < mean_vector.rows(); i++) {
+                _obs_mean.resize(_samples.size(), _dim_out);
+                for (int i = 0; i < _obs_mean.rows(); i++) {
                     assert(_samples[i].cols() == 1);
                     assert(_samples[i].rows() != 0);
                     assert(_samples[i].rows() == _dim_in);
-                    mean_vector.row(i) = _mean_function(_samples[i], *this);
+                    _obs_mean.row(i) = _observations.at(i) - _mean_function(_samples[i], *this);
                 }
-                _obs_mean = _observations - mean_vector;
             }
 
             void _compute_full_kernel()
