@@ -60,7 +60,6 @@
 
 #include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/kernel/squared_exp_ard.hpp>
-#include <limbo/mean/constant.hpp>
 #include <limbo/mean/data.hpp>
 #include <limbo/model/gp/kernel_lf_opt.hpp>
 #include <limbo/model/gp/no_lf_opt.hpp>
@@ -81,9 +80,6 @@ namespace limbo {
         template <typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
         class GP {
         public:
-            /// useful because the model might be created before knowing anything about the process
-            GP() : _dim_in(-1), _dim_out(-1), _inv_kernel_updated(false) {}
-
             /// useful because the model might be created before having samples
             GP(int dim_in, int dim_out)
                 : _dim_in(dim_in), _dim_out(dim_out), _kernel_function(dim_in), _mean_function(dim_out), _inv_kernel_updated(false) {}
@@ -95,19 +91,10 @@ namespace limbo {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
-
-                if (_dim_in != samples[0].size()) {
-                    _dim_in = samples[0].size();
-                    _kernel_function = KernelFunction(_dim_in); // the cost of building a functor should be relatively low
-                }
-
-                if (_dim_out != observations[0].size()) {
-                    _dim_out = observations[0].size();
-                    _mean_function = MeanFunction(_dim_out); // the cost of building a functor should be relatively low
-                }
+                assert(_dim_in == samples[0].size());
+                assert(_dim_out == observations[0].size());
 
                 _samples = samples;
-
                 _observations.resize(observations.size(), _dim_out);
                 for (int i = 0; i < _observations.rows(); ++i)
                     _observations.row(i) = observations[i];
@@ -129,23 +116,10 @@ namespace limbo {
             /// decomposition. It is therefore much faster than a call to compute()
             void add_sample(const Eigen::VectorXd& sample, const Eigen::VectorXd& observation)
             {
-                if (_samples.empty()) {
-                    if (_dim_in != sample.size()) {
-                        _dim_in = sample.size();
-                        _kernel_function = KernelFunction(_dim_in); // the cost of building a functor should be relatively low
-                    }
-                    if (_dim_out != observation.size()) {
-                        _dim_out = observation.size();
-                        _mean_function = MeanFunction(_dim_out); // the cost of building a functor should be relatively low
-                    }
-                }
-                else {
-                    assert(sample.size() == _dim_in);
-                    assert(observation.size() == _dim_out);
-                }
+                assert(sample.size() == _dim_in);
+                assert(observation.size() == _dim_out);
 
                 _samples.push_back(sample);
-
                 _observations.conservativeResize(_observations.rows() + 1, _dim_out);
                 _observations.bottomRows<1>() = observation.transpose();
 
@@ -197,14 +171,12 @@ namespace limbo {
             /// return the number of dimensions of the input
             int dim_in() const
             {
-                assert(_dim_in != -1); // need to compute first!
                 return _dim_in;
             }
 
             /// return the number of dimensions of the output
             int dim_out() const
             {
-                assert(_dim_out != -1); // need to compute first!
                 return _dim_out;
             }
 
@@ -331,12 +303,6 @@ namespace limbo {
                 return grad;
             }
 
-            /// return the likelihood (do not compute it -- return last computed)
-            double get_log_lik() const { return _log_lik; }
-
-            /// set the log likelihood (e.g. computed from outside)
-            void set_log_lik(double log_lik) { _log_lik = log_lik; }
-
             /// compute and return the log probability of LOO CV
             double compute_log_loo_cv()
             {
@@ -403,12 +369,6 @@ namespace limbo {
                 return grad;
             }
 
-            /// return the LOO-CV log probability (do not compute it -- return last computed)
-            double get_log_loo_cv() const { return _log_loo_cv; }
-
-            /// set the LOO-CV log probability (e.g. computed from outside)
-            void set_log_loo_cv(double log_loo_cv) { _log_loo_cv = log_loo_cv; }
-
             /// LLT matrix (from Cholesky decomposition)
             const Eigen::MatrixXd& matrixL() const { return _matrixL; }
 
@@ -439,14 +399,6 @@ namespace limbo {
 
             /// save the parameters and the data for the GP to the archive (text or binary)
             template <typename A>
-            void save(const std::string& directory) const
-            {
-                A archive(directory);
-                save(archive);
-            }
-
-            /// save the parameters and the data for the GP to the archive (text or binary)
-            template <typename A>
             void save(const A& archive) const
             {
                 if (_kernel_function.h_params_size() > 0) {
@@ -465,51 +417,43 @@ namespace limbo {
             /// if recompute is true, we do not read the kernel matrix
             /// but we recompute it given the data and the hyperparameters
             template <typename A>
-            void load(const std::string& directory, bool recompute = true)
+            static GP load(const A& archive, bool recompute = true)
             {
-                A archive(directory);
-                load(archive, recompute);
-            }
+                std::vector<Eigen::VectorXd> samples;
+                archive.load(samples, "samples");
 
-            /// load the parameters and the data for the GP from the archive (text or binary)
-            /// if recompute is true, we do not read the kernel matrix
-            /// but we recompute it given the data and the hyperparameters
-            template <typename A>
-            void load(const A& archive, bool recompute = true)
-            {
-                _samples.clear();
-                archive.load(_samples, "samples");
+                Eigen::MatrixXd observations;
+                archive.load(observations, "observations");
 
-                archive.load(_observations, "observations");
+                GP out(samples[0].size(), observations.cols());
+                out._samples = samples;
+                out._observations = observations;
 
-                _dim_in = _samples[0].size();
-                _kernel_function = KernelFunction(_dim_in);
-
-                if (_kernel_function.h_params_size() > 0) {
+                if (out._kernel_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "kernel_params");
                     assert(h_params.size() == (int)_kernel_function.h_params_size());
-                    _kernel_function.set_h_params(h_params);
+                    out._kernel_function.set_h_params(h_params);
                 }
 
-                _dim_out = _observations.cols();
-                _mean_function = MeanFunction(_dim_out);
+                out._mean_function = MeanFunction(out._dim_out);
 
-                if (_mean_function.h_params_size() > 0) {
+                if (out._mean_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "mean_params");
                     assert(h_params.size() == (int)_mean_function.h_params_size());
-                    _mean_function.set_h_params(h_params);
+                    out._mean_function.set_h_params(h_params);
                 }
 
-                _mean_observation = _observations.colwise().mean();
+                out._mean_observation = out._observations.colwise().mean();
 
                 if (recompute)
-                    this->recompute(true, true);
+                    out.recompute(true, true);
                 else {
-                    archive.load(_matrixL, "matrixL");
-                    archive.load(_alpha, "alpha");
+                    archive.load(out._matrixL, "matrixL");
+                    archive.load(out._alpha, "alpha");
                 }
+                return out;
             }
 
         protected:

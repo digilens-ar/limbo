@@ -62,17 +62,14 @@ namespace limbo {
         public:
             using GP_t = GPClass<KernelFunction, limbo::mean::NullFunction, limbo::model::gp::NoLFOpt>;
 
-            /// useful because the model might be created before knowing anything about the process
-            MultiGP() : _dim_in(-1), _dim_out(-1) {}
-
             /// useful because the model might be created before having samples
             MultiGP(int dim_in, int dim_out)
                 : _dim_in(dim_in), _dim_out(dim_out), _mean_function(dim_out)
             {
                 // initialize dim_in models with 1 output
-                _gp_models.resize(_dim_out);
+                _gp_models.clear();
                 for (int i = 0; i < _dim_out; i++) {
-                    _gp_models[i] = GP_t(_dim_in, 1);
+                    _gp_models.emplace_back(_dim_in, 1);
                 }
             }
 
@@ -83,21 +80,8 @@ namespace limbo {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
-
-                if (_dim_in != samples[0].size()) {
-                    _dim_in = samples[0].size();
-                }
-
-                if (_dim_out != observations[0].size()) {
-                    _dim_out = observations[0].size();
-                    _mean_function = MeanFunction(_dim_out); // the cost of building a functor should be relatively low
-                }
-
-                if ((int)_gp_models.size() != _dim_out) {
-                    _gp_models.resize(_dim_out);
-                    for (int i = 0; i < _dim_out; i++)
-                        _gp_models[i] = GP_t(_dim_in, 1);
-                }
+                assert(_dim_in == samples[0].size());
+                assert(_dim_out == observations[0].size());
 
                 // save observations
                 // TO-DO: Check how can we improve for not saving observations twice (one here and one for each GP)!?
@@ -140,23 +124,8 @@ namespace limbo {
             /// decomposition. It is therefore much faster than a call to compute()
             void add_sample(const Eigen::VectorXd& sample, const Eigen::VectorXd& observation)
             {
-                if (_gp_models.size() == 0) {
-                    if (_dim_in != sample.size()) {
-                        _dim_in = sample.size();
-                    }
-                    if (_dim_out != observation.size()) {
-                        _dim_out = observation.size();
-                        _gp_models.resize(_dim_out);
-                        for (int i = 0; i < _dim_out; i++)
-                            _gp_models[i] = GP_t(_dim_in, 1);
-
-                        _mean_function = MeanFunction(_dim_out); // the cost of building a functor should be relatively low
-                    }
-                }
-                else {
-                    assert(sample.size() == _dim_in);
-                    assert(observation.size() == _dim_out);
-                }
+                assert(sample.size() == _dim_in);
+                assert(observation.size() == _dim_out);
 
                 _observations.push_back(observation);
 
@@ -233,14 +202,12 @@ namespace limbo {
             /// return the number of dimensions of the input
             int dim_in() const
             {
-                assert(_dim_in != -1); // need to compute first!
                 return _dim_in;
             }
 
             /// return the number of dimensions of the output
             int dim_out() const
             {
-                assert(_dim_out != -1); // need to compute first!
                 return _dim_out;
             }
 
@@ -268,7 +235,6 @@ namespace limbo {
             /// return the list of samples
             const std::vector<Eigen::VectorXd>& samples() const
             {
-                assert(_gp_models.size());
                 return _gp_models[0].samples();
             }
 
@@ -311,13 +277,6 @@ namespace limbo {
                 return _gp_models;
             }
 
-            /// save the parameters and the data for the GP to the archive (text or binary)
-            template <typename A>
-            void save(const std::string& directory) const
-            {
-                A archive(directory);
-                save(archive);
-            }
 
             /// save the parameters and the data for the GP to the archive (text or binary)
             template <typename A>
@@ -334,7 +293,7 @@ namespace limbo {
                 }
 
                 for (int i = 0; i < _dim_out; i++) {
-                    _gp_models[i].template save<A>(archive.directory() + "/gp_" + std::to_string(i));
+                    _gp_models[i].template save(A(archive.directory() + "/gp_" + std::to_string(i)));
                 }
             }
 
@@ -342,51 +301,42 @@ namespace limbo {
             /// if recompute is true, we do not read the kernel matrix
             /// but we recompute it given the data and the hyperparameters
             template <typename A>
-            void load(const std::string& directory, bool recompute = true)
+            static MultiGP load(const A& archive, bool recompute = true)
             {
-                A archive(directory);
-                load(archive, recompute);
-            }
-
-            /// load the parameters and the data for the GP from the archive (text or binary)
-            /// if recompute is true, we do not read the kernel matrix
-            /// but we recompute it given the data and the hyperparameters
-            template <typename A>
-            void load(const A& archive, bool recompute = true)
-            {
-                _observations.clear();
-                archive.load(_observations, "observations");
 
                 Eigen::VectorXd dims;
                 archive.load(dims, "dims");
 
-                _dim_in = static_cast<int>(dims(0));
-                _dim_out = static_cast<int>(dims(1));
+                MultiGP out(dims(0), dims(1));
+                out._observations.clear();
+                archive.load(out._observations, "observations");
 
                 // recompute mean observation
-                _mean_observation = Eigen::VectorXd::Zero(_dim_out);
-                for (size_t j = 0; j < _observations.size(); j++)
-                    _mean_observation.array() += _observations[j].array();
-                _mean_observation.array() /= static_cast<double>(_observations.size());
+                out._mean_observation = Eigen::VectorXd::Zero(out._dim_out);
+                for (size_t j = 0; j < out._observations.size(); j++)
+                    out._mean_observation.array() += out._observations[j].array();
+                out._mean_observation.array() /= static_cast<double>(out._observations.size());
 
-                _mean_function = MeanFunction(_dim_out);
+                out._mean_function = MeanFunction(out._dim_out);
 
-                if (_mean_function.h_params_size() > 0) {
+                if (out._mean_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "mean_params");
                     assert(h_params.size() == (int)_mean_function.h_params_size());
-                    _mean_function.set_h_params(h_params);
+                    out._mean_function.set_h_params(h_params);
                 }
 
-                _gp_models.resize(_dim_out);
+                out._gp_models.clear();
 
-                for (int i = 0; i < _dim_out; i++) {
+                for (int i = 0; i < out._dim_out; i++) {
                     // do not recompute the individual GPs on their own
-                    _gp_models[i].template load<A>(archive.directory() + "/gp_" + std::to_string(i), false);
+                    out._gp_models.emplace_back(GP_t::load(A(archive.directory() + "/gp_" + std::to_string(i)), false));
                 }
 
                 if (recompute)
-                    this->recompute(true, true);
+                    out.recompute(true, true);
+
+                return out;
             }
 
         protected:

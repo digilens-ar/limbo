@@ -178,9 +178,9 @@ namespace limbo {
             using constraint_func_t = std::function<std::pair<double, std::optional<Eigen::VectorXd>>(Eigen::VectorXd, bool)>;
 
             /// default constructor
-            BOptimizer(int dimIn):
-				dimIn_(dimIn),
-				acqui_optimizer(acqui_opt_t::create(dimIn))
+            BOptimizer(int dimIn, int dimOut):
+				acqui_optimizer(acqui_opt_t::create(dimIn)),
+				_model(dimIn, dimOut)
             {}
 
             BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
@@ -190,7 +190,6 @@ namespace limbo {
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
             void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
-                assert(dimIn_ == sfun.dim_in());
                 this->_current_iteration = 0;
                 if (reset) {
                     this->_total_iterations = 0;
@@ -361,7 +360,6 @@ namespace limbo {
             std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
             std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
             model_type _model;
-            int dimIn_;
         };
 
         namespace _default_hp {

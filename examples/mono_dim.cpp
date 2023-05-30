@@ -132,13 +132,13 @@ int main()
         limbo::stat::GP<Params::stat_gp>>;
 
     using BD = bayes_opt::BOptimizer<Params>;
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2);
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2, 1);
     opt.optimize(fit_eval());
     std::cout << opt.best_observation() << " res  "
               << opt.best_sample().transpose() << std::endl;
 
     // example with basic HP opt
-    bayes_opt::BOptimizerHPOpt<Params> opt_hp(2);
+    bayes_opt::BOptimizerHPOpt<Params> opt_hp(2, 1);
     opt_hp.optimize(fit_eval());
     std::cout << opt_hp.best_observation() << " res  "
               << opt_hp.best_sample().transpose() << std::endl;

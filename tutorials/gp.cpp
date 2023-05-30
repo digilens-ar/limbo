@@ -136,9 +136,9 @@ int main(int argc, char** argv)
         ofs_data << samples[i].transpose() << " " << observations[i].transpose() << std::endl;
 
     // Sometimes is useful to save an optimized GP
-    gp_ard.save<serialize::TextArchive>("myGP");
+    gp_ard.save(serialize::TextArchive("myGP"));
 
     // Later we can load -- we need to make sure that the type is identical to the one saved
-    gp_ard.load<serialize::TextArchive>("myGP");
+    gp_ard.load(serialize::TextArchive("myGP"));
     return 0;
 }

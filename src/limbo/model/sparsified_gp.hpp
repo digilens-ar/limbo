@@ -73,9 +73,6 @@ namespace limbo {
         public:
             using base_gp_t = GP<KernelFunction, MeanFunction, HyperParamsOptimizer>;
 
-            /// useful because the model might be created before knowing anything about the process
-            SparsifiedGP() : base_gp_t() {}
-
             /// useful because the model might be created before having samples
             SparsifiedGP(int dim_in, int dim_out)
                 : base_gp_t(dim_in, dim_out) {}

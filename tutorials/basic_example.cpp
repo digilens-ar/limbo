@@ -112,7 +112,7 @@ struct Eval {
 int main()
 {
     // we use the default acquisition function / model / stat / etc.
-    bayes_opt::BOptimizer<Params> boptimizer(1);
+    bayes_opt::BOptimizer<Params> boptimizer(1, 1);
     // run the evaluation
     boptimizer.optimize(Eval());
     // the best sample found

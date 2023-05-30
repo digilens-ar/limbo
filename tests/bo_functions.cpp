@@ -335,7 +335,7 @@ int main(int argc, char** argv)
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "sphere"))
         tools::par::replicate(nb_replicates, [&]() {
             
-                Opt_t opt(Sphere::dim_in());
+                Opt_t opt(Sphere::dim_in(), Sphere::dim_out());
                 opt.optimize(Sphere());
                 Eigen::Vector2d s_val(0.5, 0.5);
                 double x_opt = FirstElem()(std::get<1>(Sphere()(s_val)));
@@ -346,7 +346,7 @@ int main(int argc, char** argv)
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "ellipsoid"))
         tools::par::replicate(nb_replicates, [&]() {
             
-                Opt_t opt(Ellipsoid::dim_in());
+                Opt_t opt(Ellipsoid::dim_in(), Ellipsoid::dim_out());
                 opt.optimize(Ellipsoid());
                 Eigen::Vector2d s_val(0.5, 0.5);
                 double x_opt = FirstElem()(std::get<1>(Ellipsoid()(s_val)));
@@ -357,7 +357,7 @@ int main(int argc, char** argv)
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "rastrigin"))
         tools::par::replicate(nb_replicates, [&]() {
             
-                Opt_t opt(Rastrigin::dim_in());
+                Opt_t opt(Rastrigin::dim_in(), Rastrigin::dim_out());
                 opt.optimize(Rastrigin());
                 Eigen::Vector4d s_val(0, 0, 0, 0);
                 double x_opt = FirstElem()(std::get<1>(Rastrigin()(s_val)));
@@ -368,7 +368,7 @@ int main(int argc, char** argv)
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "hartman3"))
         tools::par::replicate(nb_replicates, [&]() {
             
-                Opt_t opt(Hartman3::dim_in());
+                Opt_t opt(Hartman3::dim_in(), Hartman3::dim_out());
                 opt.optimize(Hartman3());
                 // double s_max = 3.86278;
                 Eigen::Vector3d s_val(0.114614, 0.555549, 0.852547);
@@ -380,7 +380,7 @@ int main(int argc, char** argv)
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "hartman6"))
         tools::par::replicate(nb_replicates, [&]() {
             
-                Opt_t opt(Hartman6::dim_in());
+                Opt_t opt(Hartman6::dim_in(), Hartman6::dim_out());
                 opt.optimize(Hartman6());
                 Eigen::Matrix<double, 6, 1> s_val;
                 s_val << 0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573;
@@ -393,7 +393,7 @@ int main(int argc, char** argv)
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "golden_price"))
         tools::par::replicate(nb_replicates, [&]() {
             
-                Opt_t opt(GoldenPrice::dim_in());
+                Opt_t opt(GoldenPrice::dim_in(), GoldenPrice::dim_out());
                 opt.optimize(GoldenPrice());
                 //    double s_max = -log(3);
                 Eigen::Vector2d s_val(0.5, 0.25);
