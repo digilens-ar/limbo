@@ -126,7 +126,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     }
     // 3-D inputs, 1-D outputs
     GP gp(3, 1);
-    gp.compute(samples, observations);
+    gp.initialize(samples, observations);
     if (optimize_hp)
         gp.optimize_hyperparams();
 

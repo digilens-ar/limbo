@@ -206,7 +206,7 @@ namespace limbo {
                 }
 
                 if (!this->_observations.empty())
-                    _model.compute(this->_samples, this->_observations);
+                    _model.initialize(this->_samples, this->_observations);
                 else
                     _model = model_type(sfun.dim_in(), sfun.dim_out());
 

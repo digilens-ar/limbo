@@ -78,21 +78,19 @@ namespace limbo {
                 : base_gp_t(dim_in, dim_out) {}
 
             /// Compute the GP from samples and observations. This call needs to be explicit!
-            void compute(const std::vector<Eigen::VectorXd>& samples,
+            void initialize(const std::vector<Eigen::VectorXd>& samples,
                 const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
             {
                 /// if the number of samples is less or equal than the desired
                 /// compute the normal GP
                 if (samples.size() <= ModelSparseGP::max_points())
-                    base_gp_t::compute(samples, observations, compute_kernel);
+                    base_gp_t::initialize(samples, observations, compute_kernel);
                 /// otherwise, sparsify the samples
                 else {
-                    std::vector<Eigen::VectorXd> samp, obs;
-
-                    std::tie(samp, obs) = _sparsify(samples, observations);
+                    auto [samp, obs] = _sparsify(samples, observations);
 
                     /// now compute the normal GP with less points
-                    base_gp_t::compute(samp, obs, compute_kernel);
+                    base_gp_t::initialize(samp, obs, compute_kernel);
                 }
             }
 
@@ -110,7 +108,7 @@ namespace limbo {
                         observations.push_back(this->_observations.row(i));
                     }
 
-                    compute(this->_samples, observations, true);
+                    initialize(this->_samples, observations, true);
                 }
             }
 
