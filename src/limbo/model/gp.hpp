@@ -242,9 +242,8 @@ namespace limbo {
                 double a = (_obs_mean.transpose() * _alpha)
                                .trace(); // generalization for multi dimensional observation
 
-                _log_lik = -0.5 * a - 0.5 * logdet - 0.5 * n * std::log(2 * M_PI);
-
-                return _log_lik;
+                double log_lik = -0.5 * a - 0.5 * logdet - 0.5 * n * std::log(2 * M_PI);
+                return log_lik;
             }
 
             /// compute and return the gradient of the log likelihood wrt to the kernel parameters
@@ -256,10 +255,9 @@ namespace limbo {
                 if (!_inv_kernel_updated) {
                     compute_inv_kernel();
                 }
-                Eigen::MatrixXd w = _inv_kernel;
 
                 // alpha * alpha.transpose() - K^{-1}
-                w = _alpha * _alpha.transpose() - w;
+                Eigen::MatrixXd w = _alpha * _alpha.transpose() - _inv_kernel;
 
                 // only compute half of the matrix (symmetrical matrix)
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
@@ -305,9 +303,8 @@ namespace limbo {
 
                 Eigen::VectorXd inv_diag = _inv_kernel.diagonal().array().inverse();
 
-                _log_loo_cv = (((-0.5 * (_alpha.array().square().array().colwise() * inv_diag.array())).array().colwise() - 0.5 * inv_diag.array().log().array()) - 0.5 * std::log(2 * M_PI)).colwise().sum().sum();
-
-                return _log_loo_cv;
+                double log_loo_cv = (((-0.5 * (_alpha.array().square().array().colwise() * inv_diag.array())).array().colwise() - 0.5 * inv_diag.array().log().array()) - 0.5 * std::log(2 * M_PI)).colwise().sum().sum();
+                return log_loo_cv;
             }
 
             /// compute and return the gradient of the log probability of LOO CV wrt to the kernel parameters
@@ -453,8 +450,7 @@ namespace limbo {
 
             Eigen::MatrixXd _matrixL;
 
-            double _log_lik, _log_loo_cv;
-            bool _inv_kernel_updated;
+        	bool _inv_kernel_updated;
 
             HyperParamsOptimizer _hp_optimize;
 
