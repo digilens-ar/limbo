@@ -81,26 +81,33 @@ namespace limbo {
                 static_assert(always_false<BO>);
             }
 
+            void setOutputDirectory(std::filesystem::path const& dir)
+            {
+                dir_ = dir;
+            }
+
         protected:
             std::shared_ptr<std::ofstream> _log_file;
+            std::filesystem::path dir_ = "";
 
             void _create_log_file(const std::string& name)
             {
+                if (_log_file)
+                    return;
+
                 char date[30];
                 time_t date_time;
                 time(&date_time);
                 strftime(date, 30, "%Y-%m-%d_%H_%M_%S", localtime(&date_time));
 
-                std::filesystem::path res_dir = "stats_" + std::string(date) + "_" + std::to_string(::_getpid());
+                std::filesystem::path res_dir = dir_ / ("stats_" + std::string(date) + "_" + std::to_string(::_getpid()));
                 if (!exists(res_dir))
                 {
                     create_directory(res_dir);
                 }
-                if (!_log_file) {
-                    std::filesystem::path log = res_dir / name;
-                    _log_file = std::make_shared<std::ofstream>(log.c_str());
-                    assert(_log_file->good());
-                }
+                std::filesystem::path log = res_dir / name;
+                _log_file = std::make_shared<std::ofstream>(log.c_str());
+                assert(_log_file->good());
             }
 
 

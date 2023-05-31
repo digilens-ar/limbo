@@ -68,6 +68,10 @@
 #else
 #include <limbo/opt/grid_search.hpp>
 #endif
+#include <limbo/serialize/text_archive.hpp>
+#include <filesystem>
+#include <fstream>
+
 
 namespace limbo {
     namespace defaults {
@@ -237,13 +241,13 @@ namespace limbo {
                             });
                     }
 
-                    _model.add_sample(this->_samples.back(), this->_observations.back());
+                    _model.add_sample(this->_samples.back(), this->_observations.back()); // update the model
 
                     if (Params::bayes_opt_boptimizer::hp_period() > 0
                         && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0)
                         _model.optimize_hyperparams();
 
-                    ++this->_current_iteration;
+                	++this->_current_iteration;
                     ++this->_total_iterations;
                 }
             }
@@ -268,14 +272,14 @@ namespace limbo {
                 return this->_samples[std::distance(rewards.begin(), max_e)];
             }
 
-            const model_type& model() const { return _model; }
+            model_type const& model() const { return _model; }
             stats_t& statsFunctors() { return stat_; }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
-            const std::vector<Eigen::VectorXd>& observations() const { return _observations; }
+            std::vector<Eigen::VectorXd> const& observations() const { return _observations; }
 
             /// return the list of the points that have been evaluated so far (x)
-            const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
+            std::vector<Eigen::VectorXd> const& samples() const { return _samples; }
 
             /// return the current iteration number
             int current_iteration() const { return _current_iteration; }
@@ -289,9 +293,15 @@ namespace limbo {
             EvaluationStatus eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
             {
                 auto [status, observation] = seval(sample);
-                if (status == OK) // TODO if `seval` returns `SKIP` we need to do something to avoid that sample being tested again.
+                if (status == OK) // TODO if `seval` returns `SKIP` we need to do something to avoid that sample being tested again. I.E addd a very negative observation
                 {
-                    this->add_new_sample(sample, observation);
+                    /// Add a new sample / observation pair
+					/// - does not update the model!
+					/// - we don't add NaN and inf observations
+	                if (!observation.allFinite())
+                        throw EvaluationError();
+                    _samples.push_back(sample);
+                    _observations.push_back(observation);
                 }
                 return status;
             }
@@ -338,17 +348,14 @@ namespace limbo {
                 return true;
             }
 
-        private:
-            /// Add a new sample / observation pair
-			/// - does not update the model!
-			/// - we don't add NaN and inf observations
-            void add_new_sample(const Eigen::VectorXd& s, const Eigen::VectorXd& v)
+            void setStatsOutputDirectory(std::filesystem::path const& dir)
             {
-                if (!v.allFinite())
-                    throw EvaluationError();
-                _samples.push_back(s);
-                _observations.push_back(v);
+                assert(exists(dir));
+                assert(std::filesystem::is_directory(dir));
+                boost::fusion::for_each(stat_, [&dir](auto& stat) {stat.setOutputDirectory(dir); });
             }
+
+        private:
 
             int _current_iteration = 0;
             int _total_iterations = 0;
