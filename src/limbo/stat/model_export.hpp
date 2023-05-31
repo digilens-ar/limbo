@@ -5,8 +5,9 @@
 
 namespace limbo::stat
 {
-
-
+	/**
+	 * \brief Save the model data to a text file and a text archive named by the current iteration. The text file has 3 columns: mu, sigma, acquisitionFunction. Only supports 1d problems.
+	 */
 	struct ModelExport : StatBase
 	{
 		template <typename BO, typename AggFunc>
