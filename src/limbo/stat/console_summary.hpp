@@ -47,6 +47,12 @@
 #define LIMBO_STAT_CONSOLE_SUMMARY_HPP
 
 #include <limbo/stat/stat_base.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
+template<typename T>
+    requires std::is_base_of_v<Eigen::DenseBase<T>, T>
+struct fmt::formatter<T> : fmt::ostream_formatter {}; // Enable operator<< streaming for eigen with spdlog
 
 namespace limbo {
     namespace stat {
@@ -59,10 +65,11 @@ namespace limbo {
                 if (bo.observations().empty())
                     return;
 
-                std::cout << bo.total_iterations() << " new point: "
-                          << bo.samples().back().transpose()
-                          << " value: " << afun(bo.observations().back())
-                          << " best:" << afun(bo.best_observation(afun)) << std::endl;
+                spdlog::info("{} new point: {} value: {} best: {}", 
+                    bo.total_iterations(),
+                    bo.samples().back().transpose(),
+                    afun(bo.observations().back()), 
+                    afun(bo.best_observation(afun)));
             }
         };
     }

@@ -45,6 +45,7 @@
 //|
 #include <limbo/opt.hpp>
 #include <limbo/tools.hpp>
+#include <iostream>
 
 // this short tutorial shows how to use the optimization api of limbo (opt::)
 using namespace limbo;

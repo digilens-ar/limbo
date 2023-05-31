@@ -126,7 +126,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     }
     // 3-D inputs, 1-D outputs
     GP gp(3, 1);
-    gp.compute(samples, observations);
+    gp.initialize(samples, observations);
     if (optimize_hp)
         gp.optimize_hyperparams();
 
@@ -137,8 +137,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     // gp.template save<Archive>(name);
 
     // attempt to load -- use only the name
-    GPLoad gp2(3, 1);
-    gp2.template load<Archive>(name);
+    GPLoad gp2 = GPLoad::load(Archive(name));
 
     GTEST_ASSERT_EQ(gp.nb_samples(), gp2.nb_samples());
 
@@ -163,9 +162,8 @@ void test_gp(const std::string& name, bool optimize_hp = true)
 
     // attempt to load without recomputing
     // and without knowing the dimensions
-    GPLoad gp3;
     Archive a3(name);
-    gp3.load(a3, false);
+    auto gp3 = GPLoad::load(a3, false);
 
     GTEST_ASSERT_EQ(gp.nb_samples(), gp3.nb_samples());
 

@@ -58,7 +58,7 @@ namespace limbo {
             template <typename GP>
             Eigen::VectorXd operator()(const Eigen::VectorXd& v, const GP& gp) const
             {
-                return gp.mean_observation().array();
+                return gp.mean_observation();
             }
         };
     } // namespace mean

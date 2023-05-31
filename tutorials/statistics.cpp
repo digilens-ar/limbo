@@ -150,7 +150,7 @@ int main()
 
     /// remmeber to use the new statistics vector via statsfun<>!
     using BD = bayes_opt::BOptimizer<Params>; // Default
-    bayes_opt::BOptimizer<Params, BD::model_t, BD::acquisition_function_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> boptimizer(1);
+    bayes_opt::BOptimizer<Params, BD::model_t, BD::acquisition_function_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> boptimizer(1, 1);
 
     // run the evaluation
     boptimizer.optimize(Eval());

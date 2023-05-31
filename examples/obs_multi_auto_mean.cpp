@@ -105,7 +105,7 @@ public:
         // std::tie(mu, sigma) = _model.query(v);
         // return (mu + Params::ucb::alpha() * sqrt(sigma));
 
-        return limbo::opt::no_grad(std::sqrt(_model.sigma(v)));
+        return limbo::opt::no_grad(std::sqrt(_model.sigma_sq(v)));
     }
 
 protected:
@@ -204,7 +204,7 @@ int main()
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2, 2);
     opt.optimize(fit_eval());
 
     std::cout << opt.best_observation() << " res  "

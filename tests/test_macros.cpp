@@ -53,12 +53,8 @@
 namespace {
     struct Params {
         struct test {
-            // static constexpr auto a = []() constexpr -> double {return 1;};
             BO_PARAM(double, a, 1);
             BO_DYN_PARAM(int, b);
-            BO_PARAM_ARRAY(double, c, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-            BO_PARAM_VECTOR(double, d, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-            BO_PARAM_STRING(e, "e");
         };
     };
 
@@ -74,25 +70,4 @@ TEST(Limbo_Macros, macros)
     ASSERT_TRUE(Params::test::b() == 2);
     Params::test::set_b(3);
     ASSERT_TRUE(Params::test::b() == 3);
-
-    ASSERT_TRUE(NUMARGS(1) == 1);
-    ASSERT_TRUE(NUMARGS(10, 11, 12, 13) == 4);
-
-    ASSERT_TRUE(Params::test::c_size() == 6);
-    ASSERT_TRUE(Params::test::c(0) == 1.0);
-    ASSERT_TRUE(Params::test::c(1) == 2.0);
-    ASSERT_TRUE(Params::test::c(2) == 3.0);
-    ASSERT_TRUE(Params::test::c(3) == 4.0);
-    ASSERT_TRUE(Params::test::c(4) == 5.0);
-    ASSERT_TRUE(Params::test::c(5) == 6.0);
-
-    ASSERT_TRUE(Params::test::d().size() == 6);
-    ASSERT_TRUE(Params::test::d()(0) == 1.0);
-    ASSERT_TRUE(Params::test::d()(1) == 2.0);
-    ASSERT_TRUE(Params::test::d()(2) == 3.0);
-    ASSERT_TRUE(Params::test::d()(3) == 4.0);
-    ASSERT_TRUE(Params::test::d()(4) == 5.0);
-    ASSERT_TRUE(Params::test::d()(5) == 6.0);
-
-    ASSERT_TRUE(strcmp(Params::test::e(), "e") == 0);
 }

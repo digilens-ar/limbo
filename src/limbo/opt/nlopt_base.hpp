@@ -52,7 +52,7 @@
 #include <Eigen/Core>
 #include <vector>
 #include <nlopt.hpp>
-
+#include <spdlog/spdlog.h>
 
 namespace limbo::opt {
     /**
@@ -62,7 +62,7 @@ namespace limbo::opt {
     class NLOptBase {
     public:
         template <concepts::EvalFunc F>
-        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded)
+        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
         {
             assert(init.size() == dim_);
 
@@ -78,21 +78,21 @@ namespace limbo::opt {
 
             double max;
 
-            // try {
+            try {
                 _opt.optimize(x, max);
-            // }
-            // catch (nlopt::roundoff_limited& e) {
-            //     // In theory it's ok to ignore this error
-            //     std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-            // }
-            // catch (std::invalid_argument& e) {
-            //     // In theory it's ok to ignore this error
-            //     std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-            // }
-            // catch (std::runtime_error& e) {
-            //     // In theory it's ok to ignore this error
-            //     std::cerr << "[NLOptGrad]: " << e.what() << std::endl;
-            // }
+            }
+            catch (nlopt::roundoff_limited const& e) {
+                // In theory it's ok to ignore these errors
+                spdlog::error("[NLOptNoGrad roundoff_limited]: {}", e.what());
+            }
+            catch (std::invalid_argument& e) {
+                // In theory it's ok to ignore this error
+                spdlog::error("[NLOptNoGrad invalid_argument]: {}", e.what());
+            }
+            catch (std::runtime_error& e) {
+                // In theory it's ok to ignore this error
+                spdlog::error("[NLOptGrad runtime_error]: {}", e.what());
+            }
 
             return Eigen::VectorXd::Map(x.data(), x.size());
         }
@@ -127,7 +127,7 @@ namespace limbo::opt {
             _opt = nlopt::opt(algorithm, dim);
         }
 
-        nlopt::opt _opt;
+        mutable nlopt::opt _opt;
 
     private:
         template <concepts::EvalFunc F>

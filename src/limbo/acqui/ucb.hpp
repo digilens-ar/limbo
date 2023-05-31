@@ -80,10 +80,8 @@ namespace limbo {
             opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
             {
                 assert(!gradient);
-                Eigen::VectorXd mu;
-                double sigma;
-                std::tie(mu, sigma) = _model.query(v);
-                return opt::no_grad(afun(mu) + AcquiUcb::alpha() * sqrt(sigma));
+                auto [mu, sigma_sq] = _model.query(v);
+                return opt::no_grad(afun(mu) + AcquiUcb::alpha() * sqrt(sigma_sq));
             }
 
         protected:

@@ -79,6 +79,10 @@ namespace limbo {
             {
                 // Only works with bounded BO
                 assert(opt.isBounded());
+                if (opt.hasConstraints())
+                {
+                    throw std::runtime_error("This initializer does not support constrained problems.");
+                }
 
                 tools::RandomGenerator<std::uniform_int_distribution<>> rgen(0, init_randomsamplinggrid::bins());
                 for (int i = 0; i < init_randomsamplinggrid::samples(); i++) {

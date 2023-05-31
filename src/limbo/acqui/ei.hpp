@@ -78,7 +78,7 @@ namespace limbo {
           - ``double jitter`` - :math:`\xi`
         \endrst
         */
-        template <concepts::AcquiEI AcquiEI, concepts::Model Model>
+        template <typename AcquiEI, concepts::Model Model>
         class EI {
         public:
             EI(const Model& model, int iteration = 0) : _model(model), _nb_samples(-1) {}

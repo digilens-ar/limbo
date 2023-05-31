@@ -51,6 +51,7 @@
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
 #include <limbo/concepts.hpp>
+#include <spdlog/spdlog.h>
 
 namespace limbo {
     namespace defaults {
@@ -74,19 +75,30 @@ namespace limbo {
             EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
-                    EvaluationStatus status = EvaluationStatus::SKIP;
+                    Eigen::VectorXd new_sample;
+                    int cnt = 0;
+                    do
+                    { // Find a sample that satisfies the constraints
+                        new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                        if (cnt++ > 1000000)
+                        {
+                            spdlog::error("Limbo RandomSampling: Failed to find a random sample that satisfies constraints after 1000000 attempts");
+                            break;
+                        }
+                    } while (!opt.constraintsAreSatisfied(new_sample));
+
+                    EvaluationStatus status = SKIP;
                     do
                     {
-                        auto new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
-                        status = opt.eval_and_add(seval, new_sample);
-                    } while (status == EvaluationStatus::SKIP);
+						status = opt.eval_and_add(seval, new_sample);
+                    } while (status == SKIP);
 
-					if (status == EvaluationStatus::TERMINATE)
+					if (status == TERMINATE)
 					{
-                        return EvaluationStatus::TERMINATE;
+                        return TERMINATE;
 					}
                 }
-                return EvaluationStatus::OK;
+                return OK;
             }
         };
     }

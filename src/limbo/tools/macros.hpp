@@ -46,19 +46,8 @@
 #ifndef LIMBO_TOOLS_MACROS_HPP
 #define LIMBO_TOOLS_MACROS_HPP
 
-#include <Eigen/Core>
-#include <iostream>
-#include <regex>
-
 #define BO_PARAM(Type, Name, Value) \
     static constexpr auto Name = []()constexpr -> Type { return Value; };
-
-#define BO_REQUIRED_PARAM(Type, Name)                                         \
-    static const Type Name()                                                  \
-    {                                                                         \
-        static_assert(false, "You need to define the parameter:" #Name " !"); \
-        return Type();                                                        \
-    }
 
 #define BO_DYN_PARAM(Type, Name)           \
     static Type _##Name;                   \
@@ -67,43 +56,5 @@
 
 #define BO_DECLARE_DYN_PARAM_INIT(Type, Namespace, Name, Value) Type Namespace::_##Name = Value;
 #define BO_DECLARE_DYN_PARAM(Type, Namespace, Name) Type Namespace::_##Name;
-
-#define NUMARGS(...) std::tuple_size<decltype(std::make_tuple(__VA_ARGS__))>::value
-
-#define BO_PARAM_ARRAY(Type, Name, ...)                  \
-    static Type Name(size_t i)                           \
-    {                                                    \
-        assert(i < NUMARGS(__VA_ARGS__));            \
-        static constexpr Type _##Name[] = {__VA_ARGS__}; \
-        return _##Name[i];                               \
-    }                                                    \
-    static constexpr size_t Name##_size()                \
-    {                                                    \
-        return NUMARGS(__VA_ARGS__);                 \
-    }                                                    \
-    using Name##_t = Type;
-
-#define BO_PARAM_VECTOR(Type, Name, ...)                                                    \
-    static const Eigen::Matrix<Type, NUMARGS(__VA_ARGS__), 1> Name()                    \
-    {                                                                                       \
-        static constexpr Type _##Name[] = {__VA_ARGS__};                                    \
-        return Eigen::Map<const Eigen::Matrix<Type, NUMARGS(__VA_ARGS__), 1>>(_##Name); \
-    }
-
-#define BO_PARAM_STRING(Name, Value) \
-    static constexpr const char* Name() { return Value; }
-
-#define BO_PARAMS(Stream, P)                                  \
-    struct Ps__ {                                             \
-        Ps__()                                                \
-        {                                                     \
-            static std::string __params = #P;                 \
-			std::regex_replace(__params, std::regex(";"), ";\n"); \
-			std::regex_replace(__params, std::regex("{"), "{\n"); \
-            Stream << "Parameters:" << __params << std::endl; \
-        }                                                     \
-    };                                                        \
-    P;                                                        \
-    static Ps__ ____p;
 
 #endif

@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     GP_t gp(1, 1);
 
     // compute the GP
-    gp.compute(samples, observations);
+    gp.initialize(samples, observations);
 
     // write the predicted data in a file (e.g. to be plotted)
     std::ofstream ofs("gp.dat");
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 
     GP2_t gp_ard(1, 1);
     // do not forget to call the optimization!
-    gp_ard.compute(samples, observations, false);
+    gp_ard.initialize(samples, observations, false);
     gp_ard.optimize_hyperparams();
 
     // write the predicted data in a file (e.g. to be plotted)
@@ -136,9 +136,9 @@ int main(int argc, char** argv)
         ofs_data << samples[i].transpose() << " " << observations[i].transpose() << std::endl;
 
     // Sometimes is useful to save an optimized GP
-    gp_ard.save<serialize::TextArchive>("myGP");
+    gp_ard.save(serialize::TextArchive("myGP"));
 
     // Later we can load -- we need to make sure that the type is identical to the one saved
-    gp_ard.load<serialize::TextArchive>("myGP");
+    gp_ard.load(serialize::TextArchive("myGP"));
     return 0;
 }

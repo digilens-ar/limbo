@@ -67,12 +67,12 @@ namespace limbo {
         ///Stop once the value for the best sample is above : ratio * (best value predicted by the model)
         ///
         ///Parameter: double ratio
-        template <typename stop_maxpredictedvalue, concepts::Optimizer Optimizer>
+        template <typename stop_maxpredictedvalue>
         struct MaxPredictedValue {
 
             MaxPredictedValue() {}
 
-            template <typename BO, typename AggregatorFunction>
+            template <concepts::BayesOptimizer BO, concepts::AggregatorFunc AggregatorFunction>
             bool operator()(const BO& bo, const AggregatorFunction& afun) const
             {
                 // Prevent instantiation of GPMean if there are no observed samples
@@ -81,15 +81,13 @@ namespace limbo {
 
                 Eigen::VectorXd starting_point = tools::random_vector(bo.model().dim_in());
                 auto model_optimization = [&](const Eigen::VectorXd& x, bool g) { return opt::no_grad(afun(bo.model().mu(x))); };
-                auto x = Optimizer::create(bo.model().dim_in()).optimize(model_optimization, starting_point, true);
+                auto x = bo.acquisitionOptimizer().optimize(model_optimization, starting_point, true);
                 double val = afun(bo.model().mu(x));
 
                 if (afun(bo.best_observation(afun)) <= stop_maxpredictedvalue::ratio() * val)
                     return false;
                 else {
-                    std::cout << "stop caused by Max predicted value reached. Threshold: "
-                              << stop_maxpredictedvalue::ratio() * val
-                              << " max observations: " << afun(bo.best_observation(afun)) << std::endl;
+                    spdlog::info("Stop caused by Max predicted value reached. Threshold: {} Max Observation: {}", stop_maxpredictedvalue::ratio() * val, afun(bo.best_observation(afun)));
                     return true;
                 }
             }
