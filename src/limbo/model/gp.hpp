@@ -219,8 +219,8 @@ namespace limbo {
                 // K^{-1} using Cholesky decomposition
                 _inv_kernel = Eigen::MatrixXd::Identity(n, n);
 
-                _matrixL.template triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
-                _matrixL.template triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
 
                 _inv_kernel_updated = true;
             }
@@ -515,7 +515,7 @@ namespace limbo {
             void _compute_alpha()
             {
                 // alpha = K^{-1} * this->_obs_mean;
-                Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.template triangularView<Eigen::Lower>();
+                Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.triangularView<Eigen::Lower>();
                 _alpha = triang.solve(_obs_mean);
                 triang.adjoint().solveInPlace(_alpha);
             }

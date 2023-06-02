@@ -6,7 +6,7 @@
 namespace limbo::stat
 {
 	/**
-	 * \brief Save the model data to a text file and a text archive named by the current iteration. The text file has 3 columns: mu, sigma, acquisitionFunction. Only supports 1d problems.
+	 * \brief Save the model data to a text file and a text archive named by the current iteration. The text file has 4 columns: parameterValue, mu, sigma, acquisitionFunction. Only supports 1d problems.
 	 */
 	struct ModelExport : StatBase
 	{

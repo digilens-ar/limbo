@@ -55,8 +55,7 @@ namespace limbo {
             ///@ingroup model_opt
             ///optimize the likelihood of both the kernel and the mean (try to align the mean function)
             template <typename opt_rprop, typename Optimizer = opt::Rprop<opt_rprop>>
-            struct KernelMeanLFOpt : public HPOpt {
-            public:
+            struct KernelMeanLFOpt : HPOpt {
                 template <typename GP>
                 void operator()(GP& gp)
                 {
@@ -81,7 +80,6 @@ namespace limbo {
             protected:
                 template <typename GP>
                 struct KernelMeanLFOptimization {
-                public:
                     KernelMeanLFOptimization(const GP& gp) : _original_gp(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
