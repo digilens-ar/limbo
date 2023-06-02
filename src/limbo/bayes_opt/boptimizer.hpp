@@ -214,6 +214,11 @@ namespace limbo {
                 else
                     _model = model_type(sfun.dim_in(), sfun.dim_out());
 
+                if (Params::bayes_opt_boptimizer::hp_period() > 0 && _observations.size() >= Params::bayes_opt_boptimizer::hp_period())
+                { // If the initialization includes enough samples for hyper parameter optimization then run it. TODO untested change
+                    _model.optimize_hyperparams();
+                }
+
                 // While no stopping criteria return `true`
                 while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun); }))
                 {
