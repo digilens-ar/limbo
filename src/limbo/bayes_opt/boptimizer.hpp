@@ -89,7 +89,11 @@ namespace limbo {
         }
     };
 
-    class EvaluationError : public std::exception {};
+    class EvaluationError : public std::exception
+    {
+    public:
+        using std::exception::exception;
+    };
 
     namespace bayes_opt {
 
@@ -303,8 +307,14 @@ namespace limbo {
                     /// Add a new sample / observation pair
 					/// - does not update the model!
 					/// - we don't add NaN and inf observations
-	                if (!observation.allFinite())
-                        throw EvaluationError();
+					if (observation.hasNaN())
+					{
+                        throw EvaluationError("Merit function returned a NaN value");
+					}
+                    if (!observation.allFinite()) 
+                    {
+                        throw EvaluationError("Merit function returned an infinite value");
+                    }
                     _samples.push_back(sample);
                     _observations.push_back(observation);
                 }
