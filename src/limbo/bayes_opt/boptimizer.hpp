@@ -196,7 +196,7 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
-            void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
+            std::string optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
                 this->_current_iteration = 0;
                 if (reset) {
@@ -209,7 +209,7 @@ namespace limbo {
                     EvaluationStatus initStatus = init_t()(sfun, afun, *this);
                     if (initStatus == TERMINATE)
                     {
-                        return;
+                        return "Initialization requested that optimization be terminated";
                     }
                 }
 
@@ -223,8 +223,9 @@ namespace limbo {
                     _model.optimize_hyperparams();
                 }
 
+                std::string stopMessage = "";
                 // While no stopping criteria return `true`
-                while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun); }))
+                while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun, stopMessage); }))
                 {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
@@ -237,6 +238,7 @@ namespace limbo {
                 	auto status = this->eval_and_add(sfun, new_sample);
                     if (status == TERMINATE)
                     {
+                        stopMessage = "Objective function requested that optimization be terminated";
                         break;
                     }
 
@@ -259,6 +261,7 @@ namespace limbo {
                 	++this->_current_iteration;
                     ++this->_total_iterations;
                 }
+                return stopMessage;
             }
 
             /// return the best observation so far (i.e. max(f(x)))
@@ -399,6 +402,7 @@ namespace limbo {
     		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
 			typename acqui_opt_t = typename defaults<Params>::acquiopt_t>
         using BOptimizerHPOpt = BOptimizer<Params, _default_hp::model_t<Params>, _default_hp::acqui_t<Params>, init_t, StoppingCriteria, Stat, acqui_opt_t>;
+
     }
 }
 #endif

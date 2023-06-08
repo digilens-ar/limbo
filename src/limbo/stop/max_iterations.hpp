@@ -47,6 +47,7 @@
 #define LIMBO_STOP_MAX_ITERATIONS_HPP
 
 #include <limbo/tools/macros.hpp>
+#include <spdlog/fmt/fmt.h>
 
 namespace limbo {
     namespace defaults {
@@ -66,11 +67,19 @@ namespace limbo {
             MaxIterations() {}
 
             template <typename BO, typename AggregatorFunction>
-            bool operator()(const BO& bo, const AggregatorFunction&) const
+            bool operator()(const BO& bo, const AggregatorFunction&, std::string& stopMessage) const
             {
                 if (!Stop_MaxIterations::enabled())
                     return false;
-                return bo.current_iteration() >= Stop_MaxIterations::iterations();
+                if(bo.current_iteration() >= Stop_MaxIterations::iterations())
+                {
+					stopMessage = fmt::format("The maximimum iteration number of {} was reached", Stop_MaxIterations::iterations());
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         };
     }

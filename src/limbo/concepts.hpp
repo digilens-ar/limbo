@@ -75,7 +75,7 @@ namespace limbo::concepts
 	template<typename T>
 	concept BayesOptimizer = requires (T a)
 	{
-		{a.optimize(StateFuncArchetype{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<void>;
+		{a.optimize(StateFuncArchetype{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::string>;
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<EvaluationStatus>;
 		{a.isBounded()} -> std::convertible_to<bool>;
 		{a.addInequalityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
@@ -87,7 +87,7 @@ namespace limbo::concepts
 	struct BayesOptimizerArchetype
 	{
 		EvaluationStatus eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) { return OK; }
-		void optimize(StateFuncArchetype stateFunc, AggregatorFuncArchetype aggFunc, bool reset) {}
+		std::string optimize(StateFuncArchetype stateFunc, AggregatorFuncArchetype aggFunc, bool reset) { return "Ended for no reason"; }
 		bool isBounded() { return true; }
 		void addInequalityConstraint(EvalFuncArchetype arch) {}
 		void addEqualityConstraint(EvalFuncArchetype arch) {}
@@ -105,9 +105,9 @@ namespace limbo::concepts
 	};
 
 	template <typename T>
-	concept StoppingCriteria = requires (T a)
+	concept StoppingCriteria = requires (T a, std::string& stoppingMessage)
 	{
-		{ a(BayesOptimizerArchetype(), AggregatorFuncArchetype()) } -> std::convertible_to<bool>;
+		{ a(BayesOptimizerArchetype(), AggregatorFuncArchetype(), stoppingMessage) } -> std::convertible_to<bool>;
 	};
 
 	// An acquisition function acts as the objective function of the bayesian surrogate model. It is optimized upon to find the next point to evaluate the true objective function at.
