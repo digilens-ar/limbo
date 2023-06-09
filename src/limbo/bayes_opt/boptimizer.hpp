@@ -46,6 +46,8 @@
 #ifndef LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 #define LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 
+#define SAVE_HP_MODELS
+
 #include <algorithm>
 #include <iterator>
 #include <filesystem>
@@ -220,7 +222,13 @@ namespace limbo {
 
                 if (Params::bayes_opt_boptimizer::hp_period() > 0 && _observations.size() >= Params::bayes_opt_boptimizer::hp_period())
                 { // If the initialization includes enough samples for hyper parameter optimization then run it. TODO untested change
-                    _model.optimize_hyperparams();
+					#ifdef SAVE_HP_MODELS
+                    _model.save(serialize::TextArchive((outputDir_ / "modelArchive_init").string()));
+					#endif
+                	_model.optimize_hyperparams();
+					#ifdef SAVE_HP_MODELS
+					_model.save(serialize::TextArchive((outputDir_ / "modelArchive_post_init").string()));
+					#endif
                 }
 
                 std::string stopMessage = "";
@@ -255,8 +263,13 @@ namespace limbo {
                     _model.add_sample(this->_samples.back(), this->_observations.back()); // update the model
 
                     if (Params::bayes_opt_boptimizer::hp_period() > 0
-                        && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0)
+                        && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0) {
                         _model.optimize_hyperparams();
+#ifdef SAVE_HP_MODELS
+                        _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_current_iteration))).string()));
+#endif
+                    }
+
 
                 	++this->_current_iteration;
                     ++this->_total_iterations;
@@ -370,6 +383,7 @@ namespace limbo {
             {
                 assert(exists(dir));
                 assert(std::filesystem::is_directory(dir));
+                outputDir_ = dir;
                 boost::fusion::for_each(stat_, [&dir](auto& stat) {stat.setOutputDirectory(dir); });
             }
 
@@ -385,6 +399,7 @@ namespace limbo {
             std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
             std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
             model_type _model;
+            std::filesystem::path outputDir_;
         };
 
         namespace _default_hp {
