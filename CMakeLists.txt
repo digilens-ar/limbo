@@ -48,6 +48,8 @@ if(LIMBO_BUILD_TESTS)
 	include(CTest)  # This enables testing
 	find_package(GTest CONFIG REQUIRED)
 	add_subdirectory(tests)
+	find_package(benchmark REQUIRED)
+	add_subdirectory(benchmarks)
 endif()
 
 option(LIMBO_BUILD_TUTORIALS "Build tutorials for limbo" OFF)
