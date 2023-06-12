@@ -22,46 +22,32 @@ namespace limbo::concepts
 	template<typename T>
 	concept Model = requires (T a)
 	{
-        { a.initialize(std::vector<Eigen::VectorXd>{}, std::vector<Eigen::VectorXd>{}) } -> std::convertible_to<void>;
-        { a.add_sample(Eigen::VectorXd{}, Eigen::VectorXd{}) } -> std::convertible_to<void>;
-        { a.query(Eigen::VectorXd{}) } -> std::convertible_to<std::tuple<Eigen::VectorXd, double>>;
-        { a.mu(Eigen::VectorXd{}) } -> std::convertible_to<Eigen::VectorXd>;
+        { a.initialize(std::vector<Eigen::VectorXd>{}, std::vector<double>{}) } -> std::convertible_to<void>;
+        { a.add_sample(Eigen::VectorXd{}, double()) } -> std::convertible_to<void>;
+        { a.query(Eigen::VectorXd{}) } -> std::convertible_to<std::tuple<double, double>>;
+        { a.mu(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.sigma_sq(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.dim_in() } -> std::convertible_to<int>;
-        { a.dim_out() } -> std::convertible_to<int>;
         { a.nb_samples() } -> std::convertible_to<int>;
         { a.samples() } -> std::convertible_to<const std::vector<Eigen::VectorXd>&>;
 	};
 
-	// Represents the objective function, takes in a coordinate of `dim_in` and returns a coordinate of `dim_out`.
+	// Represents the objective function, takes in a coordinate of `dim_in`.
 	template <typename T>
-	concept StateFunc = Callable<T, std::tuple<EvaluationStatus, Eigen::VectorXd>, Eigen::VectorXd>
+	concept StateFunc = Callable<T, std::tuple<EvaluationStatus, double>, Eigen::VectorXd>
 	&&
 	requires (T a)
 	{
-		{ a.dim_out() } -> std::convertible_to<size_t>;
 		{ a.dim_in() } -> std::convertible_to<size_t>;
 	};
 
 	struct StateFuncArchetype
 	{
-		std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(Eigen::VectorXd const&) { return { EvaluationStatus::OK, Eigen::VectorXd(1) }; }
-		size_t dim_out() const { return 1; }
+		std::tuple<EvaluationStatus,double> operator()(Eigen::VectorXd const&) { return { EvaluationStatus::OK, 1 }; }
 		size_t dim_in() const { return 1; }
 	};
 
 	static_assert(StateFunc<StateFuncArchetype>);
-
-	// This function is responsible for taking in the multidimensional observations and converting to a scalar `score` of the objective at that observation.
-	template <typename T>
-	concept AggregatorFunc = Callable<T, double, Eigen::VectorXd>;
-
-	struct AggregatorFuncArchetype
-	{
-		double operator()(Eigen::VectorXd const& in) { return 0.0; }
-	};
-
-	static_assert(AggregatorFunc<AggregatorFuncArchetype>);
 
 	// An evaluationFunction takes a coordinate and a t/f if gradient needs to be calculated and returns the objective function value and optionally the gradient at that location.
 	template<typename T>
@@ -75,7 +61,7 @@ namespace limbo::concepts
 	template<typename T>
 	concept BayesOptimizer = requires (T a)
 	{
-		{a.optimize(StateFuncArchetype{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::string>;
+		{a.optimize(StateFuncArchetype{}, true) } -> std::convertible_to<std::string>;
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<EvaluationStatus>;
 		{a.isBounded()} -> std::convertible_to<bool>;
 		{a.addInequalityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
@@ -87,7 +73,7 @@ namespace limbo::concepts
 	struct BayesOptimizerArchetype
 	{
 		EvaluationStatus eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) { return OK; }
-		std::string optimize(StateFuncArchetype stateFunc, AggregatorFuncArchetype aggFunc, bool reset) { return "Ended for no reason"; }
+		std::string optimize(StateFuncArchetype stateFunc, bool reset) { return "Ended for no reason"; }
 		bool isBounded() { return true; }
 		void addInequalityConstraint(EvalFuncArchetype arch) {}
 		void addEqualityConstraint(EvalFuncArchetype arch) {}
@@ -101,20 +87,20 @@ namespace limbo::concepts
 	template<typename T>
 	concept InitFunc = requires (T a)
 	{
-		{ a.operator()(StateFuncArchetype{}, AggregatorFuncArchetype{}, BayesOptimizerArchetype{}) } -> std::convertible_to<EvaluationStatus>;
+		{ a.operator()(StateFuncArchetype{}, BayesOptimizerArchetype{}) } -> std::convertible_to<EvaluationStatus>;
 	};
 
 	template <typename T>
 	concept StoppingCriteria = requires (T a, std::string& stoppingMessage)
 	{
-		{ a(BayesOptimizerArchetype(), AggregatorFuncArchetype(), stoppingMessage) } -> std::convertible_to<bool>;
+		{ a(BayesOptimizerArchetype(), stoppingMessage) } -> std::convertible_to<bool>;
 	};
 
 	// An acquisition function acts as the objective function of the bayesian surrogate model. It is optimized upon to find the next point to evaluate the true objective function at.
 	template <typename T>
 	concept AcquisitionFunc = requires (T a)
 	{
-		{ a.operator()(Eigen::VectorXd{}, AggregatorFuncArchetype{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
+		{ a.operator()(Eigen::VectorXd{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
 	};
 
 	/// An optimizer has an optimize method that takes an evalutionFunction, an initial coordinate, and a t/f if bounded, and returns a new optimum coordinate
@@ -129,7 +115,7 @@ namespace limbo::concepts
 	template <typename T>
 	concept StatsFunc = requires (T a)
 	{
-		{ a.operator()(BayesOptimizerArchetype{}, AggregatorFuncArchetype{}) } -> std::convertible_to<void>;
+		{ a.operator()(BayesOptimizerArchetype{}) } -> std::convertible_to<void>;
 	} &&
 		std::is_default_constructible_v<T>;
 }

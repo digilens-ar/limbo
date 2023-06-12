@@ -79,9 +79,21 @@ namespace limbo {
             {
                 _create_directory();
                 std::ofstream ofs(fname(object_name).c_str());
-                for (auto& x : v) {
-                    ofs << x.transpose().format(_fmt) << std::endl;
+                if constexpr (std::is_same_v<T, double>)
+                {
+                    ofs << std::setprecision(15);
+		             for (auto const& x : v)
+		             {
+	                     ofs << x << "\n";
+		             }
                 }
+                else
+                {
+                    for (auto& x : v) {
+                        ofs << x.transpose().format(_fmt) << "\n";
+                    }
+                }
+             
             }
 
             /// load an Eigen matrix (or vector)
@@ -103,10 +115,17 @@ namespace limbo {
                 auto values = _load(object_name);
                 assert(!values.empty());
                 for (size_t i = 0; i < values.size(); ++i) {
-                    V v(values[i].size());
-                    for (size_t j = 0; j < values[i].size(); ++j)
-                        v(j) = values[i][j];
-                    m_list.push_back(v);
+                    if constexpr (std::is_same_v<double, V>)
+                    {
+                        m_list.push_back(values[i][0]);
+                    }
+                    else
+                    {
+                        V v(values[i].size());
+                        for (size_t j = 0; j < values[i].size(); ++j)
+                            v(j) = values[i][j];
+                        m_list.push_back(v);
+                    }
                 }
                 assert(!m_list.empty());
             }

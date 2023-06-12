@@ -56,36 +56,35 @@ namespace limbo {
         /// filename: `gp_<iteration>.dat`
         template <typename Stat_GP>
         struct GP : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 _create_log_file("gp_" + std::to_string(bo.total_iterations()) + ".dat");
                 int gp_in = bo.model().dim_in();
-                int gp_out = bo.model().dim_out();
-                *_log_file << "#Point[" << gp_in << "d] mu[" << gp_out << "d] sigma[1d] acquisition[1d]" << std::endl;
-                _explore(0, *_log_file, bo, afun, Eigen::VectorXd::Constant(bo.model().dim_in(), 0));
+                *_log_file << "#Point[" << gp_in << "d] mu[1d] sigma[1d] acquisition[1d]" << std::endl;
+                _explore(0, *_log_file, bo, Eigen::VectorXd::Constant(bo.model().dim_in(), 0));
             }
 
         protected:
             // recursively explore all the dimensions
-            template <typename BO, typename AggregatorFunction>
+            template <typename BO>
             void _explore(int dim_in, std::ofstream& ofs,
-                const BO& bo, const AggregatorFunction& afun,
+                const BO& bo,
                 const Eigen::VectorXd& current) const
             {
                 for (double x = 0; x <= 1.0f; x += 1.0f / (double)Stat_GP::bins()) {
                     Eigen::VectorXd point = current;
                     point[dim_in] = x;
                     if (dim_in == current.size() - 1) {
-                        auto q = bo.model().query(point);
-                        auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(point, afun, false);
+                        auto [mu, sigma_sq] = bo.model().query(point);
+                        auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(point, false);
                         ofs << point.transpose() << " "
-                            << std::get<0>(q).transpose() << " "
-                            << std::get<1>(q) << " "
+                            << mu << " "
+                            << sigma_sq << " "
                             << acqui << std::endl;
                     }
                     else {
-                        _explore(dim_in + 1, ofs, bo, afun, point);
+                        _explore(dim_in + 1, ofs, bo, point);
                     }
                 }
             }

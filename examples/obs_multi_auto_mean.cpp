@@ -97,8 +97,7 @@ class UCB_multi {
 public:
     UCB_multi(const Model& model, int iteration = 0) : _model(model) {}
 
-    template <typename AggregatorFunction>
-    limbo::opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
+    limbo::opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
     {
         assert(!gradient);
         // double mu, sigma;
@@ -117,7 +116,7 @@ struct MeanOffset : public mean::BaseMean {
     MeanOffset(size_t dim_out = 1) {}
 
     template <typename GP>
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x, const GP& gp) const
+    double operator()(const Eigen::VectorXd& x, const GP& gp) const
     {
         Eigen::VectorXd res(2);
         res(0) = 2; // constant overestimation
@@ -127,7 +126,7 @@ struct MeanOffset : public mean::BaseMean {
             res(0) += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
             res(1) += 1 - (x[i] - 0.3) * (x[i] - 0.3) * 0.4;
         }
-        return res;
+        return res(0);
     }
 };
 
@@ -136,7 +135,7 @@ struct MeanRotation : public mean::BaseMean {
     MeanRotation(size_t dim_out = 1) {}
 
     template <typename GP>
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x, const GP& gp) const
+    double operator()(const Eigen::VectorXd& x, const GP& gp) const
     {
         Eigen::VectorXd res(2);
         res(0) = 0; // constant overestimation
@@ -151,7 +150,7 @@ struct MeanRotation : public mean::BaseMean {
         rot(0, 1) = -sin(theta);
         rot(1, 0) = sin(theta);
         rot(1, 1) = cos(theta);
-        return rot * res;
+        return (rot * res)(0);
     }
 };
 
@@ -160,7 +159,7 @@ struct MeanComplet : public mean::BaseMean {
     MeanComplet(size_t dim_out = 1) {}
 
     template <typename GP>
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x, const GP& gp) const
+    double operator()(const Eigen::VectorXd& x, const GP& gp) const
     {
         Eigen::VectorXd res(2);
         res(0) = 2; // constant overestimation
@@ -175,15 +174,14 @@ struct MeanComplet : public mean::BaseMean {
         rot(0, 1) = -sin(theta);
         rot(1, 0) = sin(theta);
         rot(1, 1) = cos(theta);
-        return rot * res;
+        return (rot * res)(0);
     }
 };
 
 struct fit_eval {
     BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 2);
 
-    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, double> operator()(const Eigen::VectorXd& x) const
     {
         Eigen::VectorXd res(2);
         res(0) = 0;
@@ -192,7 +190,7 @@ struct fit_eval {
             res(0) += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
             res(1) += 1 - (x[i] - 0.3) * (x[i] - 0.3) * 0.4;
         }
-        return { OK, res };
+        return { OK, res(0)};
     }
 };
 
@@ -204,7 +202,7 @@ int main()
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2, 2);
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);
     opt.optimize(fit_eval());
 
     std::cout << opt.best_observation() << " res  "

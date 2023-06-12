@@ -53,10 +53,10 @@ namespace limbo {
         ///@ingroup mean
         ///Use the mean of the observation as a constant mean
         struct Data : public BaseMean {
-            Data(size_t dim_out = 1) {}
+            Data() {}
 
             template <typename GP>
-            Eigen::VectorXd operator()(const Eigen::VectorXd& v, const GP& gp) const
+            double operator()(const Eigen::VectorXd& v, const GP& gp) const
             {
                 return gp.mean_observation();
             }

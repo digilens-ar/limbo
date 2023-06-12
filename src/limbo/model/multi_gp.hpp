@@ -64,7 +64,7 @@ namespace limbo {
 
             /// useful because the model might be created before having samples
             MultiGP(int dim_in, int dim_out)
-                : _dim_in(dim_in), _dim_out(dim_out), _mean_function(dim_out)
+                : _dim_in(dim_in), _dim_out(dim_out), _mean_function()
             {
                 // initialize dim_in models with 1 output
                 _gp_models.clear();

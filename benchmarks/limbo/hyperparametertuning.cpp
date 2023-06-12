@@ -15,12 +15,12 @@ static void kernelLFOpt(benchmark::State& state)
 	int numSamples = state.range(0);
 	int dim = state.range(1);
 	std::vector<Eigen::VectorXd> samples;
-	std::vector<Eigen::VectorXd> observations;
+	std::vector<double> observations;
 	for (int i=0; i<numSamples; i++)
 	{
 		auto [s, o] = generateObservation(dim);
 		samples.push_back(std::move(s));
-		observations.push_back(limbo::tools::make_vector(o));
+		observations.push_back(o);
 	}
 
 	struct Params
@@ -34,7 +34,7 @@ static void kernelLFOpt(benchmark::State& state)
 		limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
 		limbo::mean::Data,
 		limbo::model::gp::KernelLFOpt<Params::opt_rprop>
-	> gp(dim, 1);
+	> gp(dim);
 
 	gp.initialize(samples, observations);
 	for (auto _ : state)

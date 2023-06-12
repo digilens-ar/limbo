@@ -68,8 +68,8 @@ namespace limbo {
         */
         template <typename init_gridsampling>
         struct GridSampling {
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
-            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval, Opt& opt) const
             {
                 if (opt.hasConstraints())
                 {

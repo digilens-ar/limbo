@@ -56,7 +56,7 @@ namespace limbo {
           \endrst
         */
         struct BaseMean {
-            BaseMean(size_t dim_out = 1) {}
+            BaseMean() {}
 
             size_t h_params_size() const { return 0; }
 
@@ -65,7 +65,7 @@ namespace limbo {
             void set_h_params(const Eigen::VectorXd& p) {}
 
             template <typename GP>
-            Eigen::MatrixXd grad(const Eigen::VectorXd& x, const GP& gp) const
+            Eigen::VectorXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {
                 throw std::runtime_error("Cannot call this base class function"); // cannot call this.
             }

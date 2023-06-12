@@ -74,8 +74,8 @@ namespace limbo {
         */
         template <typename init_randomsamplinggrid>
         struct RandomSamplingGrid {
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
-            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction,  concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval, Opt& opt) const
             {
                 // Only works with bounded BO
                 assert(opt.isBounded());

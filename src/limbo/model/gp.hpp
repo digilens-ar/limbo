@@ -80,18 +80,17 @@ namespace limbo {
         template <typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
         class GP {
         public:
-            GP(int dim_in, int dim_out)
-                : _dim_in(dim_in), _dim_out(dim_out), _kernel_function(dim_in), _mean_function(dim_out), _inv_kernel_updated(false) {}
+            GP(int dim_in)
+                : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false) {}
 
             /// Initialize the GP from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
+                const std::vector<double>& observations, bool compute_kernel = true)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
                 assert(_dim_in == samples[0].size());
-                assert(_dim_out == observations[0].size());
 
                 _samples = samples;
                 _observations = observations;
@@ -109,10 +108,9 @@ namespace limbo {
 
             /// add sample and update the GP. This code uses an incremental implementation of the Cholesky
             /// decomposition. It is therefore much faster than a call to compute()
-            void add_sample(const Eigen::VectorXd& sample, const Eigen::VectorXd& observation)
+            void add_sample(const Eigen::VectorXd& sample, double observation)
             {
                 assert(sample.size() == _dim_in);
-                assert(observation.size() == _dim_out);
 
                 _samples.push_back(sample);
                 _observations.push_back(observation);
@@ -126,7 +124,7 @@ namespace limbo {
              return :math:`\mu`, :math:`\sigma^2` (un-normalized). If there is no sample, return the value according to the mean function. Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
              \\endrst
             */
-            std::tuple<Eigen::VectorXd, double> query(const Eigen::VectorXd& v) const
+            std::tuple<double, double> query(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
                     return std::make_tuple(_mean_function(v, *this),
@@ -141,7 +139,7 @@ namespace limbo {
              return :math:`\mu` (un-normalized). If there is no sample, return the value according to the mean function.
              \\endrst
             */
-            Eigen::VectorXd mu(const Eigen::VectorXd& v) const
+            double mu(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
                     return _mean_function(v, *this);
@@ -166,12 +164,6 @@ namespace limbo {
                 return _dim_in;
             }
 
-            /// return the number of dimensions of the output
-            int dim_out() const
-            {
-                return _dim_out;
-            }
-
             const KernelFunction& kernel_function() const { return _kernel_function; }
 
             KernelFunction& kernel_function() { return _kernel_function; }
@@ -181,11 +173,10 @@ namespace limbo {
             MeanFunction& mean_function() { return _mean_function; }
 
             /// return the mean observation (only call this if the output of the GP is of dimension 1)
-            Eigen::VectorXd mean_observation() const
+            double mean_observation() const
             {
-                assert(_dim_out > 0);
                 if (_samples.size() > 0) {
-                    Eigen::VectorXd mean_observation = Eigen::VectorXd::Zero(_dim_out);
+                    double mean_observation = 0;
                     for (auto const& obs : _observations)
                     {
                         mean_observation += obs;
@@ -193,7 +184,7 @@ namespace limbo {
                     mean_observation /= _observations.size();
                     return mean_observation;
                 }
-                return Eigen::VectorXd::Zero(_dim_out);
+                return 0;
             }
 
             /// return the number of samples used to compute the GP
@@ -281,10 +272,9 @@ namespace limbo {
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_mean_function.h_params_size());
-                for (int i_obs = 0; i_obs < _dim_out; ++i_obs)
-                    for (size_t n_obs = 0; n_obs < n; n_obs++) {
-                        grad += _obs_mean.col(i_obs).transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).row(i_obs);
-                    }
+                for (size_t n_obs = 0; n_obs < n; n_obs++) {
+                    grad += _obs_mean.transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).transpose();
+                }
 
                 return grad;
             }
@@ -315,7 +305,7 @@ namespace limbo {
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(n_params);
-                Eigen::MatrixXd grads = Eigen::MatrixXd::Zero(n_params, _dim_out);
+                Eigen::MatrixXd grads = Eigen::MatrixXd::Zero(n_params, 1);
 
                 // only compute half of the matrix (symmetrical matrix)
                 // TO-DO: Make it better
@@ -361,7 +351,7 @@ namespace limbo {
             const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
 
             /// return the list of observations
-            std::vector<Eigen::VectorXd> const& observations() const
+            std::vector<double> const& observations() const
             {
                 return _observations;
             }
@@ -393,10 +383,10 @@ namespace limbo {
                 std::vector<Eigen::VectorXd> samples;
                 archive.load(samples, "samples");
 
-                std::vector<Eigen::VectorXd> observations;
+                std::vector<double> observations;
                 archive.load(observations, "observations");
 
-                GP out(samples[0].size(), observations.at(0).size());
+                GP out(samples[0].size());
                 out._samples = samples;
                 out._observations = observations;
 
@@ -407,7 +397,7 @@ namespace limbo {
                     out._kernel_function.set_h_params(h_params);
                 }
 
-                out._mean_function = MeanFunction(out._dim_out);
+                out._mean_function = MeanFunction();
 
                 if (out._mean_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
@@ -427,16 +417,15 @@ namespace limbo {
 
         protected:
             int _dim_in;
-            int _dim_out;
 
             KernelFunction _kernel_function;
             MeanFunction _mean_function;
 
             std::vector<Eigen::VectorXd> _samples;
-            std::vector<Eigen::VectorXd> _observations;
-            Eigen::MatrixXd _obs_mean;
+            std::vector<double> _observations;
+            Eigen::VectorXd _obs_mean;
 
-            Eigen::MatrixXd _alpha;
+            Eigen::VectorXd _alpha;
             Eigen::MatrixXd _kernel, _inv_kernel;
 
             Eigen::MatrixXd _matrixL;
@@ -448,12 +437,12 @@ namespace limbo {
             void _compute_obs_mean()
             {
                 assert(!_samples.empty());
-                _obs_mean.resize(_samples.size(), _dim_out);
+                _obs_mean.resize(_samples.size());
                 for (int i = 0; i < _obs_mean.rows(); i++) {
                     assert(_samples[i].cols() == 1);
                     assert(_samples[i].rows() != 0);
                     assert(_samples[i].rows() == _dim_in);
-                    _obs_mean.row(i) = _observations.at(i) - _mean_function(_samples[i], *this);
+                    _obs_mean(i) = _observations.at(i) - _mean_function(_samples[i], *this);
                 }
             }
 
@@ -520,9 +509,9 @@ namespace limbo {
                 triang.adjoint().solveInPlace(_alpha);
             }
 
-            Eigen::VectorXd _mu(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
+            double _mu(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
             {
-                return (k.transpose() * _alpha) + _mean_function(v, *this).transpose();
+                return (k.transpose() * _alpha) + _mean_function(v, *this);
             }
 
             double _sigma_sq(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const

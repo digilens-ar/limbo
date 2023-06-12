@@ -66,18 +66,18 @@ namespace limbo {
         */
         template <typename mean_constant>
         struct Constant : public BaseMean {
-            Constant(size_t dim_out = 1) : _dim_out(dim_out), _constant(mean_constant::constant()) {}
+            Constant() : _constant(mean_constant::constant()) {}
 
             template <typename GP>
-            Eigen::VectorXd operator()(const Eigen::VectorXd& v, const GP&) const
+            double operator()(const Eigen::VectorXd& v, const GP&) const
             {
-                return Eigen::VectorXd::Constant(_dim_out, _constant);
+                return _constant;
             }
 
             template <typename GP>
             Eigen::MatrixXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {
-                return Eigen::MatrixXd::Ones(_dim_out, 1);
+                return Eigen::MatrixXd::Ones(1, 1); // TODO the gradient is 1?
             }
 
             size_t h_params_size() const { return 1; }
@@ -95,7 +95,6 @@ namespace limbo {
             }
 
         protected:
-            size_t _dim_out;
             double _constant;
         };
     } // namespace mean

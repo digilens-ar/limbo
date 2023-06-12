@@ -55,8 +55,8 @@ namespace limbo {
         ///@ingroup stat
         ///filename: `gp_mean_hparams.dat`
         struct GPMeanHParams : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 if (bo.observations().empty())
                     return;

@@ -75,8 +75,8 @@ namespace limbo {
             static constexpr bool always_false = false;
 
             /// main method (to be written in derived classes)
-            template <typename BO , typename AggregatorFunc>
-            void operator()(const BO& bo, const AggregatorFunc& afun)
+            template <typename BO >
+            void operator()(const BO& bo)
             {
                 static_assert(always_false<BO>);
             }

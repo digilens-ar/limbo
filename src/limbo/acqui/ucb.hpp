@@ -76,12 +76,11 @@ namespace limbo {
         public:
             UCB(const Model& model, int iteration = 0) : _model(model) {}
 
-            template <concepts::AggregatorFunc AggregatorFunction>
-            opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
+            opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
             {
                 assert(!gradient);
                 auto [mu, sigma_sq] = _model.query(v);
-                return opt::no_grad(afun(mu) + AcquiUcb::alpha() * sqrt(sigma_sq));
+                return opt::no_grad(mu + AcquiUcb::alpha() * sqrt(sigma_sq));
             }
 
         protected:

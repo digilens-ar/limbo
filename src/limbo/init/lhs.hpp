@@ -69,8 +69,8 @@ namespace limbo {
         */
         template <typename init_lhs>
         struct LHS {
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
-            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval,  Opt& opt) const
             {
                 assert(opt.isBounded());
                 if (opt.hasConstraints())

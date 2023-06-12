@@ -89,14 +89,13 @@ namespace {
 
     struct fit_eval {
         BO_PARAM(size_t, dim_in, 2);
-        BO_PARAM(size_t, dim_out, 1);
 
-        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, double> operator()(const Eigen::VectorXd& x) const
         {
             double res = 0;
             for (int i = 0; i < x.size(); i++)
                 res += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
-            return { OK, tools::make_vector(res) };
+            return { OK, res };
         }
     };
 }
@@ -108,7 +107,7 @@ TEST(Limbo_Init_Functions, no_init)
     using Init_t = init::NoInit;
     using Opt_t = bayes_opt::BOptimizer<Params, Model_t, Acqui_t, Init_t>;
 
-    Opt_t opt(fit_eval::dim_in(), fit_eval::dim_out());
+    Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
     ASSERT_TRUE(opt.observations().size() == 0);
     ASSERT_TRUE(opt.samples().size() == 0);
@@ -129,7 +128,7 @@ TEST(Limbo_Init_Functions, random_lhs)
     using Init_t = init::LHS<RandLHSParams::init_lhs>;
     using Opt_t = bayes_opt::BOptimizer<RandLHSParams, Model_t, Acqui_t, Init_t>;
 
-    Opt_t opt(fit_eval::dim_in(), fit_eval::dim_out());
+    Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
     ASSERT_TRUE(opt.observations().size() == 10);
     ASSERT_TRUE(opt.samples().size() == 10);
@@ -160,7 +159,7 @@ TEST(Limbo_Init_Functions, random_sampling)
     using Init_t = init::RandomSampling<RandSamplParams::init_randomsampling>;
     using Opt_t = bayes_opt::BOptimizer<RandSamplParams, Model_t, Acqui_t, Init_t>;
 
-    Opt_t opt(fit_eval::dim_in(), fit_eval::dim_out());
+    Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
     ASSERT_TRUE(opt.observations().size() == 10);
     ASSERT_TRUE(opt.samples().size() == 10);
@@ -192,7 +191,7 @@ TEST(Limbo_Init_Functions, random_sampling_grid)
     using Init_t = init::RandomSamplingGrid<RandSamplGridParams::init_randomsamplinggrid>;
     using Opt_t = bayes_opt::BOptimizer<RandSamplGridParams, Model_t, Acqui_t, Init_t>;
 
-    Opt_t opt(fit_eval::dim_in(), fit_eval::dim_out());
+    Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
     ASSERT_TRUE(opt.observations().size() == 10);
     ASSERT_TRUE(opt.samples().size() == 10);
@@ -223,7 +222,7 @@ TEST(Limbo_Init_Functions, grid_sampling)
     using Init_t = init::GridSampling<GridSamplParams::init_gridsampling>;
     using Opt_t = bayes_opt::BOptimizer<GridSamplParams, Model_t, Acqui_t, Init_t>;
 
-    Opt_t opt(fit_eval::dim_in(), fit_eval::dim_out());
+    Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
     std::cout << opt.observations().size() << std::endl;
     ASSERT_TRUE(opt.observations().size() == 25);

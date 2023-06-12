@@ -14,11 +14,11 @@ namespace limbo::stat
 			outFuncs_.emplace_back(std::move(outputFunc));
 		}
 
-		template <limbo::concepts::BayesOptimizer BO, limbo::concepts::AggregatorFunc AggFunc>
-		void operator()(BO const& bo, AggFunc const& aggFunc)
+		template <limbo::concepts::BayesOptimizer BO>
+		void operator()(BO const& bo)
 		{
 			for (auto& func : outFuncs_) {
-				func(aggFunc(bo.best_observation(aggFunc)), bo.best_sample(), bo.observations(), bo.samples());
+				func(bo.best_observation(), bo.best_sample(), bo.observations(), bo.samples());
 			}
 		}
 

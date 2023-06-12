@@ -66,8 +66,8 @@ namespace limbo {
         struct MaxIterations {
             MaxIterations() {}
 
-            template <typename BO, typename AggregatorFunction>
-            bool operator()(const BO& bo, const AggregatorFunction&, std::string& stopMessage) const
+            template <typename BO>
+            bool operator()(const BO& bo, std::string& stopMessage) const
             {
                 if (!Stop_MaxIterations::enabled())
                     return false;

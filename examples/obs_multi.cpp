@@ -90,14 +90,13 @@ struct Params {
 
 struct StateEval {
     BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 2);
 
-    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, double> operator()(const Eigen::VectorXd& x) const
     {
         Eigen::VectorXd res(2);
         res(0) = 3 * x(0) + 5;
         res(1) = -5 * x(1) + 2;
-        return { OK, res };
+        return { OK, res.sum() / res.size()};
     }
 };
 
@@ -109,14 +108,6 @@ struct Average {
     }
 };
 
-struct SecondElem {
-    using result_type = double;
-    double operator()(const Eigen::VectorXd& x) const
-    {
-        return x(1);
-    }
-};
-
 int main()
 {
     using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
@@ -124,12 +115,10 @@ int main()
     using GP_t = model::GP<Kernel_t, Mean_t>;
     using Acqui_t = acqui::GP_UCB<Params::acqui_gpucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2, 2);
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);
 
     std::cout << "Optimize using  Average aggregator" << std::endl;
-    opt.optimize(StateEval(), Average());
-    std::cout << "best obs based on Average aggregator: " << opt.best_observation(Average()) << " res  " << opt.best_sample(Average()).transpose() << std::endl;
-    std::cout << "best obs based on FirstElem aggregator: " << opt.best_observation(FirstElem()) << " res  " << opt.best_sample(FirstElem()).transpose() << std::endl;
-    std::cout << "best obs based on SecondElem aggregator: " << opt.best_observation(SecondElem()) << " res  " << opt.best_sample(SecondElem()).transpose() << std::endl;
+    opt.optimize(StateEval());
+    std::cout << "best obs based on Average aggregator: " << opt.best_observation() << " res  " << opt.best_sample().transpose() << std::endl;
     return 0;
 }

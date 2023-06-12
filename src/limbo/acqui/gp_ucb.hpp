@@ -91,12 +91,11 @@ namespace limbo {
                 _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3));
             }
 
-            template <typename AggregatorFunction>
-            opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
+            opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
             {
                 assert(!gradient);
                 auto [mu, sigma_sq] = _model.query(v);
-                return opt::no_grad(afun(mu) + _beta * std::sqrt(sigma_sq));
+                return opt::no_grad(mu + _beta * std::sqrt(sigma_sq));
             }
 
         protected:

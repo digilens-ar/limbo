@@ -54,8 +54,8 @@ namespace limbo {
         ///@ingroup stat
         ///filename: `samples.dat`
         struct Samples : public StatBase {
-            template <typename BO, concepts::AggregatorFunc AggregatorFunction>
-            void operator()(const BO& bo,  AggregatorFunction const&)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 if (bo.samples().empty())
                     return;

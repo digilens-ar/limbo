@@ -84,13 +84,6 @@ namespace limbo {
         };
     }
 
-    struct FirstElem {
-        double operator()(const Eigen::VectorXd& x) const
-        {
-            return x(0);
-        }
-    };
-
     class EvaluationError : public std::exception
     {
     public:
@@ -188,17 +181,17 @@ namespace limbo {
             using constraint_func_t = std::function<std::pair<double, std::optional<Eigen::VectorXd>>(Eigen::VectorXd, bool)>;
 
             /// default constructor
-            BOptimizer(int dimIn, int dimOut):
+            BOptimizer(int dimIn):
 				acqui_optimizer(acqui_opt_t::create(dimIn)),
-				_model(dimIn, dimOut)
+				_model(dimIn)
             {}
 
             BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer& operator=(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
 
             /// The main function (run the Bayesian optimization algorithm)
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction = FirstElem>
-            std::string optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
+            template <concepts::StateFunc StateFunction>
+            std::string optimize(const StateFunction& sfun, bool reset = true)
             {
                 this->_current_iteration = 0;
                 if (reset) {
@@ -208,7 +201,7 @@ namespace limbo {
                 }
 
                 if (this->_total_iterations == 0) {
-                    EvaluationStatus initStatus = init_t()(sfun, afun, *this);
+                    EvaluationStatus initStatus = init_t()(sfun, *this);
                     if (initStatus == TERMINATE)
                     {
                         return "Initialization requested that optimization be terminated";
@@ -218,7 +211,7 @@ namespace limbo {
                 if (!this->_observations.empty())
                     _model.initialize(this->_samples, this->_observations);
                 else
-                    _model = model_type(sfun.dim_in(), sfun.dim_out());
+                    _model = model_type(sfun.dim_in());
 
                 if (Params::bayes_opt_boptimizer::hp_period() > 0 && _observations.size() >= Params::bayes_opt_boptimizer::hp_period())
                 { // If the initialization includes enough samples for hyper parameter optimization then run it. TODO untested change
@@ -233,13 +226,13 @@ namespace limbo {
 
                 std::string stopMessage = "";
                 // While no stopping criteria return `true`
-                while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &afun, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, afun, stopMessage); }))
+                while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, stopMessage); }))
                 {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
                     Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
                     Eigen::VectorXd new_sample = acqui_optimizer.optimize(
-                        [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, afun, g); },
+                        [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, g); },
                         starting_point, 
                         Params::bayes_opt_boptimizer::bounded());
 
@@ -254,9 +247,9 @@ namespace limbo {
                         //update stats
                         boost::fusion::for_each(
                             stat_, 
-                            [this, &afun](concepts::StatsFunc auto& func)
+                            [this](concepts::StatsFunc auto& func)
                             {
-	                            func.template operator()<decltype(*this), AggregatorFunction>(*this, afun);
+	                            func.template operator()<decltype(*this)>(*this);
                             });
                     }
 
@@ -278,30 +271,24 @@ namespace limbo {
             }
 
             /// return the best observation so far (i.e. max(f(x)))
-            template <concepts::AggregatorFunc AggregatorFunction = FirstElem>
-            const Eigen::VectorXd& best_observation(const AggregatorFunction& afun = AggregatorFunction()) const
+            double best_observation() const
             {
-                auto rewards = std::vector<double>(this->_observations.size());
-                std::transform(this->_observations.begin(), this->_observations.end(), rewards.begin(), afun);
-                auto max_e = std::max_element(rewards.begin(), rewards.end());
-                return this->_observations[std::distance(rewards.begin(), max_e)];
+                auto max_e = std::max_element(_observations.begin(), _observations.end());
+                return this->_observations[std::distance(_observations.begin(), max_e)];
             }
 
             /// return the best sample so far (i.e. the argmax(f(x)))
-            template <concepts::AggregatorFunc AggregatorFunction = FirstElem>
-            const Eigen::VectorXd& best_sample(const AggregatorFunction& afun = AggregatorFunction()) const
+            const Eigen::VectorXd& best_sample() const
             {
-                auto rewards = std::vector<double>(this->_observations.size());
-                std::transform(this->_observations.begin(), this->_observations.end(), rewards.begin(), afun);
-                auto max_e = std::max_element(rewards.begin(), rewards.end());
-                return this->_samples[std::distance(rewards.begin(), max_e)];
+                auto max_e = std::max_element(_observations.begin(), _observations.end());
+                return this->_samples[std::distance(_observations.begin(), max_e)];
             }
 
             model_type const& model() const { return _model; }
             stats_t& statsFunctors() { return stat_; }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
-            std::vector<Eigen::VectorXd> const& observations() const { return _observations; }
+            std::vector<double> const& observations() const { return _observations; }
 
             /// return the list of the points that have been evaluated so far (x)
             std::vector<Eigen::VectorXd> const& samples() const { return _samples; }
@@ -323,11 +310,11 @@ namespace limbo {
                     /// Add a new sample / observation pair
 					/// - does not update the model!
 					/// - we don't add NaN and inf observations
-					if (observation.hasNaN())
+					if (std::isnan(observation))
 					{
                         throw EvaluationError("Merit function returned a NaN value");
 					}
-                    if (!observation.allFinite()) 
+                    if (std::isinf(observation)) 
                     {
                         throw EvaluationError("Merit function returned an infinite value");
                     }
@@ -394,7 +381,7 @@ namespace limbo {
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type _stopping_criteria;
             stats_t  stat_;
             acqui_opt_t acqui_optimizer;
-			std::vector<Eigen::VectorXd> _observations;
+			std::vector<double> _observations;
             std::vector<Eigen::VectorXd> _samples;
             std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
             std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
