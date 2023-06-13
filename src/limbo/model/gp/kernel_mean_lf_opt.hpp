@@ -71,7 +71,7 @@ namespace limbo {
                     gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
                     gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
 
-                    gp.recompute(true);
+                    gp.recompute(true, true, false);
                 }
 
             protected:
@@ -85,7 +85,7 @@ namespace limbo {
                         gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
                         gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
 
-                        gp.recompute(true);
+                        gp.recompute(true, true, true);
 
                         double lik = gp.compute_log_lik();
 

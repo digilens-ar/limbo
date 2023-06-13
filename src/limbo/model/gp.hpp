@@ -94,10 +94,8 @@ namespace limbo {
 
                 _samples = samples;
                 _observations = observations;
-            
-                this->_compute_obs_mean();
-                if (compute_kernel)
-                    this->_compute_full_kernel();
+
+                recompute(true, compute_kernel, false);
             }
 
             /// Do not forget to call this if you use hyper-parameters optimization!!
@@ -192,7 +190,8 @@ namespace limbo {
             int nb_samples() const { return _samples.size(); }
 
             ///  recomputes the GP
-            void recompute(bool update_obs_mean = true, bool update_full_kernel = true)
+            ///  `update_kernel_gradient` only has an effect if `update_full_kernel` is active.
+            void recompute(bool update_obs_mean, bool update_full_kernel, bool update_kernel_gradient)
             {
                 assert(!_samples.empty());
 
@@ -200,7 +199,7 @@ namespace limbo {
                     this->_compute_obs_mean();
 
                 if (update_full_kernel)
-                    this->_compute_full_kernel();
+                    this->_compute_full_kernel(update_kernel_gradient);
                 else
                     this->_compute_alpha();
             }
@@ -236,6 +235,7 @@ namespace limbo {
             /// compute and return the gradient of the log likelihood wrt to the kernel parameters
             [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_lik()
             {
+                assert(!kernel_grad_outdated_); // The kernel gradient must be updated via `recompute` before calling this.
                 size_t n = _obs_mean.rows();
 
                 // compute K^{-1} only if needed
@@ -250,7 +250,7 @@ namespace limbo {
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
                 for (size_t i = 0; i < n; ++i) {
                     for (size_t j = 0; j <= i; ++j) {
-                        auto [kVal, g] = _kernel_function.computeWithGradient(_samples[i], _samples[j], i, j);
+                        Eigen::VectorXd& g = _kernel_grad(i, j);
                         if (i == j)
                             grad += w(i, j) * g * 0.5;
                         else
@@ -296,6 +296,7 @@ namespace limbo {
             /// compute and return the gradient of the log probability of LOO CV wrt to the kernel parameters
             [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_loo_cv()
             {
+                assert(!kernel_grad_outdated_); // The kernel gradient must be updated via `recompute` before calling this.
                 size_t n = _obs_mean.rows();
                 size_t n_params = _kernel_function.h_params_size();
 
@@ -313,8 +314,7 @@ namespace limbo {
                 for (size_t i = 0; i < n; i++) {
                     full_dk.push_back(std::vector<Eigen::VectorXd>());
                     for (size_t j = 0; j <= i; j++)
-                        auto [kVal, g] = _kernel_function.computeWithGradient(_samples[i], _samples[j], i, j);
-                        full_dk[i].push_back(g);
+                        full_dk[i].push_back(_kernel_grad(i, j));
                     for (size_t j = i + 1; j < n; j++)
                         full_dk[i].push_back(Eigen::VectorXd::Zero(n_params));
                 }
@@ -400,7 +400,7 @@ namespace limbo {
                 }
 
                 if (recompute)
-                    out.recompute(true, true);
+                    out.recompute(true, true, false);
                 else {
                     archive.load(out._matrixL, "matrixL");
                     archive.load(out._alpha, "alpha");
@@ -416,14 +416,16 @@ namespace limbo {
 
             std::vector<Eigen::VectorXd> _samples;
             std::vector<double> _observations;
-            Eigen::VectorXd _obs_mean;
+            Eigen::VectorXd _obs_mean; // The difference between each observation at the mean_function at the observation's location
 
             Eigen::VectorXd _alpha;
             Eigen::MatrixXd _kernel, _inv_kernel;
+            Eigen::ArrayXX<Eigen::VectorXd> _kernel_grad; // Only the lower triangle may be used.
 
             Eigen::MatrixXd _matrixL;     /// LLT matrix (from Cholesky decomposition)
 
         	bool _inv_kernel_updated;
+            bool kernel_grad_outdated_ = true; // This is true if the kernel has been updated but the kernel_grad has not.
 
             HyperParamsOptimizer _hp_optimize;
 
@@ -439,15 +441,33 @@ namespace limbo {
                 }
             }
 
-            void _compute_full_kernel()
+            void _compute_full_kernel(bool update_kernel_gradient)
             {
                 size_t n = _samples.size();
                 _kernel.resize(n, n);
 
-                // Compute lower triangle
-                for (size_t i = 0; i < n; i++)
-                    for (size_t j = 0; j <= i; ++j)
-                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);
+                if (update_kernel_gradient)
+                {
+                    kernel_grad_outdated_ = false;
+                    _kernel_grad.resize(n, n);
+                    // Compute lower triangle
+                    for (size_t i = 0; i < n; i++)
+                    {
+                        for (size_t j = 0; j <= i; ++j)
+                        {
+                            std::tie(_kernel(i, j), _kernel_grad(i, j)) = _kernel_function.computeWithGradient(_samples[i], _samples[j], i, j);
+                        }
+                    }
+                }
+                else
+                {
+                    kernel_grad_outdated_ = true;
+                    // Compute lower triangle
+                    for (size_t i = 0; i < n; i++)
+                        for (size_t j = 0; j <= i; ++j)
+                            _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);
+                }
+              
 
                 // Copy lower triangle to top (TODO is this needed?)
                 for (size_t i = 0; i < n; i++)
@@ -469,7 +489,7 @@ namespace limbo {
                 // This part of the code is inspired from the Bayesopt Library (cholesky_add_row function).
                 // However, the mathematical foundations can be easily retrieved by detailing the equations of the
                 // extended L matrix that produces the desired kernel.
-
+                kernel_grad_outdated_ = true;
                 size_t n = _samples.size();
                 _kernel.conservativeResize(n, n);
 
