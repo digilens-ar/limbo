@@ -420,7 +420,7 @@ namespace limbo {
             Eigen::VectorXd _alpha;
             Eigen::MatrixXd _kernel, _inv_kernel;
 
-            Eigen::MatrixXd _matrixL;     /// LLT matrix (from Cholesky decomposition)
+            Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition
 
         	bool _inv_kernel_updated;
 
@@ -454,8 +454,7 @@ namespace limbo {
                         _kernel(j, i) = _kernel(i, j);
 
                 // O(n^3)
-                _matrixL = Eigen::LLT<Eigen::MatrixXd>(_kernel).matrixL();
-
+                _matrixL = Eigen::LLT<Eigen::MatrixXd>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
                 this->_compute_alpha();
 
                 // notify change of kernel

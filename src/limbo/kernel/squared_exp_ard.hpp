@@ -138,7 +138,6 @@ namespace limbo {
 
             double kernel_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
-                assert(x1.size() == _ell.size());
                 double z;
                 if (kernel_squared_exp_ard::k() > 0) {
                     Eigen::MatrixXd K = (_A * _A.transpose());
