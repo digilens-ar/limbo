@@ -43,4 +43,4 @@ static void kernelLFOpt(benchmark::State& state)
 	}
 }
 
-BENCHMARK(kernelLFOpt)->ArgsProduct({ {50, 100, 200, 500}, {2, 4, 8} })->Unit(benchmark::kMillisecond)->MinTime(3);
+BENCHMARK(kernelLFOpt)->ArgsProduct({ {50, 500, 1000}, {4, 8, 16} })->Unit(benchmark::kMillisecond)->MinTime(3);

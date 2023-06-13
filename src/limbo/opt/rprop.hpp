@@ -60,8 +60,8 @@ namespace limbo {
             /// number of max iterations
             BO_PARAM(int, iterations, 300);
 
-            /// gradient norm epsilon for stopping
-            BO_PARAM(double, eps_stop, 0.0);
+            /// gradient norm epsilon for stopping. Set this to some positive value for it to have an effect. Set to 0 to disable.
+            BO_PARAM(double, eps_stop, 1e-10);
         };
     }
     namespace opt {
