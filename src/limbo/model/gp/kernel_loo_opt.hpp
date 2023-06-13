@@ -63,7 +63,6 @@ namespace limbo {
                     Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), false);
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
-                    gp.compute_log_loo_cv();
                 }
 
             protected:

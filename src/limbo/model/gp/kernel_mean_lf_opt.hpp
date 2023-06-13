@@ -72,7 +72,6 @@ namespace limbo {
                     gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
 
                     gp.recompute(true);
-                    gp.compute_log_lik();
                 }
 
             protected:
