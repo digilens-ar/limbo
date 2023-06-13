@@ -46,7 +46,6 @@
 #ifndef LIMBO_MODEL_GP_KERNEL_LOO_OPT_HPP
 #define LIMBO_MODEL_GP_KERNEL_LOO_OPT_HPP
 
-#include <limbo/model/gp/hp_opt.hpp>
 
 namespace limbo {
     namespace model {
@@ -54,12 +53,11 @@ namespace limbo {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
             template <typename opt_rprop, typename Optimizer = opt::Rprop<opt_rprop>>
-            struct KernelLooOpt : public HPOpt {
+            struct KernelLooOpt {
             public:
                 template <typename GP>
                 void operator()(GP& gp)
                 {
-                    this->_called = true;
                     KernelLooOptimization<GP> optimization(gp);
                     Optimizer optimizer;
                     Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), false);
