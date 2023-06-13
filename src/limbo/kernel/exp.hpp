@@ -91,14 +91,15 @@ namespace limbo {
                 _sf2 = std::exp(2.0 * p(1));
             }
 
-            double kernel(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
+        protected:
+            double kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
             {
                 double l_sq = _l * _l;
                 double r = (v1 - v2).squaredNorm() / l_sq;
                 return _sf2 * std::exp(-0.5 * r);
             }
 
-            Eigen::VectorXd gradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 Eigen::VectorXd grad(this->params_size());
                 double l_sq = _l * _l;
@@ -110,10 +111,11 @@ namespace limbo {
                 return grad;
             }
 
-        protected:
             double _sf2, _l;
 
             Eigen::VectorXd _h_params;
+
+            friend class BaseKernel<kernel_opt, Exp<kernel_opt, kernel_exp>>;
         };
     } // namespace kernel
 } // namespace limbo

@@ -80,12 +80,12 @@ namespace limbo {
 
             double compute(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, int i = -1, int j = -2) const
             {
-                return static_cast<const Kernel*>(this)->kernel(v1, v2) + ((i == j) ? _noise + 1e-8 : 0.0);
+                return static_cast<const Kernel*>(this)->kernel_(v1, v2) + ((i == j) ? _noise + 1e-8 : 0.0);
             }
 
             Eigen::VectorXd grad(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
             {
-                Eigen::VectorXd g = static_cast<const Kernel*>(this)->gradient(x1, x2);
+                Eigen::VectorXd g = static_cast<const Kernel*>(this)->gradient_(x1, x2);
 
                 if (kernel_opt::optimize_noise()) {
                     g.conservativeResize(g.size() + 1);
@@ -128,20 +128,6 @@ namespace limbo {
         protected:
             double _noise;
             double _noise_p;
-
-            // Functions for compilation issues
-            // They should never be called like this
-            size_t params_size() const { return 0; }
-
-            Eigen::VectorXd params() const { return Eigen::VectorXd(); }
-
-            void set_params(const Eigen::VectorXd& p) {}
-
-            Eigen::VectorXd gradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
-            {
-                // This should never be called!
-                assert(false);
-            }
         };
     } // namespace kernel
 } // namespace limbo

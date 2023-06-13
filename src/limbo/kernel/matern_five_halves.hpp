@@ -81,7 +81,7 @@ namespace limbo {
           \endrst
         */
         template <typename kernel_opt, typename kernel_maternfivehalves>
-        struct MaternFiveHalves : public BaseKernel<kernel_opt, MaternFiveHalves<kernel_opt, kernel_maternfivehalves>> {
+        struct MaternFiveHalves : BaseKernel<kernel_opt, MaternFiveHalves<kernel_opt, kernel_maternfivehalves>> {
             MaternFiveHalves(size_t dim = 1) : _sf2(kernel_maternfivehalves::sigma_sq()), _l(kernel_maternfivehalves::l())
             {
                 _h_params = Eigen::VectorXd(2);
@@ -101,7 +101,8 @@ namespace limbo {
                 _sf2 = std::exp(2.0 * p(1));
             }
 
-            double kernel(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
+        protected:
+            double kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
             {
                 double d = (v1 - v2).norm();
                 double d_sq = d * d;
@@ -112,7 +113,7 @@ namespace limbo {
                 return _sf2 * (1 + term1 + term2) * std::exp(-term1);
             }
 
-            Eigen::VectorXd gradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 Eigen::VectorXd grad(this->params_size());
 
@@ -132,10 +133,11 @@ namespace limbo {
                 return grad;
             }
 
-        protected:
             double _sf2, _l;
 
             Eigen::VectorXd _h_params;
+
+            friend class BaseKernel<kernel_opt, MaternFiveHalves<kernel_opt, kernel_maternfivehalves>>;
         };
     } // namespace kernel
 } // namespace limbo

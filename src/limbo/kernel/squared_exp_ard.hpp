@@ -79,7 +79,7 @@ namespace limbo {
         \endrst
         */
         template <typename kernel_opt, typename kernel_squared_exp_ard>
-        struct SquaredExpARD : public BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>> {
+        struct SquaredExpARD : BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>> {
             SquaredExpARD(int dim = 1) : _ell_inv(dim), _A(dim, kernel_squared_exp_ard::k()), _input_dim(dim)
             {
                 Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell_inv.size() + _ell_inv.size() * kernel_squared_exp_ard::k() + 1);
@@ -104,7 +104,8 @@ namespace limbo {
                 _sf2 = std::exp(2.0 * p(params_size() - 1));
             }
 
-            Eigen::VectorXd gradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+        protected:
+            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 if (kernel_squared_exp_ard::k() > 0) {
                     Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size());
@@ -135,7 +136,7 @@ namespace limbo {
                 }
             }
 
-            double kernel(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            double kernel_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 assert(x1.size() == _ell.size());
                 double z;
@@ -150,12 +151,13 @@ namespace limbo {
                 return _sf2 * std::exp(-0.5 * z);
             }
 
-        protected:
             double _sf2;
             Eigen::VectorXd _ell_inv;
             Eigen::MatrixXd _A;
             size_t _input_dim;
             Eigen::VectorXd _h_params;
+
+            friend class BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>>;
         };
     } // namespace kernel
 } // namespace limbo
