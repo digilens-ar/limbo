@@ -104,33 +104,33 @@ namespace limbo {
         protected:
             double kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
             {
-                double d = (v1 - v2).norm();
-                double d_sq = d * d;
-                double l_sq = _l * _l;
-                double term1 = std::sqrt(5) * d / _l;
-                double term2 = 5. * d_sq / (3. * l_sq);
+                const double d = (v1 - v2).norm();
+                const double d_sq = d * d;
+                const  double l_sq = _l * _l;
+                const double term1 = std::sqrt(5) * d / _l;
+                const double term2 = 5. * d_sq / (3. * l_sq);
 
                 return _sf2 * (1 + term1 + term2) * std::exp(-term1);
             }
 
-            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            std::pair<double, Eigen::VectorXd> kernel_w_grad_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 Eigen::VectorXd grad(this->params_size());
 
-                double d = (x1 - x2).norm();
-                double d_sq = d * d;
-                double l_sq = _l * _l;
-                double term1 = std::sqrt(5) * d / _l;
-                double term2 = 5. * d_sq / (3. * l_sq);
-                double r = std::exp(-term1);
-
+                const  double d = (x1 - x2).norm();
+                const double d_sq = d * d;
+                const double l_sq = _l * _l;
+                const double term1 = std::sqrt(5) * d / _l;
+                const double term2 = 5. * d_sq / (3. * l_sq);
+                const double r = std::exp(-term1);
+                const double k = _sf2* (1 + term1 + term2) * r;
                 // derivative of term1 = -term1
                 // derivative of term2 = -2*term2
                 // derivative of e^(-term1) = term1*r
                 grad(0) = _sf2 * (r * term1 * (1 + term1 + term2) + (-term1 - 2. * term2) * r);
                 grad(1) = 2 * _sf2 * (1 + term1 + term2) * r;
 
-                return grad;
+                return {k , grad };
             }
 
             double _sf2, _l;

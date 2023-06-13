@@ -115,7 +115,7 @@ namespace {
         Kernel ke = kern;
         ke.set_h_params(x);
 
-        Eigen::VectorXd analytic_result = ke.grad(x1, x2);
+        auto [kVal, analytic_result] = ke.computeWithGradient(x1, x2);
 
         Eigen::VectorXd finite_diff_result = Eigen::VectorXd::Zero(x.size());
         for (int j = 0; j < x.size(); j++) {

@@ -83,16 +83,19 @@ namespace limbo {
                 return static_cast<const Kernel*>(this)->kernel_(v1, v2) + ((i == j) ? _noise + 1e-8 : 0.0);
             }
 
-            Eigen::VectorXd grad(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
+            std::pair<double, Eigen::VectorXd> computeWithGradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
             {
-                Eigen::VectorXd g = static_cast<const Kernel*>(this)->gradient_(x1, x2);
-
+                auto [k, g] = static_cast<const Kernel*>(this)->kernel_w_grad_(x1, x2);
+                if (i==j)
+                {
+                    k += _noise;
+                }
                 if (kernel_opt::optimize_noise()) {
                     g.conservativeResize(g.size() + 1);
                     g(g.size() - 1) = ((i == j) ? 2.0 * _noise : 0.0);
                 }
 
-                return g;
+                return { k, g };
             }
 
             // Get the hyper parameters size

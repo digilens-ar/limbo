@@ -99,7 +99,7 @@ namespace limbo {
                 return _sf2 * std::exp(-0.5 * r);
             }
 
-            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            std::pair<double, Eigen::VectorXd> kernel_w_grad_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 Eigen::VectorXd grad(this->params_size());
                 double l_sq = _l * _l;
@@ -108,7 +108,7 @@ namespace limbo {
 
                 grad(0) = r * k;
                 grad(1) = 2 * k;
-                return grad;
+                return { k, grad };
             }
 
             double _sf2, _l;

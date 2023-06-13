@@ -105,7 +105,7 @@ namespace limbo {
             }
 
         protected:
-            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            std::pair<double, Eigen::VectorXd> kernel_w_grad_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 if (kernel_squared_exp_ard::k() > 0) {
                     Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size());
@@ -122,8 +122,7 @@ namespace limbo {
                     }
 
                     grad(grad.size() - 1) = 2 * k;
-
-                    return grad;
+                    return { k, grad };
                 }
                 else {
                     Eigen::VectorXd grad(this->params_size());
@@ -132,7 +131,7 @@ namespace limbo {
                     grad.head(_input_dim) = z * k;
 
                     grad(grad.size() - 1) = 2 * k;
-                    return grad;
+                    return { k, grad };
                 }
             }
 

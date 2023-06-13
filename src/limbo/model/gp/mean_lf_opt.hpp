@@ -62,7 +62,7 @@ namespace limbo {
                     Optimizer optimizer = Optimizer::create(gp.mean_function().h_params().size());
                     Eigen::VectorXd params = optimizer.optimize(optimization, gp.mean_function().h_params(), false);
                     gp.mean_function().set_h_params(params);
-                    gp.recompute(true, false);
+                    gp.recompute(true, false, false);
                 }
 
             protected:
@@ -79,7 +79,7 @@ namespace limbo {
                         GP gp(this->_original_gp);
                         gp.mean_function().set_h_params(params);
 
-                        gp.recompute(true, false);
+                        gp.recompute(true, false, false);
 
                         double lik = gp.compute_log_lik();
 
