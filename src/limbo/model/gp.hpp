@@ -127,8 +127,9 @@ namespace limbo {
             std::tuple<double, double> query(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
-                    return std::make_tuple(_mean_function(v, *this),
-                        _kernel_function(v, v) + _kernel_function.noise());
+                    return std::make_tuple(
+                        _mean_function(v, *this),
+                        _kernel_function.compute(v, v) + _kernel_function.noise());
 
                 Eigen::VectorXd k = _compute_k(v);
                 return std::make_tuple(_mu(v, k), _sigma_sq(v, k) + _kernel_function.noise());
@@ -154,7 +155,7 @@ namespace limbo {
             double sigma_sq(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
-                    return _kernel_function(v, v) + _kernel_function.noise();
+                    return _kernel_function.compute(v, v) + _kernel_function.noise();
                 return _sigma_sq(v, _compute_k(v)) + _kernel_function.noise();
             }
 
@@ -226,7 +227,7 @@ namespace limbo {
                 // http://xcorr.net/2008/06/11/log-determinant-of-positive-definite-matrices-in-matlab/
                 long double logdet = 2 * _matrixL.diagonal().array().log().sum();
 
-                double a = _obs_mean.transpose()* _alpha;
+                double a = _obs_mean.transpose() * _alpha;
 
                 double log_lik = -0.5 * a - 0.5 * logdet - 0.5 * n * std::log(2 * M_PI);
                 return log_lik;
@@ -445,7 +446,7 @@ namespace limbo {
                 // Compute lower triangle
                 for (size_t i = 0; i < n; i++)
                     for (size_t j = 0; j <= i; ++j)
-                        _kernel(i, j) = _kernel_function(_samples[i], _samples[j], i, j);
+                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);
 
                 // Copy lower triangle to top (TODO is this needed?)
                 for (size_t i = 0; i < n; i++)
@@ -472,7 +473,7 @@ namespace limbo {
                 _kernel.conservativeResize(n, n);
 
                 for (size_t i = 0; i < n; ++i) {
-                    _kernel(i, n - 1) = _kernel_function(_samples[i], _samples[n - 1], i, n - 1);
+                    _kernel(i, n - 1) = _kernel_function.compute(_samples[i], _samples[n - 1], i, n - 1);
                     _kernel(n - 1, i) = _kernel(i, n - 1);
                 }
 
@@ -509,7 +510,7 @@ namespace limbo {
             double _sigma_sq(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
             {
                 Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k);
-                double res = _kernel_function(v, v) - z.dot(z);
+                double res = _kernel_function.compute(v, v) - z.dot(z);
 
                 return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res;
             }
@@ -518,7 +519,7 @@ namespace limbo {
             {
                 Eigen::VectorXd k(_samples.size());
                 for (int i = 0; i < k.size(); i++)
-                    k[i] = _kernel_function(_samples[i], v);
+                    k[i] = _kernel_function.compute(_samples[i], v);
                 return k;
             }
         };

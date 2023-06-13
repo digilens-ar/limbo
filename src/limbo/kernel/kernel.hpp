@@ -78,7 +78,7 @@ namespace limbo {
                 _noise_p = std::log(std::sqrt(_noise));
             }
 
-            double operator()(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, int i = -1, int j = -2) const
+            double compute(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, int i = -1, int j = -2) const
             {
                 return static_cast<const Kernel*>(this)->kernel(v1, v2) + ((i == j) ? _noise + 1e-8 : 0.0);
             }
