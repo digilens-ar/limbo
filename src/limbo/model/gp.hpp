@@ -226,8 +226,7 @@ namespace limbo {
                 // http://xcorr.net/2008/06/11/log-determinant-of-positive-definite-matrices-in-matlab/
                 long double logdet = 2 * _matrixL.diagonal().array().log().sum();
 
-                double a = (_obs_mean.transpose() * _alpha)
-                               .trace(); // generalization for multi dimensional observation
+                double a = _obs_mean.transpose()* _alpha;
 
                 double log_lik = -0.5 * a - 0.5 * logdet - 0.5 * n * std::log(2 * M_PI);
                 return log_lik;
