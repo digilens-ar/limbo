@@ -46,7 +46,6 @@
 #ifndef LIMBO_MODEL_GP_NO_LF_OPT_HPP
 #define LIMBO_MODEL_GP_NO_LF_OPT_HPP
 
-#include <iostream>
 
 namespace limbo {
     namespace model {
