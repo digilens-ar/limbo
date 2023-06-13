@@ -250,7 +250,7 @@ namespace limbo {
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
                 for (size_t i = 0; i < n; ++i) {
                     for (size_t j = 0; j <= i; ++j) {
-                        Eigen::VectorXd g = _kernel_function.grad(_samples[i], _samples[j], i, j);
+                        auto [kVal, g] = _kernel_function.computeWithGradient(_samples[i], _samples[j], i, j);
                         if (i == j)
                             grad += w(i, j) * g * 0.5;
                         else
@@ -313,7 +313,8 @@ namespace limbo {
                 for (size_t i = 0; i < n; i++) {
                     full_dk.push_back(std::vector<Eigen::VectorXd>());
                     for (size_t j = 0; j <= i; j++)
-                        full_dk[i].push_back(_kernel_function.grad(_samples[i], _samples[j], i, j));
+                        auto [kVal, g] = _kernel_function.computeWithGradient(_samples[i], _samples[j], i, j);
+                        full_dk[i].push_back(g);
                     for (size_t j = i + 1; j < n; j++)
                         full_dk[i].push_back(Eigen::VectorXd::Zero(n_params));
                 }

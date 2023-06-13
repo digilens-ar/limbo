@@ -81,18 +81,21 @@ namespace limbo {
             double compute(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, int i = -1, int j = -2) const
             {
                 double k = static_cast<const Kernel*>(this)->template kernel_<false>(v1, v2);
-                return k + ((i == j) ? _noise + 1e-8 : 0.0);
+                return k + ((i == j) ? _noise : 0.0);
             }
 
-            Eigen::VectorXd grad(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
+            std::pair<double, Eigen::VectorXd> computeWithGradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
             {
                 auto [k, grad] = static_cast<const Kernel*>(this)->template kernel_<true>(x1, x2);
                 if (kernel_opt::optimize_noise()) {
                     grad.conservativeResize(grad.size() + 1);
                     grad(grad.size() - 1) = ((i == j) ? 2.0 * _noise : 0.0);
                 }
-
-                return grad;
+                if (i==j)
+                {
+                    k += _noise;
+                }
+                return { k, grad };
             }
 
             // Get the hyper parameters size
