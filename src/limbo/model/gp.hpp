@@ -217,7 +217,7 @@ namespace limbo {
             }
 
             /// compute and return the log likelihood
-            double compute_log_lik()
+            [[nodiscard]] double compute_log_lik()
             {
                 size_t n = _obs_mean.rows();
 
@@ -234,7 +234,7 @@ namespace limbo {
             }
 
             /// compute and return the gradient of the log likelihood wrt to the kernel parameters
-            Eigen::VectorXd compute_kernel_grad_log_lik()
+            [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_lik()
             {
                 size_t n = _obs_mean.rows();
 
@@ -262,7 +262,7 @@ namespace limbo {
             }
 
             /// compute and return the gradient of the log likelihood wrt to the mean parameters
-            Eigen::VectorXd compute_mean_grad_log_lik()
+            [[nodiscard]] Eigen::VectorXd compute_mean_grad_log_lik()
             {
                 size_t n = _obs_mean.rows();
 
@@ -280,7 +280,7 @@ namespace limbo {
             }
 
             /// compute and return the log probability of LOO CV
-            double compute_log_loo_cv()
+            [[nodiscard]] double compute_log_loo_cv()
             {
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
@@ -294,7 +294,7 @@ namespace limbo {
             }
 
             /// compute and return the gradient of the log probability of LOO CV wrt to the kernel parameters
-            Eigen::VectorXd compute_kernel_grad_log_loo_cv()
+            [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_loo_cv()
             {
                 size_t n = _obs_mean.rows();
                 size_t n_params = _kernel_function.h_params_size();
@@ -344,19 +344,11 @@ namespace limbo {
                 return grad;
             }
 
-            /// LLT matrix (from Cholesky decomposition)
-            const Eigen::MatrixXd& matrixL() const { return _matrixL; }
-
             /// return the list of samples
             const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
 
             /// return the list of observations
-            std::vector<double> const& observations() const
-            {
-                return _observations;
-            }
-
-            bool inv_kernel_computed() { return _inv_kernel_updated; }
+            std::vector<double> const& observations() const { return _observations; }
 
             /// save the parameters and the data for the GP to the archive (text or binary)
             template <typename A>
@@ -428,7 +420,7 @@ namespace limbo {
             Eigen::VectorXd _alpha;
             Eigen::MatrixXd _kernel, _inv_kernel;
 
-            Eigen::MatrixXd _matrixL;
+            Eigen::MatrixXd _matrixL;     /// LLT matrix (from Cholesky decomposition)
 
         	bool _inv_kernel_updated;
 
