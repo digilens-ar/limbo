@@ -442,11 +442,12 @@ namespace limbo {
                 size_t n = _samples.size();
                 _kernel.resize(n, n);
 
-                // O(n^2) [should be negligible]
+                // Compute lower triangle
                 for (size_t i = 0; i < n; i++)
                     for (size_t j = 0; j <= i; ++j)
                         _kernel(i, j) = _kernel_function(_samples[i], _samples[j], i, j);
 
+                // Copy lower triangle to top (TODO is this needed?)
                 for (size_t i = 0; i < n; i++)
                     for (size_t j = 0; j < i; ++j)
                         _kernel(j, i) = _kernel(i, j);
