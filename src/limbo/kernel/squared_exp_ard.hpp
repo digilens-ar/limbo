@@ -105,50 +105,48 @@ namespace limbo {
             }
 
         protected:
-            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            template<bool Gradient>
+            auto kernel_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const -> typename std::conditional<Gradient, std::pair<double, Eigen::VectorXd>, double>::type
             {
                 if (kernel_squared_exp_ard::k() > 0) {
-                    Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size());
                     Eigen::MatrixXd K = (_A * _A.transpose());
                     K.diagonal() += _ell_inv.array().square().matrix();
                     double z = ((x1 - x2).transpose() * K * (x1 - x2));
                     double k = _sf2 * std::exp(-0.5 * z);
+                    if constexpr (Gradient)
+                    {
+                        Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size());
+                        grad.head(_input_dim) = (x1 - x2).cwiseProduct(_ell_inv).array().square() * k;
 
-                    grad.head(_input_dim) = (x1 - x2).cwiseProduct(_ell_inv).array().square() * k;
+                        for (size_t j = 0; j < (unsigned int)kernel_squared_exp_ard::k(); ++j) {
+                            Eigen::VectorXd G = -((x1 - x2).transpose() * _A.col(j))(0) * (x1 - x2) * k;
+                            grad.segment((j + 1) * _input_dim, _input_dim) = G;
+                        }
 
-                    for (size_t j = 0; j < (unsigned int)kernel_squared_exp_ard::k(); ++j) {
-                        Eigen::VectorXd G = -((x1 - x2).transpose() * _A.col(j))(0) * (x1 - x2) * k;
-                        grad.segment((j + 1) * _input_dim, _input_dim) = G;
+                        grad(grad.size() - 1) = 2 * k;
+
+                        return std::pair { k, grad };
                     }
-
-                    grad(grad.size() - 1) = 2 * k;
-
-                    return grad;
+                    else
+                    {
+                        return k;
+                    }
                 }
                 else {
-                    Eigen::VectorXd grad(this->params_size());
                     Eigen::VectorXd z = (x1 - x2).cwiseProduct(_ell_inv).array().square();
                     double k = _sf2 * std::exp(-0.5 * z.sum());
-                    grad.head(_input_dim) = z * k;
-
-                    grad(grad.size() - 1) = 2 * k;
-                    return grad;
+                    if constexpr (Gradient)
+                    {
+                        Eigen::VectorXd grad(this->params_size());
+                        grad.head(_input_dim) = z * k;
+                        grad(grad.size() - 1) = 2 * k;
+                        return std::pair { k, grad };
+                    }
+                    else
+                    {
+                        return k;
+                    }
                 }
-            }
-
-            double kernel_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
-            {
-                assert(x1.size() == _ell.size());
-                double z;
-                if (kernel_squared_exp_ard::k() > 0) {
-                    Eigen::MatrixXd K = (_A * _A.transpose());
-                    K.diagonal() += _ell_inv.array().square().matrix();
-                    z = ((x1 - x2).transpose() * K * (x1 - x2));
-                }
-                else {
-                    z = (x1 - x2).cwiseProduct(_ell_inv).squaredNorm();
-                }
-                return _sf2 * std::exp(-0.5 * z);
             }
 
             double _sf2;

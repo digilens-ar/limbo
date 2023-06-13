@@ -102,35 +102,31 @@ namespace limbo {
             }
 
         protected:
-            double kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
+            template<bool Gradient>
+            auto kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const -> typename std::conditional<Gradient, std::pair<double, Eigen::VectorXd>, double>::type
             {
                 double d = (v1 - v2).norm();
                 double d_sq = d * d;
                 double l_sq = _l * _l;
                 double term1 = std::sqrt(5) * d / _l;
                 double term2 = 5. * d_sq / (3. * l_sq);
-
-                return _sf2 * (1 + term1 + term2) * std::exp(-term1);
-            }
-
-            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
-            {
-                Eigen::VectorXd grad(this->params_size());
-
-                double d = (x1 - x2).norm();
-                double d_sq = d * d;
-                double l_sq = _l * _l;
-                double term1 = std::sqrt(5) * d / _l;
-                double term2 = 5. * d_sq / (3. * l_sq);
                 double r = std::exp(-term1);
+                double k = _sf2 * (1 + term1 + term2) * r;
+                if constexpr (Gradient)
+                {
+                    Eigen::VectorXd grad(2);
+                	grad << _sf2 * (r * term1 * (1 + term1 + term2) + (-term1 - 2. * term2) * r),
+                            2 * _sf2 * (1 + term1 + term2) * r;
 
-                // derivative of term1 = -term1
-                // derivative of term2 = -2*term2
-                // derivative of e^(-term1) = term1*r
-                grad(0) = _sf2 * (r * term1 * (1 + term1 + term2) + (-term1 - 2. * term2) * r);
-                grad(1) = 2 * _sf2 * (1 + term1 + term2) * r;
-
-                return grad;
+                    return std::pair {
+                    	k,
+                    	grad
+                    };
+                }
+                else
+                {
+                    return k;
+                }
             }
 
             double _sf2, _l;

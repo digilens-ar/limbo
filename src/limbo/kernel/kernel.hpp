@@ -47,7 +47,7 @@
 #define LIMBO_KERNEL_KERNEL_HPP
 
 #include <Eigen/Core>
-
+#include <optional>
 #include <limbo/tools/macros.hpp>
 
 namespace limbo {
@@ -80,19 +80,19 @@ namespace limbo {
 
             double compute(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, int i = -1, int j = -2) const
             {
-                return static_cast<const Kernel*>(this)->kernel_(v1, v2) + ((i == j) ? _noise + 1e-8 : 0.0);
+                double k = static_cast<const Kernel*>(this)->template kernel_<false>(v1, v2);
+                return k + ((i == j) ? _noise + 1e-8 : 0.0);
             }
 
             Eigen::VectorXd grad(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
             {
-                Eigen::VectorXd g = static_cast<const Kernel*>(this)->gradient_(x1, x2);
-
+                auto [k, grad] = static_cast<const Kernel*>(this)->template kernel_<true>(x1, x2);
                 if (kernel_opt::optimize_noise()) {
-                    g.conservativeResize(g.size() + 1);
-                    g(g.size() - 1) = ((i == j) ? 2.0 * _noise : 0.0);
+                    grad.conservativeResize(grad.size() + 1);
+                    grad(grad.size() - 1) = ((i == j) ? 2.0 * _noise : 0.0);
                 }
 
-                return g;
+                return grad;
             }
 
             // Get the hyper parameters size

@@ -92,23 +92,22 @@ namespace limbo {
             }
 
         protected:
-            double kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
+            template<bool Gradient>
+            auto kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const -> typename std::conditional<Gradient, std::pair<double, Eigen::VectorXd>, double>::type
             {
                 double l_sq = _l * _l;
                 double r = (v1 - v2).squaredNorm() / l_sq;
-                return _sf2 * std::exp(-0.5 * r);
-            }
-
-            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
-            {
-                Eigen::VectorXd grad(this->params_size());
-                double l_sq = _l * _l;
-                double r = (x1 - x2).squaredNorm() / l_sq;
                 double k = _sf2 * std::exp(-0.5 * r);
-
-                grad(0) = r * k;
-                grad(1) = 2 * k;
-                return grad;
+                if constexpr (Gradient)
+                {
+                    Eigen::VectorXd grad(2);
+                	grad << r * k, 2 * k ;
+                    return std::pair { k, grad };
+                }
+                else
+                {
+                    return k;
+                }
             }
 
             double _sf2, _l;
