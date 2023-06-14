@@ -7,7 +7,7 @@ namespace limbo::stat
 	//This class acts as an adapter between limbo's all-static registration of stats functions. Allows registering a dynamic function to be called.
 	struct RuntimeStatsFunction : StatBase
 	{
-		using FuncT = std::function<void(double, Eigen::VectorXd, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&)>;
+		using FuncT = std::function<void(double, Eigen::VectorXd, const std::vector<double>&, const std::vector<Eigen::VectorXd>&)>;
 
 		void addOutputFunction(FuncT outputFunc)
 		{

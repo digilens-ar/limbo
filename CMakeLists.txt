@@ -45,10 +45,12 @@ endif()
 
 option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" ON) #  This makes hyperparameter tuning much more efficient
 if (LIMBO_USE_INTEL_MKL)
-	set(MKL_LINK static)
-	set(MKL_THREADING tbb_thread)
-	set(MKL_INTERFACE lp64)  # Eigen documentation says this is required instead of default ilp64
-	find_package(MKL CONFIG REQUIRED) # You mut install MKL yourself from Intel's installer
+	if(NOT TARGET MKL::MKL) # MKL does not guard against issues if you `find` it twice
+		set(MKL_LINK static)
+		set(MKL_THREADING tbb_thread)
+		set(MKL_INTERFACE lp64)  # Eigen documentation says this is required instead of default ilp64
+		find_package(MKL CONFIG REQUIRED) # You mut install MKL yourself from Intel's installer
+	endif()
 	target_link_libraries(limbo INTERFACE MKL::MKL)
 	target_compile_definitions(limbo INTERFACE EIGEN_USE_MKL_ALL)
 endif()
