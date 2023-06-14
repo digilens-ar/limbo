@@ -51,8 +51,8 @@ namespace limbo {
         ///@ingroup init
         ///Do nothing (dummy initializer).
         struct NoInit {
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
-            EvaluationStatus operator()(const StateFunction&, const AggregatorFunction&, Opt&) const { return OK; }
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction&, Opt&) const { return OK; }
         };
     }
 }

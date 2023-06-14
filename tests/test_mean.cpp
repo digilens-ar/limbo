@@ -66,15 +66,14 @@ namespace {
 
 	// Check gradient via finite differences method
 	template <typename Mean>
-	std::tuple<double, Eigen::MatrixXd, Eigen::MatrixXd> check_grad(const Mean& mean, const Eigen::VectorXd& x, const Eigen::VectorXd& v, double e = 1e-4)
+	std::tuple<double, Eigen::VectorXd, Eigen::VectorXd> check_grad(const Mean& mean, const Eigen::VectorXd& x, const Eigen::VectorXd& v, double e = 1e-4)
 	{
-	    Eigen::MatrixXd analytic_result, finite_diff_result;
 	    Mean me = mean;
 	    me.set_h_params(x);
 
-	    analytic_result = me.grad(v, v);
+		Eigen::VectorXd analytic_result = me.grad(v, v);
 
-	    finite_diff_result = Eigen::MatrixXd::Zero(me(v, v).size(), x.size());
+		Eigen::VectorXd finite_diff_result = Eigen::VectorXd::Zero(x.size());
 	    for (int j = 0; j < x.size(); j++) {
 	        Eigen::VectorXd test1 = x, test2 = x;
 	        test1[j] -= e;
@@ -83,18 +82,18 @@ namespace {
 	        m1.set_h_params(test1);
 	        Mean m2 = mean;
 	        m2.set_h_params(test2);
-	        Eigen::VectorXd res1 = m1(v, v);
-	        Eigen::VectorXd res2 = m2(v, v);
-	        finite_diff_result.col(j) = (res2 - res1).array() / (2.0 * e);
+	        double res1 = m1(v, v);
+			double res2 = m2(v, v);
+	        finite_diff_result(j) = (res2 - res1) / (2.0 * e);
 	    }
 
 	    return std::make_tuple((analytic_result - finite_diff_result).norm(), analytic_result, finite_diff_result);
 	}
 
 	template <typename Mean>
-	void check_mean(size_t dim_in, size_t dim_out, size_t K)
+	void check_mean(size_t dim_in, size_t K)
 	{
-	    Mean mean(dim_out);
+	    Mean mean;
 
 	    for (size_t i = 0; i < K; i++) {
 	        Eigen::VectorXd hp = tools::random_vector(mean.h_params_size()).array() * 10. - 5.;
@@ -114,9 +113,8 @@ namespace {
 TEST(Limbo_Mean, mean_constant)
 {
     for (int k = 1; k <= 10; k++) {
-        for (int i = 1; i <= 10; i++) {
-            check_mean<mean::Constant<Params::mean_constant>>(k, i, 100);
-        }
+        check_mean<mean::Constant<Params::mean_constant>>(k, 100);
+        
     }
 }
 
@@ -125,9 +123,7 @@ TEST(Limbo_Mean, mean_function_ard)
     // This test checks the gradients computation of FunctionARD when the base mean function
     // also has tunable parameters
     for (int k = 1; k <= 10; k++) {
-        for (int i = 1; i <= 10; i++) {
-            check_mean<mean::FunctionARD<mean::Constant<Params::mean_constant>>>(k, i, 100);
-        }
+        check_mean<mean::FunctionARD<mean::Constant<Params::mean_constant>>>(k, 100);
     }
 }
 
@@ -136,8 +132,6 @@ TEST(Limbo_Mean, mean_function_ard_dummy)
     // This test checks the gradients computation of FunctionARD when the base mean function
     // has no tunable parameters
     for (int k = 1; k <= 10; k++) {
-        for (int i = 1; i <= 10; i++) {
-            check_mean<mean::FunctionARD<mean::NullFunction>>(k, i, 100);
-        }
+        check_mean<mean::FunctionARD<mean::NullFunction>>(k, 100);
     }
 }

@@ -109,14 +109,13 @@ using namespace limbo;
 
 struct fit_eval {
     BO_PARAM(size_t, dim_in, 2);
-    BO_PARAM(size_t, dim_out, 1);
 
-    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, double> operator()(const Eigen::VectorXd& x) const
     {
         double res = 0;
         for (int i = 0; i < x.size(); i++)
             res += 1 - (x[i] - 0.3) * (x[i] - 0.3) + sin(10 * x[i]) * 0.2;
-        return { OK, tools::make_vector(res) };
+        return { OK, res };
     }
 };
 
@@ -132,13 +131,13 @@ int main()
         limbo::stat::GP<Params::stat_gp>>;
 
     using BD = bayes_opt::BOptimizer<Params>;
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2, 1);
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2);
     opt.optimize(fit_eval());
     std::cout << opt.best_observation() << " res  "
               << opt.best_sample().transpose() << std::endl;
 
     // example with basic HP opt
-    bayes_opt::BOptimizerHPOpt<Params> opt_hp(2, 1);
+    bayes_opt::BOptimizerHPOpt<Params> opt_hp(2);
     opt_hp.optimize(fit_eval());
     std::cout << opt_hp.best_observation() << " res  "
               << opt_hp.best_sample().transpose() << std::endl;

@@ -59,8 +59,8 @@ namespace limbo {
         ///@ingroup stat
         ///write the status of the algorithm on the terminal
         struct ConsoleSummary : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 if (bo.observations().empty())
                     return;
@@ -68,8 +68,8 @@ namespace limbo {
                 spdlog::info("{} new point: {} value: {} best: {}", 
                     bo.total_iterations(),
                     bo.samples().back().transpose(),
-                    afun(bo.observations().back()), 
-                    afun(bo.best_observation(afun)));
+                    bo.observations().back(), 
+                    bo.best_observation());
             }
         };
     }

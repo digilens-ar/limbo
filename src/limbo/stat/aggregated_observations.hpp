@@ -54,8 +54,8 @@ namespace limbo {
         ///Write all the observations
         ///filename: `aggregated_observations.dat`
         struct AggregatedObservations : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 if (bo.observations().empty())
                     return;
@@ -65,10 +65,10 @@ namespace limbo {
                 if (bo.total_iterations() == 0) {
                     (*this->_log_file) << "#iteration aggregated_observation" << std::endl;
                     for (size_t i = 0; i < bo.observations().size() - 1; i++)
-                        (*this->_log_file) << "-1 " << afun(bo.observations()[i]) << std::endl;
+                        (*this->_log_file) << "-1 " << bo.observations()[i] << std::endl;
                 }
 
-                (*this->_log_file) << bo.total_iterations() << " " << afun(bo.observations().back()) << std::endl;
+                (*this->_log_file) << bo.total_iterations() << " " << bo.observations().back() << std::endl;
             }
         };
     }

@@ -116,16 +116,16 @@ void test_gp(const std::string& name, bool optimize_hp = true)
 
     // our data (3-D inputs, 1-D outputs)
     std::vector<Eigen::VectorXd> samples;
-    std::vector<Eigen::VectorXd> observations;
+    std::vector<double> observations;
 
     size_t n = 8;
     for (size_t i = 0; i < n; i++) {
         Eigen::VectorXd s = tools::random_vector(3).array() * 4.0 - 2.0;
         samples.push_back(s);
-        observations.push_back(tools::make_vector(std::cos(s(0) * s(1) * s(2))));
+        observations.push_back(std::cos(s(0) * s(1) * s(2)));
     }
     // 3-D inputs, 1-D outputs
-    GP gp(3, 1);
+    GP gp(3);
     gp.initialize(samples, observations);
     if (optimize_hp)
         gp.optimize_hyperparams();
@@ -150,7 +150,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
         if constexpr (requires (GP const& gp) { gp.kernel_function(); }) {
             ASSERT_EQ(gp.kernel_function().noise(), gp2.kernel_function().noise());
         }
-        GTEST_ASSERT_LE((mu1 - mu2).norm(), 1e-10);
+        GTEST_ASSERT_LE(mu1 - mu2, 1e-10);
         if constexpr (std::is_same_v<decltype(sigma_sq_1), double>) {
             ASSERT_NEAR(sigma_sq_1, sigma_sq_2, 1e-10);
         }
@@ -175,7 +175,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
         if constexpr (requires (GP const& gp) { gp.kernel_function(); }) {
             ASSERT_EQ(gp.kernel_function().noise(), gp3.kernel_function().noise());
         }
-        GTEST_ASSERT_LE((mu1 - mu2).norm(), 1e-10);
+        GTEST_ASSERT_LE(mu1 - mu2, 1e-10);
         if constexpr (std::is_same_v<decltype(sigma_sq_1), double>) {
             ASSERT_NEAR(sigma_sq_1, sigma_sq_2, 1e-10);
         }
@@ -209,8 +209,3 @@ TEST(Limbo_Serialize, bin_archive)
     test_gp<GPMean, GPMeanLoad, limbo::serialize::BinaryArchive>(rootDir + "/gp_mean_bin");
 }
 
-TEST(Limbo_Serialize, multi_gp_save) 
-{
-    using GP_Multi_t = limbo::model::MultiGP<limbo::model::GP, limbo::kernel::Exp<Params::kernel, Params::kernel_exp>, limbo::mean::NullFunction>;
-    test_gp<GP_Multi_t, GP_Multi_t, limbo::serialize::TextArchive>(rootDir + "/gp_multi_text", false);
-}

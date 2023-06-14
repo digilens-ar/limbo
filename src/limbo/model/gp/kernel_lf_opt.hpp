@@ -46,7 +46,6 @@
 #ifndef LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 #define LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 
-#include <limbo/model/gp/hp_opt.hpp>
 #include <limbo/opt/rprop.hpp>
 
 namespace limbo {
@@ -55,45 +54,42 @@ namespace limbo {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
             template <typename opt_rprop, concepts::Optimizer Optimizer = opt::Rprop<opt_rprop>>
-            struct KernelLFOpt : HPOpt {
+            struct KernelLFOpt {
             public:
                 template <typename GP>
                 void operator()(GP& gp)
                 {
-                    this->_called = true;
                     KernelLFOptimization<GP> optimization(gp);
                     Optimizer optimizer = Optimizer::create(gp.kernel_function().h_params().size());
                     Eigen::VectorXd params = optimizer.optimize(optimization, gp.kernel_function().h_params(), false);
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
-                    gp.compute_log_lik();
                 }
 
             protected:
                 template <typename GP>
                 struct KernelLFOptimization {
                 public:
-                    KernelLFOptimization(const GP& gp) : _original_gp(gp) {}
+                    KernelLFOptimization(const GP& gp) : gp_(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
-                        GP gp(this->_original_gp);
-                        gp.kernel_function().set_h_params(params);
+                        gp_.kernel_function().set_h_params(params);
 
-                        gp.recompute(false);
+                        gp_.recompute(false);
 
-                        double lik = gp.compute_log_lik();
+                        double lik = gp_.compute_log_lik();
 
                         if (!compute_grad)
                             return opt::no_grad(lik);
 
-                        Eigen::VectorXd grad = gp.compute_kernel_grad_log_lik();
+                        Eigen::VectorXd grad = gp_.compute_kernel_grad_log_lik();
 
                         return {lik, grad};
                     }
 
                 protected:
-                    const GP& _original_gp;
+                    mutable GP gp_;
                 };
             };
         } // namespace gp

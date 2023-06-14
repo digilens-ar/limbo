@@ -71,8 +71,8 @@ namespace limbo {
         */
         template <typename InitRandomSampling>
         struct RandomSampling {
-            template <concepts::StateFunc StateFunction, concepts::AggregatorFunc AggregatorFunction, concepts::BayesOptimizer Opt>
-            EvaluationStatus operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval,  Opt& opt) const
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
                     Eigen::VectorXd new_sample;

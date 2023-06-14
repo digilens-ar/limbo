@@ -83,12 +83,11 @@ namespace limbo {
         public:
             EI(const Model& model, int iteration = 0) : _model(model), _nb_samples(-1) {}
 
-            template <typename AggregatorFunction>
-            opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient)
+            opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient)
             {
                 assert(!gradient);
 
-                Eigen::VectorXd mu;
+                double mu;
                 double sigma_sq;
                 std::tie(mu, sigma_sq) = _model.query(v);
                 double sigma = std::sqrt(sigma_sq);
@@ -102,14 +101,14 @@ namespace limbo {
                 if (_nb_samples != _model.nb_samples()) {
                     std::vector<double> rewards;
                     for (auto s : _model.samples()) {
-                        rewards.push_back(afun(_model.mu(s)));
+                        rewards.push_back(_model.mu(s));
                     }
 
                     _nb_samples = _model.nb_samples();
                     _f_max = *std::max_element(rewards.begin(), rewards.end());
                 }
                 // Calculate Z and \Phi(Z) and \phi(Z)
-                double X = afun(mu) - _f_max - AcquiEI::jitter();
+                double X = mu - _f_max - AcquiEI::jitter();
                 double Z = X / sigma;
                 double phi = std::exp(-0.5 * std::pow(Z, 2.0)) / std::sqrt(2.0 * M_PI);
                 double Phi = 0.5 * std::erfc(-Z / std::sqrt(2)); //0.5 * (1.0 + std::erf(Z / std::sqrt(2)));

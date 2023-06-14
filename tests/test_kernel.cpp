@@ -112,13 +112,12 @@ namespace {
     template <typename Kernel>
     std::tuple<double, Eigen::VectorXd, Eigen::VectorXd> check_grad(const Kernel& kern, const Eigen::VectorXd& x, const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, double e = 1e-4)
     {
-        Eigen::VectorXd analytic_result, finite_diff_result;
         Kernel ke = kern;
         ke.set_h_params(x);
 
-        analytic_result = ke.grad(x1, x2);
+        Eigen::VectorXd analytic_result = ke.grad(x1, x2);
 
-        finite_diff_result = Eigen::VectorXd::Zero(x.size());
+        Eigen::VectorXd finite_diff_result = Eigen::VectorXd::Zero(x.size());
         for (int j = 0; j < x.size(); j++) {
             Eigen::VectorXd test1 = x, test2 = x;
             test1[j] -= e;
@@ -127,8 +126,8 @@ namespace {
             k1.set_h_params(test1);
             Kernel k2 = kern;
             k2.set_h_params(test2);
-            double res1 = k1(x1, x2);
-            double res2 = k2(x1, x2);
+            double res1 = k1.compute(x1, x2);
+            double res2 = k2.compute(x1, x2);
             finite_diff_result[j] = (res2 - res1) / (2.0 * e);
         }
 
@@ -143,14 +142,10 @@ namespace {
         for (size_t i = 0; i < K; i++) {
             Eigen::VectorXd hp = tools::random_vector(kern.h_params_size()).array() * 6. - 3.;
 
-            double error;
-            Eigen::VectorXd analytic, finite_diff;
-
             Eigen::VectorXd x1 = tools::random_vector(N).array() * 10. - 5.;
             Eigen::VectorXd x2 = tools::random_vector(N).array() * 10. - 5.;
 
-            std::tie(error, analytic, finite_diff) = check_grad(kern, hp, x1, x2, e);
-            // std::cout << error << ": " << analytic.transpose() << " vs " << finite_diff.transpose() << std::endl;
+            auto [error, analytic, finite_diff] = check_grad(kern, hp, x1, x2, e);
             ASSERT_LE(error, 1e-5);
         }
     }
@@ -204,16 +199,16 @@ TEST(Limbo_Kernel, kernel_SE_ARD)
     se.set_h_params(hp);
 
     Eigen::VectorXd v1 = make_v2(1, 1);
-    ASSERT_TRUE(std::abs(se(v1, v1) - 1) < 1e-6);
+    ASSERT_TRUE(std::abs(se.compute(v1, v1) - 1) < 1e-6);
 
     Eigen::VectorXd v2 = make_v2(0, 1);
-    double s1 = se(v1, v2);
+    double s1 = se.compute(v1, v2);
 
     ASSERT_TRUE(std::abs(s1 - std::exp(-0.5 * (v1.transpose() * v2)[0])) < 1e-5);
 
     hp(0) = 1;
     se.set_h_params(hp);
-    double s2 = se(v1, v2);
+    double s2 = se.compute(v1, v2);
     ASSERT_TRUE(s1 < s2);
 
     Params::kernel_squared_exp_ard::set_k(1);
@@ -221,5 +216,5 @@ TEST(Limbo_Kernel, kernel_SE_ARD)
     hp = Eigen::VectorXd::Zero(se.h_params_size());
 
     se.set_h_params(hp);
-    ASSERT_TRUE(s1 == se(v1, v2));
+    ASSERT_TRUE(s1 == se.compute(v1, v2));
 }

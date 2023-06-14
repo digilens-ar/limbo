@@ -97,25 +97,23 @@ struct Params {
 struct Eval {
     // number of input dimension (x.size())
     BO_PARAM(size_t, dim_in, 1);
-    // number of dimensions of the result (res.size())
-    BO_PARAM(size_t, dim_out, 1);
 
     // the function to be optimized
-    std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
+    std::tuple<EvaluationStatus, double> operator()(const Eigen::VectorXd& x) const
     {
         double y = -((5 * x(0) - 2.5) * (5 * x(0) - 2.5)) + 5;
         // we return a 1-dimensional vector
-        return {OK, tools::make_vector(y)};
+        return {OK, y};
     }
 };
 
 int main()
 {
     // we use the default acquisition function / model / stat / etc.
-    bayes_opt::BOptimizer<Params> boptimizer(1, 1);
+    bayes_opt::BOptimizer<Params> boptimizer(1);
     // run the evaluation
     boptimizer.optimize(Eval());
     // the best sample found
-    std::cout << "Best sample: " << boptimizer.best_sample()(0) << " - Best observation: " << boptimizer.best_observation()(0) << std::endl;
+    std::cout << "Best sample: " << boptimizer.best_sample()(0) << " - Best observation: " << boptimizer.best_observation() << std::endl;
     return 0;
 }

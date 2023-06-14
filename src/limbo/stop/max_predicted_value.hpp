@@ -72,8 +72,8 @@ namespace limbo {
 
             MaxPredictedValue() {}
 
-            template <concepts::BayesOptimizer BO, concepts::AggregatorFunc AggregatorFunction>
-            bool operator()(const BO& bo, const AggregatorFunction& afun, std::string& stopMessage) const
+            template <concepts::BayesOptimizer BO>
+            bool operator()(const BO& bo, std::string& stopMessage) const
             {
                 // Prevent instantiation of GPMean if there are no observed samples
                 if (bo.observations().size() == 0 || !stop_maxpredictedvalue::enabled())
@@ -84,10 +84,10 @@ namespace limbo {
                 auto x = bo.acquisitionOptimizer().optimize(model_optimization, starting_point, true);
                 double val = afun(bo.model().mu(x));
 
-                if (afun(bo.best_observation(afun)) <= stop_maxpredictedvalue::ratio() * val)
+                if (afun(bo.best_observation()) <= stop_maxpredictedvalue::ratio() * val)
                     return false;
                 else {
-                	stopMessage = fmt::format("Stop caused by Max predicted value reached. Threshold: {} Max Observation: {}", stop_maxpredictedvalue::ratio() * val, afun(bo.best_observation(afun)));
+                	stopMessage = fmt::format("Stop caused by Max predicted value reached. Threshold: {} Max Observation: {}", stop_maxpredictedvalue::ratio() * val, bo.best_observation());
                     return true;
                 }
             }

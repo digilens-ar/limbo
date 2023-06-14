@@ -43,11 +43,25 @@ target_link_libraries(limbo INTERFACE TBB::tbb)
 install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
+option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" ON) #  This makes hyperparameter tuning much more efficient
+if (LIMBO_USE_INTEL_MKL)
+	if(NOT TARGET MKL::MKL) # MKL does not guard against issues if you `find` it twice
+		set(MKL_LINK static)
+		set(MKL_THREADING tbb_thread)
+		set(MKL_INTERFACE lp64)  # Eigen documentation says this is required instead of default ilp64
+		find_package(MKL CONFIG REQUIRED) # You mut install MKL yourself from Intel's installer
+	endif()
+	target_link_libraries(limbo INTERFACE MKL::MKL)
+	target_compile_definitions(limbo INTERFACE EIGEN_USE_MKL_ALL)
+endif()
+
 option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)
 if(LIMBO_BUILD_TESTS)
 	include(CTest)  # This enables testing
 	find_package(GTest CONFIG REQUIRED)
 	add_subdirectory(tests)
+	find_package(benchmark REQUIRED)
+	add_subdirectory(benchmarks)
 endif()
 
 option(LIMBO_BUILD_TUTORIALS "Build tutorials for limbo" OFF)

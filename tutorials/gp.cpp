@@ -76,13 +76,13 @@ int main(int argc, char** argv)
 
     // our data (1-D inputs, 1-D outputs)
     std::vector<Eigen::VectorXd> samples;
-    std::vector<Eigen::VectorXd> observations;
+    std::vector<double> observations;
 
     size_t N = 8;
     for (size_t i = 0; i < N; i++) {
         Eigen::VectorXd s = tools::random_vector(1).array() * 4.0 - 2.0;
         samples.push_back(s);
-        observations.push_back(tools::make_vector(std::cos(s(0))));
+        observations.push_back(std::cos(s(0)));
     }
 
     // the type of the GP
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     using GP_t = model::GP<Kernel_t, Mean_t>;
 
     // 1-D inputs, 1-D outputs
-    GP_t gp(1, 1);
+    GP_t gp(1);
 
     // compute the GP
     gp.initialize(samples, observations);
@@ -100,13 +100,11 @@ int main(int argc, char** argv)
     std::ofstream ofs("gp.dat");
     for (int i = 0; i < 100; ++i) {
         Eigen::VectorXd v = tools::make_vector(i / 100.0).array() * 4.0 - 2.0;
-        Eigen::VectorXd mu;
-        double sigma;
-        std::tie(mu, sigma) = gp.query(v);
+        auto [mu, sigma] = gp.query(v);
         // an alternative (slower) is to query mu and sigma separately:
         //  double mu = gp.mu(v)[0]; // mu() returns a 1-D vector
         //  double s2 = gp.sigma(v);
-        ofs << v.transpose() << " " << mu[0] << " " << sqrt(sigma) << std::endl;
+        ofs << v.transpose() << " " << mu << " " << sqrt(sigma) << std::endl;
     }
 
     // an alternative is to optimize the hyper-parameters
@@ -115,7 +113,7 @@ int main(int argc, char** argv)
     using Mean_t = mean::Data;
     using GP2_t = model::GP<Kernel2_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
 
-    GP2_t gp_ard(1, 1);
+    GP2_t gp_ard(1);
     // do not forget to call the optimization!
     gp_ard.initialize(samples, observations, false);
     gp_ard.optimize_hyperparams();
@@ -124,16 +122,14 @@ int main(int argc, char** argv)
     std::ofstream ofs_ard("gp_ard.dat");
     for (int i = 0; i < 100; ++i) {
         Eigen::VectorXd v = tools::make_vector(i / 100.0).array() * 4.0 - 2.0;
-        Eigen::VectorXd mu;
-        double sigma;
-        std::tie(mu, sigma) = gp_ard.query(v);
-        ofs_ard << v.transpose() << " " << mu[0] << " " << sqrt(sigma) << std::endl;
+        auto [mu, sigma] = gp_ard.query(v);
+        ofs_ard << v.transpose() << " " << mu << " " << sqrt(sigma) << std::endl;
     }
 
     // write the data to a file (useful for plotting)
     std::ofstream ofs_data("data.dat");
     for (size_t i = 0; i < samples.size(); ++i)
-        ofs_data << samples[i].transpose() << " " << observations[i].transpose() << std::endl;
+        ofs_data << samples[i].transpose() << " " << observations[i] << std::endl;
 
     // Sometimes is useful to save an optimized GP
     gp_ard.save(serialize::TextArchive("myGP"));

@@ -102,15 +102,14 @@ namespace {
 
     BO_DECLARE_DYN_PARAM(int, Params::bayes_opt_boptimizer, hp_period);
 
-    template <typename Params, int obs_size = 1>
+    template <typename Params>
     struct eval2 {
         BO_PARAM(size_t, dim_in, 2);
-        BO_PARAM(size_t, dim_out, obs_size);
 
-        std::tuple<EvaluationStatus, Eigen::VectorXd> operator()(const Eigen::VectorXd& x) const
+        std::tuple<EvaluationStatus, double> operator()(const Eigen::VectorXd& x) const
         {
             Eigen::Vector2d opt(0.25, 0.75);
-            return { OK, tools::make_vector(-(x - opt).squaredNorm()) };
+            return { OK, -(x - opt).squaredNorm() };
         }
     };
 
@@ -153,7 +152,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
     using GP_t = model::GP<Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in(), eval2<Params>::dim_out());
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
     opt.optimize(eval2<Params>());
 
     ASSERT_TRUE(opt.total_iterations() == 1);
@@ -211,7 +210,7 @@ TEST(Limbo_Boptimizer, bo_gp)
     using GP_t = model::GP<Kernel_t, Mean_t>;
     using Acqui_t = acqui::EI<Params::acqui_ei, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in(), eval2<Params>::dim_out());
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
     opt.optimize(eval2<Params>());
 
     Eigen::VectorXd sol(2);
@@ -238,7 +237,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in(), eval2<Params>::dim_out());
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
     opt.optimize(eval2<Params>());
 
     Eigen::VectorXd sol(2);
@@ -265,7 +264,7 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
     using GP_t = model::GP<Kernel_t, Mean_t, model::gp::MeanLFOpt<Params::opt_rprop>>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
-    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in(), eval2<Params>::dim_out());
+    bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
     opt.optimize(eval2<Params>());
 
     Eigen::VectorXd sol(2);

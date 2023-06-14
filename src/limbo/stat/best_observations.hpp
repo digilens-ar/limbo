@@ -54,8 +54,8 @@ namespace limbo {
         /// Write the best observation so far
         ///filename: `best_observations.dat"`
         struct BestObservations : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 if (bo.observations().empty())
                     return;
@@ -65,7 +65,7 @@ namespace limbo {
                 if (bo.total_iterations() == 0)
                     (*this->_log_file) << "#iteration best_observation" << std::endl;
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.best_observation(afun).transpose() << std::endl;
+                (*this->_log_file) << bo.total_iterations() << " " << bo.best_observation() << std::endl;
             }
         };
     }

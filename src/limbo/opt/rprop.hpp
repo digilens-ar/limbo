@@ -60,8 +60,8 @@ namespace limbo {
             /// number of max iterations
             BO_PARAM(int, iterations, 300);
 
-            /// gradient norm epsilon for stopping
-            BO_PARAM(double, eps_stop, 0.0);
+            /// gradient norm epsilon for stopping. Set this to some positive value for it to have an effect. Set to 0 to disable.
+            BO_PARAM(double, eps_stop, 1e-10);
         };
     }
     namespace opt {
@@ -89,13 +89,12 @@ namespace limbo {
             {
                 assert(opt_rprop::eps_stop() >= 0.);
 
-                size_t param_dim = init.size();
-                double delta0 = 0.1;
-                double deltamin = 1e-6;
-                double deltamax = 50;
-                double etaminus = 0.5;
-                double etaplus = 1.2;
-                double eps_stop = opt_rprop::eps_stop();
+                const size_t param_dim = init.size();
+                constexpr double delta0 = 0.1;
+                constexpr double deltamin = 1e-6;
+                constexpr double deltamax = 50;
+                constexpr double etaminus = 0.5;
+                constexpr double etaplus = 1.2;
 
                 Eigen::VectorXd delta = Eigen::VectorXd::Ones(param_dim) * delta0;
                 Eigen::VectorXd grad_old = Eigen::VectorXd::Zero(param_dim);
@@ -103,10 +102,7 @@ namespace limbo {
 
                 if (bounded) {
                     for (int j = 0; j < params.size(); j++) {
-                        if (params(j) < 0)
-                            params(j) = 0;
-                        if (params(j) > 1)
-                            params(j) = 1;
+                        params(j) = std::clamp(params(j), 0.0, 1.0);
                     }
                 }
 
@@ -132,14 +128,12 @@ namespace limbo {
                         }
                         params(j) += -signum(grad(j)) * delta(j);
 
-                        if (bounded && params(j) < 0)
-                            params(j) = 0;
-                        if (bounded && params(j) > 1)
-                            params(j) = 1;
+                        if (bounded)
+                            params(j) = std::clamp(params(j), 0.0, 1.0);
                     }
 
                     grad_old = grad;
-                    if (grad_old.norm() < eps_stop)
+                    if (grad_old.norm() < opt_rprop::eps_stop())
                         break;
                 }
 

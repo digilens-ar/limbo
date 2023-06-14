@@ -55,8 +55,8 @@ namespace limbo {
         ///@ingroup stat
         ///filename: `gp_acquisitions.dat`
         struct GPAcquisitions : public StatBase {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+            template <typename BO>
+            void operator()(const BO& bo)
             {
                 this->_create_log_file(bo, "gp_acquisitions.dat");
 
@@ -65,7 +65,7 @@ namespace limbo {
 
                 if (!bo.samples().empty()) {
                     auto [mu, sigma] = bo.model().query(bo.samples().back());
-                    auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(bo.samples().back(), afun, false);
+                    auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(bo.samples().back(), false);
                     (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
                 }
             }
