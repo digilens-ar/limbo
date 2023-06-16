@@ -58,6 +58,7 @@
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 
+#include <numeric>
 #include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/kernel/squared_exp_ard.hpp>
 #include <limbo/mean/data.hpp>
@@ -94,7 +95,10 @@ namespace limbo {
 
                 _samples = samples;
                 _observations = observations;
-            
+
+                //calculate the mean observation
+                mean_observation_ = std::accumulate(_observations.begin(), _observations.end(), 0.0) / _observations.size();
+
                 this->_compute_obs_mean();
                 if (compute_kernel)
                     this->_compute_full_kernel();
@@ -114,6 +118,9 @@ namespace limbo {
 
                 _samples.push_back(sample);
                 _observations.push_back(observation);
+                //calculate the mean observation
+                mean_observation_ = std::accumulate(_observations.begin(), _observations.end(), 0.0) / _observations.size();
+
 
                 this->_compute_obs_mean();
                 this->_compute_incremental_kernel();
@@ -176,16 +183,7 @@ namespace limbo {
             /// return the mean observation (only call this if the output of the GP is of dimension 1)
             double mean_observation() const
             {
-                if (_samples.size() > 0) {
-                    double mean_observation = 0;
-                    for (auto const& obs : _observations)
-                    {
-                        mean_observation += obs;
-                    }
-                    mean_observation /= _observations.size();
-                    return mean_observation;
-                }
-                return 0;
+                return mean_observation_;
             }
 
             /// return the number of samples used to compute the GP
@@ -220,17 +218,15 @@ namespace limbo {
             /// compute and return the log likelihood
             [[nodiscard]] double compute_log_lik()
             {
-                size_t n = _obs_mean.rows();
 
                 // --- cholesky ---
                 // see:
                 // http://xcorr.net/2008/06/11/log-determinant-of-positive-definite-matrices-in-matlab/
                 long double logdet = 2 * _matrixL.diagonal().array().log().sum();
 
-                double a = _obs_mean.transpose() * _alpha;
-
-                double log_lik = -0.5 * a - 0.5 * logdet - 0.5 * n * std::log(2 * M_PI);
-                return log_lik;
+                const double a = _obs_mean.transpose() * _alpha;
+                const double log_2_pi = std::log(2 * M_PI);
+                return 0.5 * (-a - logdet - _obs_mean.rows() * log_2_pi);
             }
 
             /// compute and return the gradient of the log likelihood wrt to the kernel parameters
@@ -264,15 +260,13 @@ namespace limbo {
             /// compute and return the gradient of the log likelihood wrt to the mean parameters
             [[nodiscard]] Eigen::VectorXd compute_mean_grad_log_lik()
             {
-                size_t n = _obs_mean.rows();
-
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
                     compute_inv_kernel();
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_mean_function.h_params_size());
-                for (size_t n_obs = 0; n_obs < n; n_obs++) {
+                for (size_t n_obs = 0; n_obs < _obs_mean.rows(); n_obs++) {
                     grad += _obs_mean.transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).transpose();
                 }
 
@@ -382,6 +376,9 @@ namespace limbo {
                 out._samples = samples;
                 out._observations = observations;
 
+                //calcualte the mean observation
+                out.mean_observation_ = std::accumulate(out._observations.begin(), out._observations.end(), 0.0) / out._observations.size();
+
                 if (out._kernel_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "kernel_params");
@@ -415,9 +412,10 @@ namespace limbo {
 
             std::vector<Eigen::VectorXd> _samples;
             std::vector<double> _observations;
-            Eigen::VectorXd _obs_mean;
+            Eigen::VectorXd _obs_mean; // The differences between the observations at the mean function at the observation locations
+            double mean_observation_ = 0;
 
-            Eigen::VectorXd _alpha;
+            Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->_obs_mean;
             Eigen::MatrixXd _kernel, _inv_kernel;
 
             Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition

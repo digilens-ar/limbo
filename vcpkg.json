@@ -9,7 +9,8 @@
     "gtest",
     "eigen3",
     "spdlog",
-    "benchmark"
+    "benchmark",
+    "zlib"
   ],
   "builtin-baseline": "877e3dc2323a4d4c3c75e7168c22a0c4e921d4db",
   "supports": "windows"

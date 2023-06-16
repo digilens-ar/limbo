@@ -77,7 +77,7 @@ namespace limbo {
             template <typename GP>
             Eigen::MatrixXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {
-                return Eigen::MatrixXd::Ones(1, 1); // TODO the gradient is 1?
+                return Eigen::MatrixXd::Ones(1, 1);
             }
 
             size_t h_params_size() const { return 1; }

@@ -107,7 +107,7 @@ namespace limbo {
                 }
 
                 Eigen::VectorXd best_params = params;
-                double best = log(0);
+                double best = -INFINITY;
 
                 for (int i = 0; i < opt_rprop::iterations(); ++i) {
                     auto [funcVal, gradient] = f(params, true);

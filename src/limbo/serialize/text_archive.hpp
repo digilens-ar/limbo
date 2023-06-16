@@ -50,6 +50,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <fstream>
 
 // Quick hack for definition of 'I' in <complex.h>
 #undef I

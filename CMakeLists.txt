@@ -36,18 +36,22 @@ if(LIMBO_USE_CMAES)
 	target_link_libraries(limbo INTERFACE libcmaes)
 endif()
 
-option(LIMBO_USE_TBB "Use Intel TBB for parallelization" OFF)
+option(LIMBO_USE_TBB "Use Intel TBB for parallelization" ON)
 if (LIMBO_USE_TBB)
-target_compile_definitions(limbo INTERFACE "USE_TBB") # Bugs need to be fixed before this works
-target_link_libraries(limbo INTERFACE TBB::tbb)
-install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
+	target_compile_definitions(limbo INTERFACE "USE_TBB") # Bugs need to be fixed before this works
+	target_link_libraries(limbo INTERFACE TBB::tbb)
+	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
 option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" ON) #  This makes hyperparameter tuning much more efficient
 if (LIMBO_USE_INTEL_MKL)
 	if(NOT TARGET MKL::MKL) # MKL does not guard against issues if you `find` it twice
 		set(MKL_LINK static)
-		set(MKL_THREADING tbb_thread)
+		if (LIMBO_USE_TBB)
+			set(MKL_THREADING tbb_thread)
+		else()
+			set(MKL_THREADING sequential)
+		endif()
 		set(MKL_INTERFACE lp64)  # Eigen documentation says this is required instead of default ilp64
 		find_package(MKL CONFIG REQUIRED) # You mut install MKL yourself from Intel's installer
 	endif()

@@ -57,8 +57,8 @@
 #include <limbo/serialize/binary_archive.hpp>
 #include <limbo/serialize/text_archive.hpp>
 
-#ifndef LIMBO_TEST_RESOURCE_DIR
-#error "Please define LIMBO_TEST_RESOURCE_DIR"
+#ifndef LIMBO_TEST_TEMP_DIR
+#error "Please define LIMBO_TEST_TEMP_DIR to a folder to be used for temporary storage"
 #endif
 
 namespace {
@@ -186,7 +186,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     }
 }
 
-static std::string rootDir(LIMBO_TEST_RESOURCE_DIR);
+static std::string rootDir(LIMBO_TEST_TEMP_DIR);
 
 TEST(Limbo_Serialize, text_archive)
 {
