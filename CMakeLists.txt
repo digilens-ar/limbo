@@ -66,6 +66,7 @@ if(LIMBO_BUILD_TESTS)
 	add_subdirectory(tests)
 	find_package(benchmark REQUIRED)
 	add_subdirectory(benchmarks)
+	add_subdirectory(util)
 endif()
 
 option(LIMBO_BUILD_TUTORIALS "Build tutorials for limbo" OFF)

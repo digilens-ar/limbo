@@ -3,7 +3,7 @@
 #include <limbo/model.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/serialize/text_archive.hpp>
-#include <limbo/serialize/function_export.hpp>
+#include "function_export.hpp"
 
 using namespace limbo;
 

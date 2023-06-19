@@ -44,14 +44,7 @@
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
 #include <gtest/gtest.h>
-#include <limbo/opt/adam.hpp>
-#include <limbo/opt/chained.hpp>
-#include <limbo/opt/cmaes.hpp>
-#include <limbo/opt/gradient_ascent.hpp>
-#include <limbo/opt/grid_search.hpp>
-#include <limbo/opt/parallel_repeater.hpp>
-#include <limbo/opt/random_point.hpp>
-#include <limbo/opt/rprop.hpp>
+#include <limbo/opt.hpp>
 #include "limbo/tools.hpp"
 #ifdef USE_TBB
 #include <tbb/global_control.h>
@@ -81,6 +74,11 @@ namespace {
         struct opt_adam : public defaults::opt_adam {
             BO_PARAM(int, iterations, 150);
             BO_PARAM(double, alpha, 0.1);
+        };
+
+        struct opt_irpropplus : defaults::opt_irpropplus
+        {
+            BO_PARAM(double, min_gradient, 1e-3);
         };
     };
 }
@@ -191,11 +189,15 @@ TEST(Limbo_Optimizers, gradient)
     opt::Rprop<Params::opt_rprop> optimizer;
 
     simple_calls = 0;
-    check_grad = true;
     Eigen::VectorXd best_point = optimizer.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, Params::opt_rprop::iterations());
+
+    opt::Irpropplus<Params::opt_irpropplus> optimizer2;
+    Eigen::VectorXd best_point2 = optimizer2.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
+    ASSERT_EQ(best_point2.size(), 1);
+    ASSERT_TRUE(std::abs(best_point2(0) + 1.) < 1e-3);
 }
 
 
