@@ -15,10 +15,13 @@ add_executable(
 	"test_hp_tuning.cpp")
 
 target_compile_definitions(limbo_tests PRIVATE LIMBO_TEST_TEMP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/temp")
-target_compile_definitions(limbo_tests PRIVATE LIMBO_TEST_RESOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources")
 target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
-target_link_libraries(limbo_tests PUBLIC cnpy)
 install(TARGETS limbo_tests)
+
+add_executable(limbo_export_model "test_hp_tuning.cpp")
+target_compile_definitions(limbo_export_model PRIVATE LIMBO_TEST_RESOURCES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+target_link_libraries(limbo_export_model PUBLIC limbo cnpy)
+install(TARGETS limbo_export_model)
 
 include(GoogleTest) 
 gtest_discover_tests(limbo_tests)

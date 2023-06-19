@@ -89,6 +89,16 @@ namespace limbo {
                     _mean_function.set_h_params(p.tail(_mean_function.h_params_size()));
             }
 
+            std::vector<std::pair<double, double>> h_params_bounds()
+            {
+                std::vector<std::pair<double, double>> bounds(2, std::make_pair(-INFINITY, INFINITY));
+                for (auto const& bound : _mean_function.h_params_bounds())
+                {
+                    bounds.push_back(bound);
+                }
+	            return bounds;
+            };
+
             template <typename GP>
             Eigen::VectorXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {

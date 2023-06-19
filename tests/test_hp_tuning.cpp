@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>
 
 #include <limbo/kernel.hpp>
 #include <limbo/model.hpp>
@@ -30,20 +29,8 @@ namespace {
     };
 }
 
-
-TEST(Limbo_HyperParameter, grad_SE_ARD)
-{
-    using Kernel = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
-    using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<Params::opt_rprop>>;
-
-    std::filesystem::path rootDir(LIMBO_TEST_RESOURCES_DIR);
-    // Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_init").string()));
-    Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_3d_init").string()));
-
-    m.optimize_hyperparams();
-}
-
-TEST(Limbo_HyperParameter, exportLogLik)
+//Export loglikelihood
+int main()
 {
     using Kernel = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<Params::opt_rprop>>;
@@ -57,12 +44,11 @@ TEST(Limbo_HyperParameter, exportLogLik)
         m,
         100);
 
-    // serialize::FunctionExport(rootDir / "pre", serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood, m, 100);
-    // m.optimize_hyperparams(); // TODO log each iteration
+    m.optimize_hyperparams(); // TODO log each iteration
     // serialize::FunctionExport(
     //     rootDir / "post",
     //     serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood,
     //     m,
     //     200);
-
+    return 0;
 }

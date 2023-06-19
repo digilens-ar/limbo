@@ -122,10 +122,11 @@ TEST(Limbo_Optimizers, random_mono_dim)
     using namespace limbo;
 
     opt::RandomPoint optimizer = opt::RandomPoint::create(1);
+    auto parameterBounds = std::vector<std::pair<double, double>>(1, std::make_pair(0.0, 1.0));
 
     monodim_calls = 0;
     for (int i = 0; i < 1000; i++) {
-        Eigen::VectorXd best_point = optimizer.optimize(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), true);
+        Eigen::VectorXd best_point = optimizer.optimize(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), parameterBounds);
         ASSERT_EQ(best_point.size(), 1);
         ASSERT_TRUE(best_point(0) > 0 || std::abs(best_point(0)) < 1e-7);
         ASSERT_TRUE(best_point(0) < 1 || std::abs(best_point(0) - 1) < 1e-7);
@@ -136,11 +137,12 @@ TEST(Limbo_Optimizers, random_bi_dim)
 {
     using namespace limbo;
 
-    opt::RandomPoint optimizer = opt::RandomPoint::create(1);
+    opt::RandomPoint optimizer = opt::RandomPoint::create(2);
+    auto parameterBounds = std::vector<std::pair<double, double>>(2, std::make_pair(0.0, 1.0));
 
     bidim_calls = 0;
     for (int i = 0; i < 1000; i++) {
-        Eigen::VectorXd best_point = optimizer.optimize(FakeAcquiBi(), Eigen::VectorXd::Constant(2, 0.5), true);
+        Eigen::VectorXd best_point = optimizer.optimize(FakeAcquiBi(), Eigen::VectorXd::Constant(2, 0.5), parameterBounds);
         ASSERT_EQ(best_point.size(), 2);
         ASSERT_TRUE(best_point(0) > 0 || std::abs(best_point(0)) < 1e-7);
         ASSERT_TRUE(best_point(0) < 1 || std::abs(best_point(0) - 1) < 1e-7);
@@ -154,9 +156,10 @@ TEST(Limbo_Optimizers, grid_search_mono_dim)
     using namespace limbo;
 
     opt::GridSearch<Params::opt_gridsearch> optimizer;
+    auto parameterBounds = std::vector<std::pair<double, double>>(1, std::make_pair(0.0, 1.0));
 
     monodim_calls = 0;
-    Eigen::VectorXd best_point = optimizer.optimize(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), true);
+    Eigen::VectorXd best_point = optimizer.optimize(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), parameterBounds);
 
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_NEAR(best_point(0), 1, 0.0001);
@@ -170,7 +173,9 @@ TEST(Limbo_Optimizers, grid_search_bi_dim)
     opt::GridSearch<Params::opt_gridsearch> optimizer;
 
     bidim_calls = 0;
-    Eigen::VectorXd best_point = optimizer.optimize(FakeAcquiBi(), Eigen::VectorXd::Constant(2, 0.5), true);
+    auto parameterBounds = std::vector<std::pair<double, double>>(2, std::make_pair(0.0, 1.0));
+
+    Eigen::VectorXd best_point = optimizer.optimize(FakeAcquiBi(), Eigen::VectorXd::Constant(2, 0.5), parameterBounds);
 
     ASSERT_EQ(best_point.size(), 2);
     ASSERT_NEAR(best_point(0), 1, 0.0001);
@@ -187,7 +192,7 @@ TEST(Limbo_Optimizers, gradient)
 
     simple_calls = 0;
     check_grad = true;
-    Eigen::VectorXd best_point = optimizer.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    Eigen::VectorXd best_point = optimizer.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, Params::opt_rprop::iterations());
@@ -221,9 +226,10 @@ TEST(Limbo_Optimizers, classic_optimizers)
     opt::GradientAscent<MomentumParams::opt_gradient_ascent> gradient_ascent_momentum;
     opt::GradientAscent<NesterovParams::opt_gradient_ascent> gradient_ascent_nesterov;
 
+
     simple_calls = 0;
     check_grad = true;
-    Eigen::VectorXd best_point = rprop.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    Eigen::VectorXd best_point = rprop.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, Params::opt_rprop::iterations());
@@ -232,7 +238,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 
     simple_calls = 0;
     check_grad = true;
-    best_point = gradient_ascent.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    best_point = gradient_ascent.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, Params::opt_gradient_ascent::iterations());
@@ -241,7 +247,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 
     simple_calls = 0;
     check_grad = true;
-    best_point = gradient_ascent_momentum.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    best_point = gradient_ascent_momentum.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, MomentumParams::opt_gradient_ascent::iterations());
@@ -250,7 +256,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 
     simple_calls = 0;
     check_grad = true;
-    best_point = gradient_ascent_nesterov.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    best_point = gradient_ascent_nesterov.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, NesterovParams::opt_gradient_ascent::iterations());
@@ -259,7 +265,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 
     simple_calls = 0;
     check_grad = true;
-    best_point = adam.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    best_point = adam.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, Params::opt_adam::iterations());
@@ -284,7 +290,7 @@ TEST(Limbo_Optimizers, parallel_repeater)
     simple_calls = 0;
     check_grad = false;
     starting_points.clear();
-    Eigen::VectorXd best_point = optimizer.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), false);
+    Eigen::VectorXd best_point = optimizer.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
     ASSERT_EQ(simple_calls, Params::opt_parallelrepeater::repeats() * Params::opt_rprop::iterations() + Params::opt_parallelrepeater::repeats());
@@ -306,8 +312,10 @@ TEST(Limbo_Optimizers, chained)
     using opt_4_t = opt::GridSearch<Params::opt_gridsearch>;
     auto optimizer = opt::Chained<opt_1_t, opt_2_t, opt_3_t, opt_4_t>::create(1);
 
+    auto parameterBounds = std::vector<std::pair<double, double>>(1, std::make_pair(0.0, 1.0));
+
     monodim_calls = 0;
-    Eigen::VectorXd best_point = optimizer.optimize(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), true);
+    Eigen::VectorXd best_point = optimizer.optimize(acqui_mono, Eigen::VectorXd::Constant(1, 0.5), parameterBounds);
 
     ASSERT_EQ(best_point.size(), 1);
     ASSERT_TRUE(best_point(0) > 0 || std::abs(best_point(0)) < 1e-7);

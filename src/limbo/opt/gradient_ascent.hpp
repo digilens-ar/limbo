@@ -98,7 +98,7 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 assert(opt_gradient_ascent::gamma() >= 0. && opt_gradient_ascent::gamma() < 1.);
                 assert(opt_gradient_ascent::alpha() >= 0.);
@@ -113,12 +113,9 @@ namespace limbo {
 
                 Eigen::VectorXd params = init;
 
-                if (bounded) {
+                if (bounds.has_value()) {
                     for (int j = 0; j < params.size(); j++) {
-                        if (params(j) < 0)
-                            params(j) = 0;
-                        if (params(j) > 1)
-                            params(j) = 1;
+                        params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                     }
                 }
 
@@ -130,12 +127,9 @@ namespace limbo {
                         query_params.array() += gamma * v.array();
 
                         // make sure that the parameters are still in bounds, if needed
-                        if (bounded) {
+                        if (bounds.has_value()) {
                             for (int j = 0; j < query_params.size(); j++) {
-                                if (query_params(j) < 0)
-                                    query_params(j) = 0;
-                                if (query_params(j) > 1)
-                                    query_params(j) = 1;
+                                query_params(j) = std::clamp(query_params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                             }
                         }
                     }
@@ -145,12 +139,9 @@ namespace limbo {
 
                     params.array() += v.array();
 
-                    if (bounded) {
+                    if (bounds.has_value()) {
                         for (int j = 0; j < params.size(); j++) {
-                            if (params(j) < 0)
-                                params(j) = 0;
-                            if (params(j) > 1)
-                                params(j) = 1;
+                            params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                         }
                     }
 

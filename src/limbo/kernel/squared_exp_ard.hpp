@@ -84,31 +84,14 @@ namespace limbo {
             {
                 Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell_inv.size() + _ell_inv.size() * kernel_squared_exp_ard::k() + 1);
                 p(p.size() - 1) = std::log(std::sqrt(kernel_squared_exp_ard::sigma_sq()));
-                this->set_params(p);
-            }
-
-            size_t params_size() const { return _ell_inv.size() + _ell_inv.size() * kernel_squared_exp_ard::k() + 1; }
-
-            // Return the hyper parameters in log-space
-            Eigen::VectorXd params() const { return _h_params; }
-
-            // We expect the input parameters to be in log-space
-            void set_params(const Eigen::VectorXd& p)
-            {
-                _h_params = p;
-                for (size_t i = 0; i < _input_dim; ++i)
-                    _ell_inv(i) = 1.0 / std::exp(p(i));
-                for (size_t j = 0; j < (unsigned int)kernel_squared_exp_ard::k(); ++j)
-                    for (size_t i = 0; i < _input_dim; ++i)
-                        _A(i, j) = p((j + 1) * _input_dim + i);
-                _sf2 = std::exp(2.0 * p(params_size() - 1));
+                this->set_params_(p);
             }
 
         protected:
             Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
                 if (kernel_squared_exp_ard::k() > 0) {
-                    Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size());
+                    Eigen::VectorXd grad = Eigen::VectorXd::Zero(this->params_size_());
                     Eigen::MatrixXd K = (_A * _A.transpose());
                     K.diagonal() += _ell_inv.array().square().matrix();
                     double z = ((x1 - x2).transpose() * K * (x1 - x2));
@@ -126,7 +109,7 @@ namespace limbo {
                     return grad;
                 }
                 else {
-                    Eigen::VectorXd grad(this->params_size());
+                    Eigen::VectorXd grad(this->params_size_());
                     Eigen::VectorXd z = (x1 - x2).cwiseProduct(_ell_inv).array().square();
                     double k = _sf2 * std::exp(-0.5 * z.sum());
                     grad.head(_input_dim) = z * k;
@@ -149,6 +132,30 @@ namespace limbo {
                 }
                 return _sf2 * std::exp(-0.5 * z);
             }
+
+            size_t params_size_() const { return _ell_inv.size() + _ell_inv.size() * kernel_squared_exp_ard::k() + 1; }
+
+            // Return the hyper parameters in log-space
+            Eigen::VectorXd params_() const { return _h_params; }
+
+            // We expect the input parameters to be in log-space
+            void set_params_(const Eigen::VectorXd& p)
+            {
+                _h_params = p;
+                for (size_t i = 0; i < _input_dim; ++i)
+                    _ell_inv(i) = 1.0 / std::exp(p(i));
+                for (size_t j = 0; j < (unsigned int)kernel_squared_exp_ard::k(); ++j)
+                    for (size_t i = 0; i < _input_dim; ++i)
+                        _A(i, j) = p((j + 1) * _input_dim + i);
+                _sf2 = std::exp(2.0 * p(params_size_() - 1));
+            }
+
+            std::vector<std::pair<double, double>> h_params_bounds_()
+            {
+                std::vector<std::pair<double, double>> bounds(_input_dim, std::make_pair(-100, std::log(2)));
+                bounds.push_back(std::make_pair(-INFINITY, INFINITY)); // Don't let l exceed 2 since we are only looking at data between 0 and 1 anyway. prevents hyperparm optimization from going off to infinity.
+                return bounds;
+            };
 
             double _sf2;
             Eigen::VectorXd _ell_inv;

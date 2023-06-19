@@ -10,6 +10,7 @@ find_package(ZLIB REQUIRED)
 add_library(cnpy "cnpy.cpp")
 target_link_libraries(cnpy ZLIB::ZLIB)
 target_include_directories(cnpy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(cnpy PRIVATE _CRT_SECURE_NO_WARNINGS) # Windows don't warn that fopen isn't safe
 
 install(TARGETS "cnpy" LIBRARY DESTINATION lib PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 

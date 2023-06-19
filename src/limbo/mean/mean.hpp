@@ -64,6 +64,8 @@ namespace limbo {
 
             void set_h_params(const Eigen::VectorXd& p) {}
 
+            std::vector<std::pair<double, double>> h_params_bounds() { return {}; };
+
             template <typename GP>
             Eigen::VectorXd grad(const Eigen::VectorXd& x, const GP& gp) const
             {

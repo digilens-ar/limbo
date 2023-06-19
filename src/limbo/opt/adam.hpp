@@ -98,7 +98,7 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 assert(opt_adam::b1() >= 0. && opt_adam::b1() < 1.);
                 assert(opt_adam::b2() >= 0. && opt_adam::b2() < 1.);
@@ -118,12 +118,9 @@ namespace limbo {
 
                 Eigen::VectorXd params = init;
 
-                if (bounded) {
+                if (bounds.has_value()) {
                     for (int j = 0; j < params.size(); j++) {
-                        if (params(j) < 0)
-                            params(j) = 0;
-                        if (params(j) > 1)
-                            params(j) = 1;
+                        params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                     }
                 }
 
@@ -142,12 +139,9 @@ namespace limbo {
                     b1_t *= b1;
                     b2_t *= b2;
 
-                    if (bounded) {
+                    if (bounds.has_value()) {
                         for (int j = 0; j < params.size(); j++) {
-                            if (params(j) < 0)
-                                params(j) = 0;
-                            if (params(j) > 1)
-                                params(j) = 1;
+                            params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                         }
                     }
 

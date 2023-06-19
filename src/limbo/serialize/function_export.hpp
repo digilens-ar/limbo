@@ -143,6 +143,7 @@ namespace limbo::serialize
 			}
 			if (flags & LogLikelihood)
 			{
+                constexpr double LIMIT = 8;
                 Model copy(model); // Create a copy so that we don't have to modify the original with hyperparameter adjustments.
                 saveBinary((directory / "loglik.npy").string(), copy.kernel_function().h_params_size(), samplesPerDim, [samplesPerDim, &copy](std::vector<int> const& coord) -> double
                     {
@@ -150,13 +151,13 @@ namespace limbo::serialize
                         Eigen::VectorXd x(dims);
                         for (int i = 0; i < dims; i++)
                         {
-                            x(i) = 600 * (static_cast<double>(coord.at(i)) / (samplesPerDim - 1) - 0.5);
+                            x(i) = 2 * LIMIT * (static_cast<double>(coord.at(i)) / (samplesPerDim - 1) - 0.5);
                         }
                         copy.kernel_function().set_h_params(x);
                         copy.recompute(false);
                         return copy.compute_log_lik();
                     });
-                std::ofstream(directory / "loglik.txt") << -10 << "," << 10 << "\n";
+                std::ofstream(directory / "loglik.txt") << -LIMIT << "," <<  LIMIT << "\n";
 			}
 		}
 

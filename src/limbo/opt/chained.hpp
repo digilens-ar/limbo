@@ -71,9 +71,9 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
-                return Optimizer::create(dims_).optimize(f, init, bounded);
+                return Optimizer::create(dims_).optimize(f, init, bounds);
             };
 
         protected:
@@ -93,9 +93,9 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
-                return Chained<Optimizers...>::optimize(f, Optimizer::create(Chained<Optimizers...>::dims_).optimize(f, init, bounded), bounded);
+                return Chained<Optimizers...>::optimize(f, Optimizer::create(Chained<Optimizers...>::dims_).optimize(f, init, bounds), bounds);
             };
         };
 

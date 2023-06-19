@@ -62,11 +62,17 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 // Random point does not support unbounded search
-                assert(bounded);
-                return tools::random_vector(init.size());
+                assert(bounds.has_value());
+                auto normedResult = tools::random_vector(init.size());
+                for (int i=0; i<normedResult.size(); i++)
+                {
+                    auto& bound = bounds.value().at(i);
+                    normedResult(i) = normedResult(i) * (bound.second - bound.first) + bound.first;
+                }
+                return normedResult;
             }
         };
     }

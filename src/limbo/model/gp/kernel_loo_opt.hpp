@@ -60,7 +60,7 @@ namespace limbo {
                 {
                     KernelLooOptimization<GP> optimization(gp);
                     Optimizer optimizer;
-                    Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), false);
+                    Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), gp.kernel_function().h_params_bounds());
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
                 }

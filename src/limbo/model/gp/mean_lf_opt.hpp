@@ -60,7 +60,7 @@ namespace limbo {
                 {
                     MeanLFOptimization<GP> optimization(gp);
                     Optimizer optimizer = Optimizer::create(gp.mean_function().h_params().size());
-                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.mean_function().h_params(), false);
+                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.mean_function().h_params(), gp.mean_function().h_params_bounds());
                     gp.mean_function().set_h_params(params);
                     gp.recompute(true, false);
                 }

@@ -82,7 +82,7 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 assert(opt_parallelrepeater::repeats() > 0);
                 assert(opt_parallelrepeater::epsilon() > 0.);
@@ -92,7 +92,7 @@ namespace limbo {
                 auto body = [&](int i) {
                     
                     Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
-                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, init + r_deviation, bounded);
+                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, init + r_deviation, bounds);
                     double val = opt::eval(f, v);
 
                     return std::make_pair(v, val);

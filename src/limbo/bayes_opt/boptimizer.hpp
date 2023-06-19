@@ -224,6 +224,12 @@ namespace limbo {
 					#endif
                 }
 
+                std::optional<std::vector<std::pair<double, double>>> parameterBounds = std::nullopt;
+                if (Params::bayes_opt_boptimizer::bounded())
+                {
+                    parameterBounds = std::vector<std::pair<double, double>>(_model.dim_in(), std::make_pair( 0.0, 1.0 ));
+                }
+
                 std::string stopMessage = "";
                 // While no stopping criteria return `true`
                 while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, stopMessage); }))
@@ -234,7 +240,7 @@ namespace limbo {
                     Eigen::VectorXd new_sample = acqui_optimizer.optimize(
                         [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, g); },
                         starting_point, 
-                        Params::bayes_opt_boptimizer::bounded());
+                        parameterBounds);
 
                 	auto status = this->eval_and_add(sfun, new_sample);
                     if (status == TERMINATE)
