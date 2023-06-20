@@ -60,7 +60,7 @@ void kernelLFOpt(benchmark::State& state)
 {
 	// constexpr int numSamples = 800;
 	constexpr int numSamples = 500;
-	constexpr int dim = 10;
+	constexpr int dim = 2;
 
 	if (samples.empty()) {
 		for (int i = 0; i < numSamples; i++)
@@ -91,60 +91,64 @@ void kernelLFOpt(benchmark::State& state)
 
 
 	if (state.range(1) == 0) {
-		limbo::model::GP<
-			limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-			limbo::mean::Data,
-			limbo::model::gp::KernelLFOpt<limbo::opt::Rprop<Params::opt_rprop>>
-		> gp(dim);
+	
 
-		gp.initialize(samples, observations);
 		for (auto _ : state)
 		{
+			limbo::model::GP<
+				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+				limbo::mean::Data,
+				limbo::model::gp::KernelLFOpt<limbo::opt::Rprop<Params::opt_rprop>>
+			> gp(dim);
+			gp.initialize(samples, observations);
 			gp.optimize_hyperparams();
 			std::cout << gp.compute_log_lik() << "\n";
 		}
 	}
 	else if (state.range(1) == 1){
-		limbo::model::GP<
-			limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-			limbo::mean::Data,
-			limbo::model::gp::KernelLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>
-		> gp(dim);
 
-		gp.initialize(samples, observations);
+
 		for (auto _ : state)
 		{
+			limbo::model::GP<
+				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+				limbo::mean::Data,
+				limbo::model::gp::KernelLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>
+			> gp(dim);
+			gp.initialize(samples, observations);
 			gp.optimize_hyperparams();
 			std::cout << gp.compute_log_lik() << "\n";
 		}
 	}
 	else if (state.range(1) == 2) {
-		Params::opt_parallel::set_repeats(3);
-		limbo::model::GP<
-			limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-			limbo::mean::Data,
-			limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
-		> gp(dim);
+		Params::opt_parallel::set_repeats(2);
 
-		gp.initialize(samples, observations);
+
 		for (auto _ : state)
 		{
+			limbo::model::GP<
+				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+				limbo::mean::Data,
+				limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
+			> gp(dim);
+			gp.initialize(samples, observations);
 			gp.optimize_hyperparams();
 			std::cout << gp.compute_log_lik() << "\n";
 		}
 
 	}
 	else if (state.range(1) == 3) {
-		Params::opt_parallel::set_repeats(2);
-		limbo::model::GP<
-			limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-			limbo::mean::Data,
-			limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
-		> gp(dim);
+		Params::opt_parallel::set_repeats(4);
 
-		gp.initialize(samples, observations);
+
 		for (auto _ : state)
 		{
+			limbo::model::GP<
+				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+				limbo::mean::Data,
+				limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
+			> gp(dim);
+			gp.initialize(samples, observations);
 			gp.optimize_hyperparams();
 			std::cout << gp.compute_log_lik() << "\n";
 		}
@@ -157,5 +161,6 @@ void kernelLFOpt(benchmark::State& state)
 	
 }
 
-// BENCHMARK(kernelLFOpt)->ArgsProduct({ {0}, {2, 3} })->Unit(benchmark::kMillisecond);
-BENCHMARK(kernelLFOpt)->ArgsProduct({ {0, 1, 2}, {0, 1, 2, 3} })->Unit(benchmark::kMillisecond);
+// BENCHMARK(kernelLFOpt)->ArgsProduct({ {0}, {2} })->Unit(benchmark::kMillisecond)->MinTime(12);
+// BENCHMARK(kernelLFOpt)->ArgsProduct({ {1}, {1} })->Unit(benchmark::kMillisecond)->MinTime(12);
+BENCHMARK(kernelLFOpt)->ArgsProduct({ {0, 1, 2}, {0, 1, 2, 3} })->Unit(benchmark::kMillisecond)->MinTime(6);
