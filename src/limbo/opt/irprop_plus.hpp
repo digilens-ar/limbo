@@ -6,6 +6,7 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
+#include <spdlog/spdlog.h>
 
 namespace limbo {
     namespace defaults {
@@ -58,6 +59,7 @@ namespace limbo {
                 double best = INFINITY;
                 double lastVal = best;
 
+                int cnt = 0;
                 for (int i = 0; i < opt_irpropplus::max_iterations(); ++i) {
                     auto [funcVal, gradient] = f(weights, true); // Evaluate the function at the current paramter values.
                     funcVal = -funcVal; // invert the value and gradient since we are maximizing but the original algorithm is written for minimizing.
@@ -69,7 +71,10 @@ namespace limbo {
                     }
 
                     if (grad.norm() < opt_irpropplus::min_gradient())
+                    {
+                        grad_old = grad;
                         break;
+                    }
 
                     for (int j = 0; j < grad_old.size(); ++j) {
                         double gradProduct = grad(j) * grad_old(j);
@@ -99,7 +104,9 @@ namespace limbo {
                     }
                     lastVal = funcVal;
                     grad_old = grad;
+                    ++cnt;
                 }
+                spdlog::info("Irpropplus completed in {} iterations. Gradient {}", cnt, grad_old.norm());
                 return best_params;
             }
 
