@@ -41,9 +41,7 @@ int main()
     // using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
 
     std::filesystem::path rootDir(R"(C:\Users\NicholasAnthony\source\repos\wt_gui\external\WaveTracer\testing\optimizerTests\resources\DIA_highD\optimizations\hp_10_irpropplus_ser_1eneg3)");
-    // std::filesystem::path rootDir(LIMBO_TEST_RESOURCES_DIR);
     Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_init").string()));
-    // Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_3d_init").string()));
 
     serialize::FunctionExport(
         rootDir / "pre",
