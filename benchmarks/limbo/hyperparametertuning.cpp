@@ -5,9 +5,24 @@
 
 static std::default_random_engine eng;
 
+// see : http://www.sfu.ca/~ssurjano/goldpr.html
+// (with ln, as suggested in Jones et al.)
+struct GoldenPrice {
+	BO_PARAM(size_t, dim_in, 2);
+
+	double operator()(const Eigen::VectorXd& xx) const
+	{
+		Eigen::VectorXd x = (4.0 * xx).array() - 2.0;
+		double r = (1 + (x(0) + x(1) + 1) * (x(0) + x(1) + 1) * (19 - 14 * x(0) + 3 * x(0) * x(0) - 14 * x(1) + 6 * x(0) * x(1) + 3 * x(1) * x(1))) * (30 + (2 * x(0) - 3 * x(1)) * (2 * x(0) - 3 * x(1)) * (18 - 32 * x(0) + 12 * x(0) * x(0) + 48 * x(1) - 36 * x(0) * x(1) + 27 * x(1) * x(1)));
+
+		return -log(r) + 5 ;
+	}
+};
+
 static std::tuple<Eigen::VectorXd, double> generateObservation(size_t n)
-{ // TODO load a model or use a real function
-	return { Eigen::VectorXd::Random(n, 1), std::uniform_real_distribution<double>(0, 1)(eng)};
+{
+	auto sample = Eigen::VectorXd::Random(2, 1);
+	return { sample, GoldenPrice()(sample)};
 }
 
 namespace
