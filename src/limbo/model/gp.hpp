@@ -82,7 +82,7 @@ namespace limbo {
         class GP {
         public:
             GP(int dim_in)
-                : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false) {}
+                : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
             /// Initialize the GP from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,

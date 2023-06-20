@@ -55,11 +55,20 @@ namespace limbo {
             ///optimize the likelihood of both the kernel and the mean (try to align the mean function)
             template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct KernelMeanLFOpt {
+
+                KernelMeanLFOpt(int dims):
+					opt_(Optimizer::create(dims))
+                {}
+
+                static KernelMeanLFOpt create(int dims)
+                {
+                    return KernelMeanLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
                     KernelMeanLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
 
                     int dim = gp.kernel_function().h_params_size() + gp.mean_function().h_params_size();
 
@@ -74,14 +83,16 @@ namespace limbo {
                         parameterBounds.push_back(mBound);
                     }
 
-                    Eigen::VectorXd params = optimizer.optimize(optimization, init, parameterBounds);
+                    Eigen::VectorXd params = opt_.optimize(optimization, init, parameterBounds);
                     gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
                     gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
 
                     gp.recompute(true);
                 }
 
-            protected:
+            private:
+                Optimizer opt_;
+
                 template <typename GP>
                 struct KernelMeanLFOptimization {
                     KernelMeanLFOptimization(const GP& gp) : _original_gp(gp) {}

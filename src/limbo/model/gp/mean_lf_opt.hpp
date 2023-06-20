@@ -55,17 +55,27 @@ namespace limbo {
             template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct MeanLFOpt {
             public:
+                MeanLFOpt(int dims):
+					opt_(Optimizer::create(dims))
+                {}
+
+                static MeanLFOpt create(int dims)
+                {
+                    return MeanLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
                     MeanLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer = Optimizer::create(gp.mean_function().h_params().size());
-                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.mean_function().h_params(), gp.mean_function().h_params_bounds());
+                    Eigen::VectorXd params = opt_.optimize(optimization, gp.mean_function().h_params(), gp.mean_function().h_params_bounds());
                     gp.mean_function().set_h_params(params);
                     gp.recompute(true, false);
                 }
 
-            protected:
+            private:
+                Optimizer opt_;
+
                 template <typename GP>
                 struct MeanLFOptimization {
                 public:

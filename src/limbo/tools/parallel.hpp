@@ -104,20 +104,6 @@ namespace limbo {
             }
 
 #endif
-
-#ifdef USE_TBB
-            inline void init()
-            {
-
-            }
-#else
-            /// @ingroup par_tools
-            /// init TBB (if activated) for multi-core computing
-            inline void init()
-            {
-            }
-#endif
-
             ///@ingroup par_tools
             /// parallel for
             template <typename F>

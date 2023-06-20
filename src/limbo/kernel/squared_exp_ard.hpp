@@ -55,6 +55,8 @@ namespace limbo {
             BO_PARAM(int, k, 0); //equivalent to the standard exp ARD
             /// @ingroup kernel_defaults
             BO_PARAM(double, sigma_sq, 1);
+            /// @ingroup kernel_defaults
+            BO_PARAM(double, l_init , 0.5); // The initial characteristic length to use
         };
     } // namespace defaults
 
@@ -83,6 +85,7 @@ namespace limbo {
             SquaredExpARD(int dim = 1) : _ell_inv(dim), _A(dim, kernel_squared_exp_ard::k()), _input_dim(dim)
             {
                 Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell_inv.size() + _ell_inv.size() * kernel_squared_exp_ard::k() + 1);
+                p.fill(std::log(kernel_squared_exp_ard::l_init()));
                 p(p.size() - 1) = std::log(std::sqrt(kernel_squared_exp_ard::sigma_sq()));
                 this->set_params_(p);
             }

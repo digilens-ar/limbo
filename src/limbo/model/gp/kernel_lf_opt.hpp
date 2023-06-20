@@ -56,17 +56,27 @@ namespace limbo {
             template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct KernelLFOpt {
             public:
+                KernelLFOpt(int dims):
+					optimizer_(Optimizer::create(dims))
+                {}
+
+                static KernelLFOpt create(int dims)
+                {
+                    return KernelLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
                     KernelLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer = Optimizer::create(gp.kernel_function().h_params().size());
-                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.kernel_function().h_params(), gp.kernel_function().h_params_bounds());
+                    Eigen::VectorXd params = optimizer_.optimize(optimization, gp.kernel_function().h_params(), gp.kernel_function().h_params_bounds());
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
                 }
 
-            protected:
+            private:
+                Optimizer optimizer_;
+
                 template <typename GP>
                 struct KernelLFOptimization {
                 public:
@@ -74,22 +84,23 @@ namespace limbo {
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
-                        gp_.kernel_function().set_h_params(params);
+                        GP gp(gp_);
+                        gp.kernel_function().set_h_params(params);
 
-                        gp_.recompute(false);
+                        gp.recompute(false);
 
-                        double lik = gp_.compute_log_lik();
+                        double lik = gp.compute_log_lik();
 
                         if (!compute_grad)
                             return opt::no_grad(lik);
 
-                        Eigen::VectorXd grad = gp_.compute_kernel_grad_log_lik();
+                        Eigen::VectorXd grad = gp.compute_kernel_grad_log_lik();
 
                         return {lik, grad};
                     }
 
-                protected:
-                    mutable GP gp_;
+                private:
+                    GP const& gp_;
                 };
             };
         } // namespace gp

@@ -53,6 +53,11 @@ namespace limbo {
             ///@ingroup model_opt
             ///do not optimize anything
             struct NoLFOpt {
+                static NoLFOpt create(int dims)
+                {
+                    return NoLFOpt();
+                }
+
                 template <typename GP>
                 void operator()(GP&) const
                 {

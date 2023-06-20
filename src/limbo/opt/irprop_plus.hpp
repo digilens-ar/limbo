@@ -25,7 +25,6 @@ namespace limbo {
     namespace opt {
         /// @ingroup opt
         /// Gradient-based optimization (irprop_plus) An enhancement of rprop
-        /// - partly inspired by: https://www.dropbox.com/s/ruytpw66g8097cb/contourplots.py?dl=0
         /// - reference: https://sci2s.ugr.es/keel/pdf/algorithm/articulo/2003-Neuro-Igel-IRprop+.pdf
         /// - reference: https://citeseerx.ist.psu.edu/doc/10.1.1.17.1332
         ///
@@ -39,7 +38,7 @@ namespace limbo {
                 return Irpropplus();
             }
 
-            template <concepts::EvalFunc F>
+        	template <concepts::EvalFunc F>
             Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
 
@@ -69,8 +68,8 @@ namespace limbo {
                         best = funcVal;
                         best_params = weights;
                     }
-
-                    if (grad.norm() < opt_irpropplus::min_gradient())
+                    double grad_norm = grad.norm();
+                    if (grad_norm < opt_irpropplus::min_gradient())
                     {
                         grad_old = grad;
                         break;
@@ -88,7 +87,7 @@ namespace limbo {
                         { // Gradient has changed sign
                             delta(j) = std::max(delta(j) * etaminus, deltamin);
                             if (funcVal > lastVal)
-                            { // This iteration is worst than the last one
+                            { // This iteration is worst than the last one. backtrack
                                 weights(j) -= deltaWeights(j);
                             }
                             grad(j) = 0;
@@ -99,14 +98,12 @@ namespace limbo {
                             weights(j) += deltaWeights(j);
                         }
 
-                        if (bounds.has_value())
-                            weights(j) = std::clamp(weights(j), bounds.value().at(j).first, bounds.value().at(j).second);
                     }
                     lastVal = funcVal;
                     grad_old = grad;
                     ++cnt;
                 }
-                spdlog::info("Irpropplus completed in {} iterations. Gradient {}", cnt, grad_old.norm());
+                spdlog::info("Irpropplus completed in {} iterations. Gradient {:.10f}", cnt, grad_old.norm());
                 return best_params;
             }
 
