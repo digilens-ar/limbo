@@ -46,7 +46,7 @@
 #ifndef LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 #define LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 
-#define SAVE_HP_MODELS
+// #define SAVE_HP_MODELS
 
 #include <algorithm>
 #include <iterator>
