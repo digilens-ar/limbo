@@ -69,8 +69,8 @@ namespace limbo {
             /// write an Eigen::Matrix*
             void save(const Eigen::MatrixXd& v, const std::string& object_name) const
             {
-                _create_directory();
-                std::ofstream ofs(fname(object_name).c_str());
+                create_directories(_dir_name);
+            	std::ofstream ofs(fname(object_name).c_str());
                 ofs << v.format(_fmt) << std::endl;
             }
 
@@ -78,7 +78,7 @@ namespace limbo {
             template <typename T>
             void save(const std::vector<T>& v, const std::string& object_name) const
             {
-                _create_directory();
+                create_directories(_dir_name);
                 std::ofstream ofs(fname(object_name).c_str());
                 if constexpr (std::is_same_v<T, double>)
                 {
@@ -133,23 +133,17 @@ namespace limbo {
 
             std::string fname(const std::string& object_name) const
             {
-                return _dir_name + "/" + object_name + ".dat";
+                return (_dir_name / (object_name + ".dat")).string();
             }
 
-            const std::string& directory() const
+            std::string directory() const
             {
-                return _dir_name;
+                return _dir_name.string();
             }
 
         protected:
-            std::string _dir_name;
+            std::filesystem::path _dir_name;
             Eigen::IOFormat _fmt;
-
-            void _create_directory() const
-            {
-                std::filesystem::path my_path(_dir_name);
-                std::filesystem::create_directories(my_path);
-            }
 
             std::vector<std::vector<double>> _load(const std::string& object_name) const
             {

@@ -213,8 +213,8 @@ namespace limbo {
                 else
                     _model = model_type(sfun.dim_in());
 
-                if (Params::bayes_opt_boptimizer::hp_period() > 0 && _observations.size() >= Params::bayes_opt_boptimizer::hp_period())
-                { // If the initialization includes enough samples for hyper parameter optimization then run it. TODO untested change
+                if (Params::bayes_opt_boptimizer::hp_period() > 0)
+                { // If hyperparameter tuning is enabled then run it after initialization
 					#ifdef SAVE_HP_MODELS
                     _model.save(serialize::TextArchive((outputDir_ / "modelArchive_init").string()));
 					#endif

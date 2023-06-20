@@ -103,7 +103,7 @@ using namespace limbo;
               struct kernel_squared_exp_ard : public defaults::kernel_squared_exp_ard {
               };
 
-              struct opt_rprop : public defaults::opt_rprop {
+              struct opt_irpropplus : public defaults::opt_irpropplus {
               };
           };
 

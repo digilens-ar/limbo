@@ -156,24 +156,21 @@ namespace limbo {
 #ifdef USE_TBB
                 auto body = [&](const tbb::blocked_range<size_t>& r, T current_max) -> T {
                     
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                T v = f(i);
-                if (comp(v, current_max))
-                  current_max = v;
-            }
-            return current_max;
-                    
+		            for (size_t i = r.begin(); i != r.end(); ++i)
+		            {
+		                T v = f(i);
+		                if (comp(v, current_max))
+		                  current_max = v;
+		            }
+		            return current_max;
+	                    
+	            };
+	            auto joint = [&](const T& p1, const T& p2) -> T {
+		            if (comp(p1, p2))
+		                return p1;
+		            return p2;
                 };
-                auto joint = [&](const T& p1, const T& p2) -> T {
-                    
-            if (comp(p1, p2))
-                return p1;
-            return p2;
-                    
-                };
-                return tbb::parallel_reduce(tbb::blocked_range<size_t>(0, num_steps), init,
-                    body, joint);
+                return tbb::parallel_reduce(tbb::blocked_range<size_t>(0, num_steps), init, body, joint);
 #else
                 T current_max = init;
                 for (int i = 0; i < num_steps; ++i) {

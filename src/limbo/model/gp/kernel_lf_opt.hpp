@@ -46,14 +46,14 @@
 #ifndef LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 #define LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 
-#include <limbo/opt/rprop.hpp>
+#include <limbo/opt/irprop_plus.hpp>
 
 namespace limbo {
     namespace model {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
-            template <typename opt_rprop, concepts::Optimizer Optimizer = opt::Rprop<opt_rprop>>
+            template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct KernelLFOpt {
             public:
                 template <typename GP>

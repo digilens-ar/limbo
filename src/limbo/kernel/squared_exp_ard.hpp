@@ -152,7 +152,7 @@ namespace limbo {
 
             std::vector<std::pair<double, double>> h_params_bounds_()
             {
-                std::vector<std::pair<double, double>> bounds(_input_dim, std::make_pair(-100, std::log(2)));
+                std::vector<std::pair<double, double>> bounds(_input_dim, std::make_pair(-INFINITY, std::log(5)));
                 bounds.push_back(std::make_pair(-INFINITY, INFINITY)); // Don't let l exceed 2 since we are only looking at data between 0 and 1 anyway. prevents hyperparm optimization from going off to infinity.
                 return bounds;
             };
