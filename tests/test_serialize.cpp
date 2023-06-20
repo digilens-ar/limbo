@@ -57,6 +57,8 @@
 #include <limbo/serialize/binary_archive.hpp>
 #include <limbo/serialize/text_archive.hpp>
 
+#include "limbo/opt/rprop.hpp"
+
 #ifndef LIMBO_TEST_TEMP_DIR
 #error "Please define LIMBO_TEST_TEMP_DIR to a folder to be used for temporary storage"
 #endif
@@ -71,7 +73,7 @@ namespace {
         };
         struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
         };
-        struct opt_rprop : public limbo::defaults::opt_rprop {
+        struct opt_irpropplus : public limbo::defaults::opt_irpropplus {
         };
 
         struct kernel_maternfivehalves {
@@ -96,7 +98,7 @@ struct LoadParams {
     struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
         BO_PARAM(double, sigma_sq, 10.0);
     };
-    struct opt_rprop : public limbo::defaults::opt_rprop {
+    struct opt_irpropplus : public limbo::defaults::opt_irpropplus {
     };
 
     struct kernel_maternfivehalves {
@@ -194,8 +196,8 @@ TEST(Limbo_Serialize, text_archive)
     test_gp<limbo::model::GPOpt<Params>, limbo::model::GPOpt<LoadParams>, limbo::serialize::TextArchive>(rootDir + "/gp_opt_text");
     test_gp<limbo::model::GPBasic<Params>, limbo::model::GPBasic<LoadParams>, limbo::serialize::TextArchive>(rootDir + "/gp_basic_text", false);
 
-    using GPMean = limbo::model::GP<limbo::kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>, limbo::mean::Constant<Params::mean_constant>, limbo::model::gp::MeanLFOpt<Params::opt_rprop>>;
-    using GPMeanLoad = limbo::model::GP<limbo::kernel::MaternFiveHalves<LoadParams::kernel, LoadParams::kernel_maternfivehalves>, limbo::mean::Constant<LoadParams::mean_constant>, limbo::model::gp::MeanLFOpt<LoadParams::opt_rprop>>;
+    using GPMean = limbo::model::GP<limbo::kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>, limbo::mean::Constant<Params::mean_constant>, limbo::model::gp::MeanLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>>;
+    using GPMeanLoad = limbo::model::GP<limbo::kernel::MaternFiveHalves<LoadParams::kernel, LoadParams::kernel_maternfivehalves>, limbo::mean::Constant<LoadParams::mean_constant>, limbo::model::gp::MeanLFOpt<limbo::opt::Irpropplus<LoadParams::opt_irpropplus>>>;
     test_gp<GPMean, GPMeanLoad, limbo::serialize::TextArchive>(rootDir + "/gp_mean_text");
 }
 
@@ -204,8 +206,8 @@ TEST(Limbo_Serialize, bin_archive)
     test_gp<limbo::model::GPOpt<Params>, limbo::model::GPOpt<LoadParams>, limbo::serialize::BinaryArchive>(rootDir + "/gp_opt_bin");
     test_gp<limbo::model::GPBasic<Params>, limbo::model::GPBasic<LoadParams>, limbo::serialize::BinaryArchive>(rootDir + "/gp_basic_bin", false);
 
-    using GPMean = limbo::model::GP<limbo::kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>, limbo::mean::Constant<Params::mean_constant>, limbo::model::gp::MeanLFOpt<Params::opt_rprop>>;
-    using GPMeanLoad = limbo::model::GP<limbo::kernel::MaternFiveHalves<LoadParams::kernel, LoadParams::kernel_maternfivehalves>, limbo::mean::Constant<LoadParams::mean_constant>, limbo::model::gp::MeanLFOpt<LoadParams::opt_rprop>>;
+    using GPMean = limbo::model::GP<limbo::kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>, limbo::mean::Constant<Params::mean_constant>, limbo::model::gp::MeanLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>>;
+    using GPMeanLoad = limbo::model::GP<limbo::kernel::MaternFiveHalves<LoadParams::kernel, LoadParams::kernel_maternfivehalves>, limbo::mean::Constant<LoadParams::mean_constant>, limbo::model::gp::MeanLFOpt<limbo::opt::Irpropplus<LoadParams::opt_irpropplus>>>;
     test_gp<GPMean, GPMeanLoad, limbo::serialize::BinaryArchive>(rootDir + "/gp_mean_bin");
 }
 

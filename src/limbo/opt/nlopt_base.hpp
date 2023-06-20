@@ -62,7 +62,7 @@ namespace limbo::opt {
     class NLOptBase {
     public:
         template <concepts::EvalFunc F>
-        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
         {
             assert(init.size() == dim_);
 
@@ -71,9 +71,12 @@ namespace limbo::opt {
             std::vector<double> x(dim_);
             Eigen::VectorXd::Map(&x[0], dim_) = init;
 
-            if (bounded) {
-                _opt.set_lower_bounds(std::vector<double>(dim_, 0));
-                _opt.set_upper_bounds(std::vector<double>(dim_, 1));
+            if (bounds.has_value()) {
+                std::vector<double> lowerBounds;
+                std::vector<double> upperBounds;
+                std::for_each(bounds.value().begin(), bounds.value().end(), [&lowerBounds, &upperBounds](auto const& bound) {lowerBounds.push_back(bound.first); upperBounds.push_back(bound.second); });
+                _opt.set_lower_bounds(lowerBounds);
+                _opt.set_upper_bounds(upperBounds);
             }
 
             double max;

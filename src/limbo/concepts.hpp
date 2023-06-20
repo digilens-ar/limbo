@@ -103,12 +103,12 @@ namespace limbo::concepts
 		{ a.operator()(Eigen::VectorXd{}, true) } -> std::convertible_to<std::pair<double, std::optional<Eigen::VectorXd>>>;
 	};
 
-	/// An optimizer has an optimize method that takes an evalutionFunction, an initial coordinate, and a t/f if bounded, and returns a new optimum coordinate
+	/// An optimizer has an optimize method that takes an evalutionFunction, an initial coordinate, and an optional set of lower and upper bounds for the parameters, and returns a new optimum coordinate
 	template<typename T>
 	concept Optimizer = requires (T a)
 	{
 		{ T::create(3) } -> std::convertible_to<T>;
-		{ a.optimize(EvalFuncArchetype{}, Eigen::VectorXd{}, true) } -> std::convertible_to<Eigen::VectorXd>;
+		{ a.optimize(EvalFuncArchetype{}, Eigen::VectorXd{}, std::optional<std::vector<std::pair<double, double>>>{}) } -> std::convertible_to<Eigen::VectorXd>;
 	};
 
 	//Receives data about the model and saves/logs it somewhere

@@ -199,7 +199,7 @@ int main()
 
     using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Mean_t = mean::FunctionARD<MeanComplet<Params>>;
-    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<Params::opt_rprop>>;
+    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<opt::Rprop<Params::opt_rprop>>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);

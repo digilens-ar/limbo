@@ -61,7 +61,7 @@ namespace limbo {
             BO_PARAM(int, iterations, 300);
 
             /// gradient norm epsilon for stopping. Set this to some positive value for it to have an effect. Set to 0 to disable.
-            BO_PARAM(double, eps_stop, 1e-10);
+            BO_PARAM(double, eps_stop, 0);
         };
     }
     namespace opt {
@@ -85,9 +85,10 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 assert(opt_rprop::eps_stop() >= 0.);
+                assert(!bounds.has_value() && "rprop doesn't suppoert bounds");
 
                 const size_t param_dim = init.size();
                 constexpr double delta0 = 0.1;
@@ -99,12 +100,6 @@ namespace limbo {
                 Eigen::VectorXd delta = Eigen::VectorXd::Ones(param_dim) * delta0;
                 Eigen::VectorXd grad_old = Eigen::VectorXd::Zero(param_dim);
                 Eigen::VectorXd params = init;
-
-                if (bounded) {
-                    for (int j = 0; j < params.size(); j++) {
-                        params(j) = std::clamp(params(j), 0.0, 1.0);
-                    }
-                }
 
                 Eigen::VectorXd best_params = params;
                 double best = -INFINITY;
@@ -127,9 +122,6 @@ namespace limbo {
                             grad(j) = 0;
                         }
                         params(j) += -signum(grad(j)) * delta(j);
-
-                        if (bounded)
-                            params(j) = std::clamp(params(j), 0.0, 1.0);
                     }
 
                     grad_old = grad;

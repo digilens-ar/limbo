@@ -98,13 +98,13 @@ namespace limbo {
             // Get the hyper parameters size
             size_t h_params_size() const
             {
-                return static_cast<const Kernel*>(this)->params_size() + (kernel_opt::optimize_noise() ? 1 : 0);
+                return static_cast<const Kernel*>(this)->params_size_() + (kernel_opt::optimize_noise() ? 1 : 0);
             }
 
             // Get the hyper parameters in log-space
             Eigen::VectorXd h_params() const
             {
-                Eigen::VectorXd params = static_cast<const Kernel*>(this)->params();
+                Eigen::VectorXd params = static_cast<const Kernel*>(this)->params_();
                 if (kernel_opt::optimize_noise()) {
                     params.conservativeResize(params.size() + 1);
                     params(params.size() - 1) = _noise_p;
@@ -115,7 +115,7 @@ namespace limbo {
             // We expect the input parameters to be in log-space
             void set_h_params(const Eigen::VectorXd& p)
             {
-                static_cast<Kernel*>(this)->set_params(p.head(h_params_size() - (kernel_opt::optimize_noise() ? 1 : 0)));
+                static_cast<Kernel*>(this)->set_params_(p.head(h_params_size() - (kernel_opt::optimize_noise() ? 1 : 0)));
                 if (kernel_opt::optimize_noise()) {
                     _noise_p = p(h_params_size() - 1);
                     _noise = std::exp(2 * _noise_p);

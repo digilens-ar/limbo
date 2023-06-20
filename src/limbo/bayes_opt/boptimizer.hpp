@@ -46,7 +46,7 @@
 #ifndef LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 #define LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 
-#define SAVE_HP_MODELS
+// #define SAVE_HP_MODELS
 
 #include <algorithm>
 #include <iterator>
@@ -213,8 +213,8 @@ namespace limbo {
                 else
                     _model = model_type(sfun.dim_in());
 
-                if (Params::bayes_opt_boptimizer::hp_period() > 0 && _observations.size() >= Params::bayes_opt_boptimizer::hp_period())
-                { // If the initialization includes enough samples for hyper parameter optimization then run it. TODO untested change
+                if (Params::bayes_opt_boptimizer::hp_period() > 0)
+                { // If hyperparameter tuning is enabled then run it after initialization
 					#ifdef SAVE_HP_MODELS
                     _model.save(serialize::TextArchive((outputDir_ / "modelArchive_init").string()));
 					#endif
@@ -222,6 +222,12 @@ namespace limbo {
 					#ifdef SAVE_HP_MODELS
 					_model.save(serialize::TextArchive((outputDir_ / "modelArchive_post_init").string()));
 					#endif
+                }
+
+                std::optional<std::vector<std::pair<double, double>>> parameterBounds = std::nullopt;
+                if (Params::bayes_opt_boptimizer::bounded())
+                {
+                    parameterBounds = std::vector<std::pair<double, double>>(_model.dim_in(), std::make_pair( 0.0, 1.0 ));
                 }
 
                 std::string stopMessage = "";
@@ -234,7 +240,7 @@ namespace limbo {
                     Eigen::VectorXd new_sample = acqui_optimizer.optimize(
                         [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, g); },
                         starting_point, 
-                        Params::bayes_opt_boptimizer::bounded());
+                        parameterBounds);
 
                 	auto status = this->eval_and_add(sfun, new_sample);
                     if (status == TERMINATE)

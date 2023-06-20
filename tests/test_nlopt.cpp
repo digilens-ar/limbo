@@ -99,7 +99,7 @@ namespace {
 TEST(Limbo_NLOpt, nlopt_grad_simple)
 {
 	auto optimizer = opt::NLOptGrad<Params::opt_nloptgrad, nlopt::LD_MMA>::create(2);
-    Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), false);
+    Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), std::nullopt);
 
     ASSERT_LE(g(0), 0.00000001);
     ASSERT_LE(g(1), 0.00000001);
@@ -112,7 +112,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_simple)
     best << 1, 1;
     size_t N = 10;
     for (size_t i = 0; i < N; i++) {
-        Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), false);
+        Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), std::nullopt);
         if (g.norm() < best.norm()) {
             best = g;
         }
@@ -132,7 +132,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
     target << 1., 3.;
     size_t N = 10;
     for (size_t i = 0; i < N; i++) {
-        Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), false);
+        Eigen::VectorXd g = optimizer.optimize(my_function, tools::random_vector(2), std::nullopt);
         if ((g - target).norm() < (best - target).norm()) {
             best = g;
         }

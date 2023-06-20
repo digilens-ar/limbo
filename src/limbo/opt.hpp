@@ -62,7 +62,9 @@
 #include <limbo/opt/adam.hpp>
 #include <limbo/opt/gradient_ascent.hpp>
 #include <limbo/opt/parallel_repeater.hpp>
+#include <limbo/opt/parallel_repeater_2.hpp>
 #include <limbo/opt/random_point.hpp>
+#include <limbo/opt/irprop_plus.hpp>
 #include <limbo/opt/rprop.hpp>
 
 #endif

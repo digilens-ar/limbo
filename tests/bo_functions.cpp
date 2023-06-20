@@ -52,7 +52,7 @@
 
 #include <Eigen/Core>
 
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/parallel_for.h>
 #else
@@ -298,7 +298,7 @@ namespace {
     template <typename T1, typename T2>
     void add_to_results(const char* key, T1& map, const T2& p)
     {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
         typename T1::accessor a;
         if (!map.find(a, key))
             map.insert(a, key);
@@ -317,7 +317,7 @@ int main(int argc, char** argv)
 {
     tools::par::init();
 
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
     using res_t = tbb::concurrent_hash_map<std::string, std::vector<std::pair<double, double>>>;
 #else
     using res_t = std::map<std::string, std::vector<std::pair<double, double>>>;

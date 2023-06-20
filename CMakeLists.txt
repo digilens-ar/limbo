@@ -38,7 +38,7 @@ endif()
 
 option(LIMBO_USE_TBB "Use Intel TBB for parallelization" ON)
 if (LIMBO_USE_TBB)
-	target_compile_definitions(limbo INTERFACE "USE_TBB") # Bugs need to be fixed before this works
+	target_compile_definitions(limbo INTERFACE "LIMBO_USE_TBB")
 	target_link_libraries(limbo INTERFACE TBB::tbb)
 	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
@@ -66,6 +66,7 @@ if(LIMBO_BUILD_TESTS)
 	add_subdirectory(tests)
 	find_package(benchmark REQUIRED)
 	add_subdirectory(benchmarks)
+	add_subdirectory(util)
 endif()
 
 option(LIMBO_BUILD_TUTORIALS "Build tutorials for limbo" OFF)

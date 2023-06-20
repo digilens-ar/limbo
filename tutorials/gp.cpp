@@ -51,7 +51,7 @@
 #include <limbo/model/gp/kernel_lf_opt.hpp>
 #include <limbo/tools.hpp>
 #include <limbo/tools/macros.hpp>
-
+#include <limbo/opt.hpp>
 #include <limbo/serialize/text_archive.hpp>
 
 // this tutorials shows how to use a Gaussian process for regression
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     // in that case, we need a kernel with hyper-parameters that are designed to be optimized
     using Kernel2_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Mean_t = mean::Data;
-    using GP2_t = model::GP<Kernel2_t, Mean_t, model::gp::KernelLFOpt<Params::opt_rprop>>;
+    using GP2_t = model::GP<Kernel2_t, Mean_t, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
 
     GP2_t gp_ard(1);
     // do not forget to call the optimization!

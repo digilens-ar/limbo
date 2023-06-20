@@ -82,21 +82,34 @@ namespace limbo {
             }
 
             template <concepts::EvalFunc F>
-            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            Eigen::VectorXd optimize(F const& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 assert(opt_parallelrepeater::repeats() > 0);
                 assert(opt_parallelrepeater::epsilon() > 0.);
-                tools::par::init();
                 using pair_t = std::pair<Eigen::VectorXd, double>;
 
-                auto body = [&](int i) {
-                    
-                    Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
-                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, init + r_deviation, bounded);
+                auto body = [&init, &bounds, &f](int i) {
+                    Eigen::VectorXd newPoint;
+                    if (i == 0)
+                    { // For the first repeat don't do any randomization
+                        newPoint = init;
+                    }
+                    else
+                    {
+                        Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
+                    	newPoint = init + r_deviation;
+                    }
+                 
+                    if (bounds.has_value())
+                    { // Make sure initil point is in bounds
+	                    for (int j=0; j<newPoint.size(); j++)
+	                    {
+                            newPoint(j) = std::clamp(newPoint(j), bounds.value().at(j).first, bounds.value().at(j).second);
+	                    }
+                    }
+                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, newPoint, bounds);
                     double val = opt::eval(f, v);
-
                     return std::make_pair(v, val);
-                    
                 };
 
                 auto comp = [](const pair_t& v1, const pair_t& v2) {

@@ -52,20 +52,28 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
-            template <typename opt_rprop, typename Optimizer = opt::Rprop<opt_rprop>>
+            template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct KernelLooOpt {
             public:
+                KernelLooOpt(int dim_in):
+					opt_(Optimizer::create(dim_in))
+                {}
+
+                static KernelLooOpt create(int dim_in)
+                {
+                    return KernelLooOpt(dim_in);
+                }
+					
                 template <typename GP>
                 void operator()(GP& gp)
                 {
                     KernelLooOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
-                    Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), false);
+                    Eigen::VectorXd params = opt_.optimize(optimization, gp.kernel_function().h_params(), std::nullopt);
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
                 }
 
-            protected:
+            private:
                 template <typename GP>
                 struct KernelLooOptimization {
                 public:
@@ -91,6 +99,8 @@ namespace limbo {
                 protected:
                     const GP& _original_gp;
                 };
+
+                Optimizer opt_;
             };
         } // namespace gp
     } // namespace model

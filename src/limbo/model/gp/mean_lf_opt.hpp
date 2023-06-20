@@ -52,20 +52,30 @@ namespace limbo {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the mean only (try to align the mean function)
-            template <typename opt_rprop, concepts::Optimizer Optimizer = opt::Rprop<opt_rprop>>
+            template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct MeanLFOpt {
             public:
+                MeanLFOpt(int dims):
+					opt_(Optimizer::create(dims))
+                {}
+
+                static MeanLFOpt create(int dims)
+                {
+                    return MeanLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
                     MeanLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer = Optimizer::create(gp.mean_function().h_params().size());
-                    Eigen::VectorXd params = optimizer.optimize(optimization, gp.mean_function().h_params(), false);
+                    Eigen::VectorXd params = opt_.optimize(optimization, gp.mean_function().h_params(), std::nullopt);
                     gp.mean_function().set_h_params(params);
                     gp.recompute(true, false);
                 }
 
-            protected:
+            private:
+                Optimizer opt_;
+
                 template <typename GP>
                 struct MeanLFOptimization {
                 public:

@@ -82,7 +82,7 @@ namespace limbo {
         class GP {
         public:
             GP(int dim_in)
-                : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false) {}
+                : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
             /// Initialize the GP from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,
@@ -529,7 +529,7 @@ namespace limbo {
         /// GPOpt is a GP with a "mean data" mean function, Exponential kernel with Automatic Relevance
         /// Determination (ARD), and hyper-parameter optimization based on Rprop
         template <typename Params>
-        using GPOpt = GP<kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<typename Params::opt_rprop>>;
+        using GPOpt = GP<kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<opt::Irpropplus<typename Params::opt_irpropplus>>>;
     } // namespace model
 } // namespace limbo
 

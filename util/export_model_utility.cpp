@@ -1,10 +1,9 @@
-#include <gtest/gtest.h>
 
 #include <limbo/kernel.hpp>
 #include <limbo/model.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/serialize/text_archive.hpp>
-#include <limbo/serialize/function_export.hpp>
+#include "function_export.hpp"
 
 using namespace limbo;
 
@@ -25,44 +24,36 @@ namespace {
         struct opt_rprop : defaults::opt_rprop
         {
             BO_PARAM(double, eps_stop, 0);
-            // BO_PARAM(double, eps_stop, 1e-10);
+        };
+
+        struct opt_irpropplus : defaults::opt_irpropplus
+        {
+            BO_PARAM(double, min_gradient, 1e-3);
         };
     };
 }
 
-
-TEST(Limbo_HyperParameter, grad_SE_ARD)
+//Export loglikelihood
+int main()
 {
     using Kernel = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
-    using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<Params::opt_rprop>>;
+    using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<opt::Irpropplus<Params::opt_irpropplus>>>;
+    // using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
 
-    std::filesystem::path rootDir(LIMBO_TEST_RESOURCES_DIR);
-    // Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_init").string()));
-    Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_3d_init").string()));
-
-    m.optimize_hyperparams();
-}
-
-TEST(Limbo_HyperParameter, exportLogLik)
-{
-    using Kernel = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
-    using Model = model::GP<Kernel, mean::Data, model::gp::KernelLFOpt<Params::opt_rprop>>;
-
-    std::filesystem::path rootDir(LIMBO_TEST_RESOURCES_DIR);
-    Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_3d_init").string()));
+    std::filesystem::path rootDir(R"(C:\Users\NicholasAnthony\source\repos\wt_gui\external\WaveTracer\testing\optimizerTests\resources\DIA_highD\optimizations\hp_10_irpropplus_ser_1eneg3)");
+    Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_init").string()));
 
     serialize::FunctionExport(
         rootDir / "pre",
         serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood,
         m,
-        100);
+        6);
 
-    // serialize::FunctionExport(rootDir / "pre", serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood, m, 100);
-    // m.optimize_hyperparams(); // TODO log each iteration
+    m.optimize_hyperparams(); // TODO log each iteration
     // serialize::FunctionExport(
     //     rootDir / "post",
     //     serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood,
     //     m,
     //     200);
-
+    return 0;
 }
