@@ -68,7 +68,7 @@ namespace limbo {
                 void operator()(GP& gp)
                 {
                     MeanLFOptimization<GP> optimization(gp);
-                    Eigen::VectorXd params = opt_.optimize(optimization, gp.mean_function().h_params(), gp.mean_function().h_params_bounds());
+                    Eigen::VectorXd params = opt_.optimize(optimization, gp.mean_function().h_params(), std::nullopt);
                     gp.mean_function().set_h_params(params);
                     gp.recompute(true, false);
                 }

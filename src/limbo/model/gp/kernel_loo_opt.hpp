@@ -68,7 +68,7 @@ namespace limbo {
                 void operator()(GP& gp)
                 {
                     KernelLooOptimization<GP> optimization(gp);
-                    Eigen::VectorXd params = opt_.optimize(optimization, gp.kernel_function().h_params(), gp.kernel_function().h_params_bounds());
+                    Eigen::VectorXd params = opt_.optimize(optimization, gp.kernel_function().h_params(), std::nullopt);
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
                 }

@@ -41,7 +41,7 @@ namespace limbo {
         	template <concepts::EvalFunc F>
             Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
-
+                assert(!bounds.has_value() && "rprop doesn't suppoert bounds");
                 const size_t param_dim = init.size();
                 constexpr double delta0 = opt_irpropplus::init_delta();
                 constexpr double deltamin = opt_irpropplus::min_delta();

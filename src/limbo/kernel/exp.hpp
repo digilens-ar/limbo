@@ -111,11 +111,6 @@ namespace limbo {
                 _sf2 = std::exp(2.0 * p(1));
             }
 
-            std::vector<std::pair<double, double>> h_params_bounds_()
-            {
-	            return { std::make_pair(-INFINITY, std::log(5)), std::make_pair(-INFINITY, INFINITY) }; // Don't let l exceed 2 since we are only looking at data between 0 and 1 anyway. prevents hyperparm optimization from going off to infinity.
-            };
-
             double _sf2, _l;
 
             Eigen::VectorXd _h_params;

@@ -31,7 +31,7 @@ namespace limbo {
                 auto body = [this, &init, &bounds, &f](int i) -> pair_t {
                     Eigen::VectorXd newPoint;
                     if (i == 0)
-                    { // For the first repeat don't do any randomization
+                    { 
                         newPoint = init;
                     }
                     else

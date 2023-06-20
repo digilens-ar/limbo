@@ -88,6 +88,7 @@ namespace limbo {
             Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 assert(opt_rprop::eps_stop() >= 0.);
+                assert(!bounds.has_value() && "rprop doesn't suppoert bounds");
 
                 const size_t param_dim = init.size();
                 constexpr double delta0 = 0.1;
@@ -99,12 +100,6 @@ namespace limbo {
                 Eigen::VectorXd delta = Eigen::VectorXd::Ones(param_dim) * delta0;
                 Eigen::VectorXd grad_old = Eigen::VectorXd::Zero(param_dim);
                 Eigen::VectorXd params = init;
-
-                if (bounds.has_value()) {
-                    for (int j = 0; j < params.size(); j++) {
-                        params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
-                    }
-                }
 
                 Eigen::VectorXd best_params = params;
                 double best = -INFINITY;
@@ -127,9 +122,6 @@ namespace limbo {
                             grad(j) = 0;
                         }
                         params(j) += -signum(grad(j)) * delta(j);
-
-                        if (bounds.has_value())
-                            params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                     }
 
                     grad_old = grad;

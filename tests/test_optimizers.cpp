@@ -46,7 +46,7 @@
 #include <gtest/gtest.h>
 #include <limbo/opt.hpp>
 #include "limbo/tools.hpp"
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
 #include <tbb/global_control.h>
 #endif
 using namespace limbo;
@@ -282,7 +282,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 
 TEST(Limbo_Optimizers, parallel_repeater)
 {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
     tbb::global_control(tbb::global_control::max_allowed_parallelism, 1);
 #endif
     using namespace limbo;
@@ -299,7 +299,7 @@ TEST(Limbo_Optimizers, parallel_repeater)
     ASSERT_EQ(starting_points.size(), simple_calls);
     ASSERT_TRUE(starting_points[0](0) >= 2. - Params::opt_parallelrepeater::epsilon() && starting_points[0](0) <= 2. + Params::opt_parallelrepeater::epsilon());
     ASSERT_TRUE(starting_points[Params::opt_rprop::iterations() + 1](0) >= 2. - Params::opt_parallelrepeater::epsilon() && starting_points[Params::opt_rprop::iterations() + 1](0) <= 2. + Params::opt_parallelrepeater::epsilon());
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
     tools::par::init();
 #endif
 }

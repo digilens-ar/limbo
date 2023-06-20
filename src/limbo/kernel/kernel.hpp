@@ -122,16 +122,6 @@ namespace limbo {
                 }
             }
 
-            std::vector<std::pair<double, double>> h_params_bounds()
-            {
-                auto bounds = static_cast<Kernel*>(this)->h_params_bounds_();
-	            if (kernel_opt::optimize_noise())
-	            {
-                    bounds.push_back(std::make_pair(-INFINITY, INFINITY));
-	            }
-                return bounds;
-            };
-
             // Get signal noise
             double noise() const { return _noise; }
 

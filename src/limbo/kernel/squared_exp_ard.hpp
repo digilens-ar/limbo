@@ -55,8 +55,7 @@ namespace limbo {
             BO_PARAM(int, k, 0); //equivalent to the standard exp ARD
             /// @ingroup kernel_defaults
             BO_PARAM(double, sigma_sq, 1);
-            /// @ingroup kernel_defaults
-            BO_PARAM(double, l_init , 0.5); // The initial characteristic length to use
+  
         };
     } // namespace defaults
 
@@ -85,7 +84,6 @@ namespace limbo {
             SquaredExpARD(int dim = 1) : _ell_inv(dim), _A(dim, kernel_squared_exp_ard::k()), _input_dim(dim)
             {
                 Eigen::VectorXd p = Eigen::VectorXd::Zero(_ell_inv.size() + _ell_inv.size() * kernel_squared_exp_ard::k() + 1);
-                p.fill(std::log(kernel_squared_exp_ard::l_init()));
                 p(p.size() - 1) = std::log(std::sqrt(kernel_squared_exp_ard::sigma_sq()));
                 this->set_params_(p);
             }
@@ -152,13 +150,6 @@ namespace limbo {
                         _A(i, j) = p((j + 1) * _input_dim + i);
                 _sf2 = std::exp(2.0 * p(params_size_() - 1));
             }
-
-            std::vector<std::pair<double, double>> h_params_bounds_()
-            {
-                std::vector<std::pair<double, double>> bounds(_input_dim, std::make_pair(-INFINITY, std::log(5)));
-                bounds.push_back(std::make_pair(-INFINITY, INFINITY)); // Don't let l exceed 2 since we are only looking at data between 0 and 1 anyway. prevents hyperparm optimization from going off to infinity.
-                return bounds;
-            };
 
             double _sf2;
             Eigen::VectorXd _ell_inv;

@@ -89,8 +89,6 @@ namespace limbo {
                 return p;
             }
 
-            std::vector<std::pair<double, double>> h_params_bounds() { return {std::make_pair(-INFINITY, INFINITY)}; };
-
             void set_h_params(const Eigen::VectorXd& p)
             {
                 _constant = p(0);

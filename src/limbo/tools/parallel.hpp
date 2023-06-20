@@ -49,7 +49,7 @@
 #include <algorithm>
 #include <vector>
 
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 #include <tbb/blocked_range.h>
@@ -65,7 +65,7 @@
 namespace limbo {
     namespace tools {
         namespace par {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
             template <typename X> // old fashion way to create template alias (for GCC
             // 4.6...)
@@ -109,7 +109,7 @@ namespace limbo {
             template <typename F>
             inline void loop(size_t begin, size_t end, const F& f)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(begin), end, size_t(1), [&](size_t i) {
                     
                 f(i);
@@ -126,7 +126,7 @@ namespace limbo {
             template <typename Iterator, typename F>
             inline void for_each(Iterator begin, Iterator end, const F& f)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_for_each(begin, end, f);
 #else
                 for (Iterator i = begin; i != end; ++i)
@@ -139,7 +139,7 @@ namespace limbo {
             template <typename T, typename F, typename C>
             inline T max(const T& init, int num_steps, const F& f, const C& comp)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 auto body = [&](const tbb::blocked_range<size_t>& r, T current_max) -> T {
                     
 		            for (size_t i = r.begin(); i != r.end(); ++i)
@@ -172,7 +172,7 @@ namespace limbo {
             template <typename T1, typename T2, typename T3>
             inline void sort(T1 i1, T2 i2, T3 comp)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_sort(i1, i2, comp);
 #else
                 std::sort(i1, i2, comp);
@@ -184,7 +184,7 @@ namespace limbo {
             template <typename F>
             inline void replicate(size_t nb, const F& f)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(0), nb, size_t(1), [&](size_t i) {
                     
                 f();
