@@ -92,11 +92,17 @@ namespace limbo {
                 auto body = [&](int i) {
                     
                     Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
-                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, init + r_deviation, bounds);
+                    Eigen::VectorXd newPoint = init + r_deviation;
+                    if (bounds.has_value())
+                    { // Make sure initil point is in bounds
+	                    for (int j=0; j<newPoint.size(); j++)
+	                    {
+                            newPoint(j) = std::clamp(newPoint(j), bounds.value().at(j).first, bounds.value().at(j).second);
+	                    }
+                    }
+                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, newPoint, bounds);
                     double val = opt::eval(f, v);
-
                     return std::make_pair(v, val);
-                    
                 };
 
                 auto comp = [](const pair_t& v1, const pair_t& v2) {
