@@ -315,7 +315,6 @@ namespace {
 }
 int main(int argc, char** argv)
 {
-    tools::par::init();
 
 #ifdef LIMBO_USE_TBB
     using res_t = tbb::concurrent_hash_map<std::string, std::vector<std::pair<double, double>>>;

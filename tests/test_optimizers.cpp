@@ -299,9 +299,6 @@ TEST(Limbo_Optimizers, parallel_repeater)
     ASSERT_EQ(starting_points.size(), simple_calls);
     ASSERT_TRUE(starting_points[0](0) >= 2. - Params::opt_parallelrepeater::epsilon() && starting_points[0](0) <= 2. + Params::opt_parallelrepeater::epsilon());
     ASSERT_TRUE(starting_points[Params::opt_rprop::iterations() + 1](0) >= 2. - Params::opt_parallelrepeater::epsilon() && starting_points[Params::opt_rprop::iterations() + 1](0) <= 2. + Params::opt_parallelrepeater::epsilon());
-#ifdef LIMBO_USE_TBB
-    tools::par::init();
-#endif
 }
 
 TEST(Limbo_Optimizers, chained)
