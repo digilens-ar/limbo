@@ -78,8 +78,9 @@
 namespace limbo {
     namespace defaults {
         struct bayes_opt_boptimizer {
-            BO_PARAM(int, hp_period, -1); // If this is a positive number the model will `optimize_hyperparameters` every `hp_period` iterations
-            BO_PARAM(bool, stats_enabled, true);
+            BO_PARAM(int, hp_period, -1); // If this is a positive number the model will `optimize_hyperparameters` every `hp_period + i * hp_period_scaler` iterations
+            BO_PARAM(double, hp_period_scaler, 0.0); // If this is 0 the hyperparameter optimization will occur on a regular schedule. If it is positive then the frequency of optimization will decrease over time. This can be useful since optimization becomes time consuming when more samples are present and usually doesn't result in major changes of the hyperparameters if the optimization has already been run a few times earlier. Values must be less than 1. Reccommended values are ~0.0-0.2 
+        	BO_PARAM(bool, stats_enabled, true);
             BO_PARAM(bool, bounded, true);
         };
     }
@@ -259,19 +260,26 @@ namespace limbo {
                             });
                     }
 
-                    _model.add_sample(this->_samples.back(), this->_observations.back()); // update the model
+                    _model.add_sample(_samples.back(), _observations.back()); // update the model
 
-                    if (Params::bayes_opt_boptimizer::hp_period() > 0
-                        && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0) {
-                        _model.optimize_hyperparams();
+                    if (Params::bayes_opt_boptimizer::hp_period() > 0)
+                    {
+                        if ((iterations_since_hp_optimize_ + 1) % static_cast<int>(Params::bayes_opt_boptimizer::hp_period() + _current_iteration * Params::bayes_opt_boptimizer::hp_period_scaler()) == 0)
+                        {
+                            iterations_since_hp_optimize_ = 0;
+                            _model.optimize_hyperparams();
 #ifdef SAVE_HP_MODELS
-                        _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_current_iteration))).string()));
+                            _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_current_iteration))).string()));
 #endif
+                        }
+                        else
+                        {
+                            ++iterations_since_hp_optimize_;
+                        }
                     }
 
-
-                	++this->_current_iteration;
-                    ++this->_total_iterations;
+                	++_current_iteration;
+                    ++_total_iterations;
                 }
                 return stopMessage;
             }
@@ -280,14 +288,14 @@ namespace limbo {
             double best_observation() const
             {
                 auto max_e = std::max_element(_observations.begin(), _observations.end());
-                return this->_observations[std::distance(_observations.begin(), max_e)];
+                return _observations[std::distance(_observations.begin(), max_e)];
             }
 
             /// return the best sample so far (i.e. the argmax(f(x)))
             const Eigen::VectorXd& best_sample() const
             {
                 auto max_e = std::max_element(_observations.begin(), _observations.end());
-                return this->_samples[std::distance(_observations.begin(), max_e)];
+                return _samples[std::distance(_observations.begin(), max_e)];
             }
 
             model_type const& model() const { return _model; }
@@ -384,6 +392,7 @@ namespace limbo {
 
             int _current_iteration = 0;
             int _total_iterations = 0;
+            size_t iterations_since_hp_optimize_ = 0;
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type _stopping_criteria;
             stats_t  stat_;
             acqui_opt_t acqui_optimizer;
