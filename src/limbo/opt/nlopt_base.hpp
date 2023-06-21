@@ -62,7 +62,7 @@ namespace limbo::opt {
     class NLOptBase {
     public:
         template <concepts::EvalFunc F>
-        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds, double* bestVal = nullptr) const
         {
             assert(init.size() == dim_);
 
@@ -81,21 +81,28 @@ namespace limbo::opt {
 
             double max;
 
-            try {
-                _opt.optimize(x, max);
+            // try {
+            //     nlopt::result result = _opt.optimize(x, max);
+            // }
+            // catch (nlopt::roundoff_limited const& e) {
+            //     // In theory it's ok to ignore these errors
+            //     spdlog::error("[NLOptNoGrad roundoff_limited]: {}", e.what());
+            // }
+            // catch (std::invalid_argument const& e) {
+            //     // In theory it's ok to ignore this error
+            //     spdlog::error("[NLOptNoGrad invalid_argument]: {}", e.what());
+            // }
+            // catch (std::runtime_error const& e) {
+            //     // In theory it's ok to ignore this error
+            //     spdlog::error("[NLOptGrad runtime_error]: {}", e.what());
+            // }
+            nlopt::result result = _opt.optimize(x, max);
+
+            if (bestVal)
+            {
+                *bestVal = max;
             }
-            catch (nlopt::roundoff_limited const& e) {
-                // In theory it's ok to ignore these errors
-                spdlog::error("[NLOptNoGrad roundoff_limited]: {}", e.what());
-            }
-            catch (std::invalid_argument& e) {
-                // In theory it's ok to ignore this error
-                spdlog::error("[NLOptNoGrad invalid_argument]: {}", e.what());
-            }
-            catch (std::runtime_error& e) {
-                // In theory it's ok to ignore this error
-                spdlog::error("[NLOptGrad runtime_error]: {}", e.what());
-            }
+
 
             return Eigen::VectorXd::Map(x.data(), x.size());
         }
@@ -121,6 +128,8 @@ namespace limbo::opt {
             }
             _opt.add_equality_constraint(nlopt_func<F>, (void*)f, tolerance);
 		}
+
+        nlopt::algorithm getAlgorithm() const { return _opt.get_algorithm(); }
 
     protected:
 

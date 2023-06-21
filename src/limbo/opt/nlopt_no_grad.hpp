@@ -116,18 +116,40 @@ namespace limbo {
                 // TO-DO: Add support for MLSL (Multi-Level Single-Linkage)
                 // TO-DO: Add better support for ISRES (Improved Stochastic Ranking Evolution Strategy)
                 
-                static_assert(Algorithm == nlopt::LN_COBYLA || Algorithm == nlopt::LN_BOBYQA ||
-                    Algorithm == nlopt::LN_NEWUOA || Algorithm == nlopt::LN_NEWUOA_BOUND ||
-                    Algorithm == nlopt::LN_PRAXIS || Algorithm == nlopt::LN_NELDERMEAD ||
-                    Algorithm == nlopt::LN_SBPLX || Algorithm == nlopt::GN_DIRECT ||
-                    Algorithm == nlopt::GN_DIRECT_L || Algorithm == nlopt::GN_DIRECT_L_RAND ||
-                    Algorithm == nlopt::GN_DIRECT_NOSCAL || Algorithm == nlopt::GN_DIRECT_L_NOSCAL ||
-                    Algorithm == nlopt::GN_DIRECT_L_RAND_NOSCAL || Algorithm == nlopt::GN_ORIG_DIRECT ||
-                    Algorithm == nlopt::GN_ORIG_DIRECT_L || Algorithm == nlopt::GN_CRS2_LM ||
-                    Algorithm == nlopt::LN_AUGLAG || Algorithm == nlopt::LN_AUGLAG_EQ ||
-                    Algorithm == nlopt::GN_ISRES || Algorithm == nlopt::GN_ESCH, "NLOptNoGrad accepts gradient free nlopt algorithms only");
+                static_assert(Algorithm == nlopt::LN_COBYLA 
+                    || Algorithm == nlopt::LN_BOBYQA 
+                    || Algorithm == nlopt::LN_NEWUOA 
+                    || Algorithm == nlopt::LN_NEWUOA_BOUND 
+                    || Algorithm == nlopt::LN_PRAXIS 
+                    || Algorithm == nlopt::LN_NELDERMEAD 
+                    ||Algorithm == nlopt::LN_SBPLX 
+                    || Algorithm == nlopt::GN_DIRECT 
+                    || Algorithm == nlopt::GN_DIRECT_L 
+                    || Algorithm == nlopt::GN_DIRECT_L_RAND 
+                    || Algorithm == nlopt::GN_DIRECT_NOSCAL 
+                    || Algorithm == nlopt::GN_DIRECT_L_NOSCAL 
+                    || Algorithm == nlopt::GN_DIRECT_L_RAND_NOSCAL 
+                    || Algorithm == nlopt::GN_ORIG_DIRECT 
+                    || Algorithm == nlopt::GN_ORIG_DIRECT_L
+                    || Algorithm == nlopt::GN_CRS2_LM 
+                    || Algorithm == nlopt::LN_AUGLAG 
+                    || Algorithm == nlopt::LN_AUGLAG_EQ  
+                    || Algorithm == nlopt::AUGLAG 
+                    || Algorithm == nlopt::AUGLAG_EQ 
+                    || Algorithm == nlopt::GN_ISRES 
+                    || Algorithm == nlopt::GN_ESCH,
+                    "NLOptNoGrad accepts gradient free nlopt algorithms only");
 
                 NLOptNoGrad opt(Algorithm, dim);
+
+                if constexpr (Algorithm == nlopt::AUGLAG)
+                {
+                	nlopt::opt opt2(nlopt::GN_DIRECT_L_RAND, dim); // DIRECT_L_RAND consistently seems to perform better than the other options.
+                    opt2.set_maxeval(opt_nloptnograd::iterations());
+                    opt2.set_ftol_rel(opt_nloptnograd::fun_tolerance());
+                    opt2.set_xtol_rel(opt_nloptnograd::xrel_tolerance());
+                    opt._opt.set_local_optimizer(opt2);
+                }
 
                 opt._opt.set_maxeval(opt_nloptnograd::iterations());
                 opt._opt.set_ftol_rel(opt_nloptnograd::fun_tolerance());
