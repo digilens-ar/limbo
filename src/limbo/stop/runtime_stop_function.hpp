@@ -6,7 +6,7 @@ namespace limbo::stop
 	//This class acts as an adapter between limbo's all-static registration of stop conditions. Allows registering a dynamic function to be called.
 	struct RuntimeStopFunction
 	{
-		using StopFuncT = std::function<bool(double, Eigen::VectorXd, const std::vector<double>&, const std::vector<Eigen::VectorXd>&, std::string&)>;
+		using StopFuncT = std::function<bool(double, Eigen::VectorXd, std::vector<double>, std::vector<Eigen::VectorXd>, std::string&)>;
 
 		template<concepts::BayesOptimizer BO>
 		bool operator()(BO const& bo, std::string& stopMessage) const

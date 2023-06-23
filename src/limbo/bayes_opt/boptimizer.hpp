@@ -233,7 +233,7 @@ namespace limbo {
 
                 std::string stopMessage = "";
                 // While no stopping criteria return `true`
-                while (!boost::fusion::accumulate(_stopping_criteria, false, [this, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, stopMessage); }))
+                while (!boost::fusion::accumulate(stopping_criteria_, false, [this, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, stopMessage); }))
                 {
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
@@ -299,7 +299,6 @@ namespace limbo {
             }
 
             model_type const& model() const { return _model; }
-            stats_t& statsFunctors() { return stat_; }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
             std::vector<double> const& observations() const { return _observations; }
@@ -388,13 +387,13 @@ namespace limbo {
                 boost::fusion::for_each(stat_, [&dir](auto& stat) {stat.setOutputDirectory(dir); });
             }
 
+		protected:
+            typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type stopping_criteria_;
+            stats_t  stat_;
         private:
-
             int _current_iteration = 0;
             int _total_iterations = 0;
             size_t iterations_since_hp_optimize_ = 0;
-            typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type _stopping_criteria;
-            stats_t  stat_;
             acqui_opt_t acqui_optimizer;
 			std::vector<double> _observations;
             std::vector<Eigen::VectorXd> _samples;
