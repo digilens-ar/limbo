@@ -1,16 +1,9 @@
 #pragma once
+#include <limbo/public.hpp>
 #include <concepts>
 #include <Eigen/Dense>
 
-namespace limbo
-{
-	enum EvaluationStatus
-	{
-		OK, // Return this if everything was successful
-		SKIP, // return this if you want evaluation of the current point to be skipped.
-		TERMINATE // return this to call for early termination of the optimization
-	};
-}
+
 
 namespace limbo::concepts
 {

@@ -56,7 +56,7 @@ if (LIMBO_USE_INTEL_MKL)
 		find_package(MKL CONFIG REQUIRED) # You mut install MKL yourself from Intel's installer
 	endif()
 	target_link_libraries(limbo INTERFACE MKL::MKL)
-	target_compile_definitions(limbo INTERFACE EIGEN_USE_MKL_ALL)
+	target_compile_definitions(limbo INTERFACE LIMBO_USE_INTEL_MKL)
 endif()
 
 option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)

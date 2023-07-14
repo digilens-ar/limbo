@@ -54,7 +54,7 @@
 #include <Eigen/Core>
 #include <boost/fusion/container.hpp>
 #include <boost/fusion/algorithm.hpp>
-
+#include <limbo/public.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
 #include <limbo/stat.hpp>
@@ -84,12 +84,6 @@ namespace limbo {
             BO_PARAM(bool, bounded, true);
         };
     }
-
-    class EvaluationError : public std::exception
-    {
-    public:
-        using std::exception::exception;
-    };
 
     namespace bayes_opt {
 
