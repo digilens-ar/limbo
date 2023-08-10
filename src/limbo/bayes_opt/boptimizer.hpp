@@ -191,7 +191,7 @@ namespace limbo {
             template <typename Archive>
             void loadFromArchive(Archive const& archive )
             {
-	            _model.load(archive);
+	            _model = model_type::load(archive);
                 _total_iterations = _model.observations().size();
             }
 
