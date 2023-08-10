@@ -71,7 +71,7 @@ namespace limbo {
             {
                 if (!Stop_MaxIterations::enabled())
                     return false;
-                if(bo.current_iteration() >= Stop_MaxIterations::iterations())
+                if(bo.total_iterations() >= Stop_MaxIterations::iterations())
                 {
 					stopMessage = fmt::format("The maximimum iteration number of {} was reached", Stop_MaxIterations::iterations());
                     return true;

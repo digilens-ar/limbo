@@ -70,10 +70,12 @@
 #else
 #include <limbo/opt/grid_search.hpp>
 #endif
+
+#ifdef SAVE_HP_MODELS
 #include <limbo/serialize/text_archive.hpp>
 #include <filesystem>
 #include <fstream>
-
+#endif
 
 namespace limbo {
     namespace defaults {
@@ -183,30 +185,32 @@ namespace limbo {
 
             BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer& operator=(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
+            BOptimizer(BOptimizer&& other) = default;
+            BOptimizer& operator=(BOptimizer&& other) = default;
+
+            template <typename Archive>
+            void loadFromArchive(Archive const& archive )
+            {
+	            _model.load(archive);
+                _total_iterations = _model.observations().size();
+            }
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction>
             std::string optimize(const StateFunction& sfun, bool reset = true)
             {
-                this->_current_iteration = 0;
                 if (reset) {
-                    this->_total_iterations = 0;
-                    this->_samples.clear();
-                    this->_observations.clear();
+                    _total_iterations = 0;
+                    _model = model_type(sfun.dim_in());
                 }
 
-                if (this->_total_iterations == 0) {
+                if (_total_iterations == 0) {
                     EvaluationStatus initStatus = init_t()(sfun, *this);
                     if (initStatus == TERMINATE)
                     {
                         return "Initialization requested that optimization be terminated";
                     }
                 }
-
-                if (!this->_observations.empty())
-                    _model.initialize(this->_samples, this->_observations);
-                else
-                    _model = model_type(sfun.dim_in());
 
                 if (Params::bayes_opt_boptimizer::hp_period() > 0)
                 { // If hyperparameter tuning is enabled then run it after initialization
@@ -229,7 +233,7 @@ namespace limbo {
                 // While no stopping criteria return `true`
                 while (!boost::fusion::accumulate(stopping_criteria_, false, [this, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, stopMessage); }))
                 {
-                    acquisition_function_t acqui(_model, this->_current_iteration);
+                    acquisition_function_t acqui(_model, this->_total_iterations);
 
                     Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
                     Eigen::VectorXd new_sample = acqui_optimizer.optimize(
@@ -254,16 +258,14 @@ namespace limbo {
                             });
                     }
 
-                    _model.add_sample(_samples.back(), _observations.back()); // update the model
-
                     if (Params::bayes_opt_boptimizer::hp_period() > 0)
                     {
-                        if ((iterations_since_hp_optimize_ + 1) % static_cast<int>(Params::bayes_opt_boptimizer::hp_period() + _current_iteration * Params::bayes_opt_boptimizer::hp_period_scaler()) == 0)
+                        if ((iterations_since_hp_optimize_ + 1) % static_cast<int>(Params::bayes_opt_boptimizer::hp_period() + _total_iterations * Params::bayes_opt_boptimizer::hp_period_scaler()) == 0)
                         {
                             iterations_since_hp_optimize_ = 0;
                             _model.optimize_hyperparams();
 #ifdef SAVE_HP_MODELS
-                            _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_current_iteration))).string()));
+                            _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_total_iterations))).string()));
 #endif
                         }
                         else
@@ -272,7 +274,6 @@ namespace limbo {
                         }
                     }
 
-                	++_current_iteration;
                     ++_total_iterations;
                 }
                 return stopMessage;
@@ -281,28 +282,26 @@ namespace limbo {
             /// return the best observation so far (i.e. max(f(x)))
             double best_observation() const
             {
-                auto max_e = std::max_element(_observations.begin(), _observations.end());
-                return _observations[std::distance(_observations.begin(), max_e)];
+                auto max_e = std::max_element(observations().begin(), observations().end());
+                return observations()[std::distance(observations().begin(), max_e)];
             }
 
             /// return the best sample so far (i.e. the argmax(f(x)))
             const Eigen::VectorXd& best_sample() const
             {
-                auto max_e = std::max_element(_observations.begin(), _observations.end());
-                return _samples[std::distance(_observations.begin(), max_e)];
+                auto max_e = std::max_element(observations().begin(), observations().end());
+                return samples()[std::distance(observations().begin(), max_e)];
             }
 
             model_type const& model() const { return _model; }
 
             /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
-            std::vector<double> const& observations() const { return _observations; }
+            std::vector<double> const& observations() const { return _model.observations(); }
 
             /// return the list of the points that have been evaluated so far (x)
-            std::vector<Eigen::VectorXd> const& samples() const { return _samples; }
+            std::vector<Eigen::VectorXd> const& samples() const { return _model.samples(); }
 
             /// return the current iteration number
-            int current_iteration() const { return _current_iteration; }
-
             int total_iterations() const { return _total_iterations; }
 
             acqui_opt_t const& acquisitionOptimizer() const { return acqui_optimizer; }
@@ -325,8 +324,7 @@ namespace limbo {
                     {
                         throw EvaluationError("Merit function returned an infinite value");
                     }
-                    _samples.push_back(sample);
-                    _observations.push_back(observation);
+                    _model.add_sample(sample, observation);
                 }
                 return status;
             }
@@ -384,17 +382,16 @@ namespace limbo {
 		protected:
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type stopping_criteria_;
             stats_t  stat_;
+            std::filesystem::path outputDir_;
         private:
-            int _current_iteration = 0;
             int _total_iterations = 0;
             size_t iterations_since_hp_optimize_ = 0;
             acqui_opt_t acqui_optimizer;
-			std::vector<double> _observations;
-            std::vector<Eigen::VectorXd> _samples;
+			// std::vector<double> _observations;
+   //          std::vector<Eigen::VectorXd> _samples;
             std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
             std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
             model_type _model;
-            std::filesystem::path outputDir_;
         };
 
         namespace _default_hp {
