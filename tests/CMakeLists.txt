@@ -13,6 +13,11 @@ add_executable(
 
 target_compile_definitions(limbo_tests PRIVATE LIMBO_TEST_TEMP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/temp")
 target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
+
+if (LIMBO_USE_INTEL_MKL)
+	target_compile_definitions(limbo_tests PRIVATE EIGEN_USE_MKL_ALL)
+endif()
+
 install(TARGETS limbo_tests)
 
 include(GoogleTest) 

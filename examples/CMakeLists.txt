@@ -8,5 +8,8 @@ set(example_targets limbo_example_mono_dim limbo_example_obs_multi limbo_example
 
 foreach(targ ${example_targets})
 	target_link_libraries(${targ} PUBLIC limbo)
+	if (LIMBO_USE_INTEL_MKL)
+		target_compile_definitions(${targ} PRIVATE EIGEN_USE_MKL_ALL)
+	endif()
 endforeach()
 install(TARGETS ${example_targets})
