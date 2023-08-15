@@ -14,16 +14,16 @@ namespace limbo::stat
 		void operator()(BO const& bo)
 		{
 			assert(bo.model().dim_in() == 1);
-			std::ofstream f(dir_ / (std::to_string(bo.current_iteration()) + ".dat"));
+			std::ofstream f(dir_ / (std::to_string(bo.total_iterations()) + ".dat"));
 			using acqFuncT = typename std::decay_t<decltype(bo)>::acquisition_function_t;
-			acqFuncT acquisitionFunction(bo.model(), bo.current_iteration());
+			acqFuncT acquisitionFunction(bo.model(), bo.total_iterations());
 			for (int i = 0; i < 100; ++i) {
 				Eigen::VectorXd v = tools::make_vector(i / 99.0);
 				auto [mu, sigma_sq] = bo.model().query(v);
 				auto [acqVal, grad] = acquisitionFunction(v, false);
 				f << v.transpose() << " " << mu[0] << " " << std::sqrt(sigma_sq) << " " << acqVal << std::endl;
 			}
-			bo.model().save(serialize::TextArchive((dir_ / (std::to_string(bo.current_iteration()) + ".model")).string()));
+			bo.model().save(serialize::TextArchive((dir_ / (std::to_string(bo.total_iterations()) + ".model")).string()));
 		}
 	};
 }

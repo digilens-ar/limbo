@@ -14,5 +14,8 @@ endif()
 
 foreach(targ ${tutorial_targets})
 	target_link_libraries(${targ} PUBLIC limbo)
+	if (LIMBO_USE_INTEL_MKL)
+		target_compile_definitions(${targ} PRIVATE EIGEN_USE_MKL_ALL)
+	endif()
 endforeach()
 install(TARGETS ${tutorial_targets})

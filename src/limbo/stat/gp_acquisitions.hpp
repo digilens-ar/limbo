@@ -65,7 +65,7 @@ namespace limbo {
 
                 if (!bo.samples().empty()) {
                     auto [mu, sigma] = bo.model().query(bo.samples().back());
-                    auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(bo.samples().back(), false);
+                    auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.total_iterations())(bo.samples().back(), false);
                     (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
                 }
             }
