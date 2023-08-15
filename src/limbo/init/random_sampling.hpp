@@ -76,22 +76,33 @@ namespace limbo {
             {
                 for (int i = 0; i < InitRandomSampling::samples(); i++) {
                     Eigen::VectorXd new_sample;
-                    int cnt = 0;
-                    do
-                    { // Find a sample that satisfies the constraints
-                        new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
-                        if (cnt++ > 1000000)
-                        {
-                            spdlog::error("Limbo RandomSampling: Failed to find a random sample that satisfies constraints after 1000000 attempts");
-                            break;
-                        }
-                    } while (!opt.constraintsAreSatisfied(new_sample));
-
-                    EvaluationStatus status = SKIP;
-                    do
+                    if (opt.hasConstraints())
                     {
-						status = opt.eval_and_add(seval, new_sample);
-                    } while (status == SKIP);
+                        const auto proposed_new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                        auto ConstFunc = [&proposed_new_sample](Eigen::VectorXd const& position, bool gradient) -> std::pair<double, std::optional<Eigen::VectorXd>> // A function with a max at proposed_new_sample that falls off proportional to the distance.
+                        { 
+                            assert(!gradient);
+                            return {
+                                -.01 * (proposed_new_sample - position).norm(),
+                                std::nullopt};
+                        };
+                        // static_assert(concepts::EvalFunc<ConstFunc>);
+
+                        auto parameterBounds = std::vector<std::pair<double, double>>(seval.dim_in(), std::make_pair( 0.0, 1.0 ));
+
+                        //find the closest coordinate to proposed_new_sample that satisfies the constraints
+	                    new_sample = opt.acquisitionOptimizer().optimize(
+                            ConstFunc, 
+                            proposed_new_sample, 
+                            parameterBounds);
+                    }
+                    else
+                    {
+	                    new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                    }
+
+					EvaluationStatus status = opt.eval_and_add(seval, new_sample);
+                    assert(status != SKIP); // I'm not sure how we should handle this case.
 
 					if (status == TERMINATE)
 					{
