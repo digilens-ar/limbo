@@ -197,7 +197,7 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction>
-            std::string optimize(const StateFunction& sfun, bool reset = true)
+            std::string optimize(const StateFunction& sfun, bool reset = true, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt)
             {
                 if (reset) {
                     _total_iterations = 0;
@@ -205,7 +205,16 @@ namespace limbo {
                 }
 
                 if (_total_iterations == 0) {
-                    EvaluationStatus initStatus = init_t()(sfun, *this);
+                    EvaluationStatus initStatus;
+                    if (initialPoint.has_value())
+                    {
+	                    initStatus = eval_and_add(sfun, initialPoint.value());
+                        if (initStatus == TERMINATE)
+	                    {
+	                        return "Initialization requested that optimization be terminated";
+	                    }
+                    }
+                    initStatus = init_t()(sfun, *this);
                     if (initStatus == TERMINATE)
                     {
                         return "Initialization requested that optimization be terminated";
@@ -306,7 +315,7 @@ namespace limbo {
 
             acqui_opt_t const& acquisitionOptimizer() const { return acqui_optimizer; }
 
-            /// Evaluate a sample and add the result to the 'database' (sample / observations vectors) -- it does not update the model
+            /// Evaluate a sample and add the result to the 'database' (sample / observations vectors)
             template <concepts::StateFunc StateFunction>
             EvaluationStatus eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
             {
