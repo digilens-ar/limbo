@@ -8,6 +8,9 @@ add_executable(
 if (LIMBO_USE_INTEL_MKL)
 	target_compile_definitions(limbo_benchmarks PRIVATE EIGEN_USE_MKL_ALL)
 endif()
+if (LIMBO_USE_OPENBLAS)
+	target_compile_definitions(limbo_benchmarks PRIVATE EIGEN_USE_BLAS EIGEN_USE_LAPACKE)
+endif()
 
 target_link_libraries(limbo_benchmarks PUBLIC limbo benchmark::benchmark_main limbo)
 install(TARGETS limbo_benchmarks)

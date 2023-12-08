@@ -52,6 +52,16 @@
 #endif
 #endif
 
+#ifdef LIMBO_USE_OPENBLAS
+#ifndef EIGEN_USE_BLAS
+#error If using the LIMBO_USE_OPENBLAS option then you must also define EIGEN_USE_BLAS in any source file before including limbo. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+#endif
+#ifndef EIGEN_USE_LAPACKE
+#error If using the LIMBO_USE_OPENBLAS option then you must also define EIGEN_USE_LAPACKE in any source file before including limbo. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+#endif
+#endif
+
+
 #include <limbo/acqui.hpp>
 #include <limbo/bayes_opt/boptimizer.hpp>
 #include <limbo/init.hpp>

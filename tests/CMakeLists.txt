@@ -17,7 +17,9 @@ target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
 if (LIMBO_USE_INTEL_MKL)
 	target_compile_definitions(limbo_tests PRIVATE EIGEN_USE_MKL_ALL)
 endif()
-
+if (LIMBO_USE_OPENBLAS)
+	target_compile_definitions(limbo_tests PRIVATE EIGEN_USE_BLAS EIGEN_USE_LAPACKE)
+endif()
 install(TARGETS limbo_tests)
 
 include(GoogleTest) 

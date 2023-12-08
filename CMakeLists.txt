@@ -43,7 +43,12 @@ if (LIMBO_USE_TBB)
 	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
-option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" ON) #  This makes hyperparameter tuning much more efficient
+option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" OFF) #  This makes hyperparameter tuning much more efficient
+option(LIMBO_USE_OPENBLAS "Build with Eigen using OpenBlas as a backend" ON) #  This makes hyperparameter tuning much more efficient
+if (LIMBO_USE_INTEL_MKL AND LIMBO_USE_OPENBLAS)
+    message(FATAL_ERROR "Cannot enable LIMBO_USE_INTEL_MKL and LIMBO_USE_OPENBLAS simultaneously.")
+endif()
+
 if (LIMBO_USE_INTEL_MKL)
 	if(NOT TARGET MKL::MKL) # MKL does not guard against issues if you `find` it twice
 		set(MKL_LINK static)
@@ -57,6 +62,14 @@ if (LIMBO_USE_INTEL_MKL)
 	endif()
 	target_link_libraries(limbo INTERFACE MKL::MKL)
 	target_compile_definitions(limbo INTERFACE LIMBO_USE_INTEL_MKL)
+endif()
+if (LIMBO_USE_OPENBLAS)
+	find_package(OpenBLAS)
+	target_link_libraries(limbo INTERFACE OpenBLAS::OpenBLAS)
+	target_compile_definitions(limbo INTERFACE LIMBO_USE_OPENBLAS)
+	target_compile_definitions(limbo INTERFACE LAPACK_COMPLEX_CUSTOM)  # See https://github.com/OpenMathLib/OpenBLAS/wiki/How-to-use-OpenBLAS-in-Microsoft-Visual-Studio
+	target_compile_definitions(limbo INTERFACE lapack_complex_float=_Fcomplex)
+	target_compile_definitions(limbo INTERFACE lapack_complex_double=_Dcomplex)
 endif()
 
 option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)
