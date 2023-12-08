@@ -43,8 +43,10 @@ if (LIMBO_USE_TBB)
 	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
-option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" ON) #  This makes hyperparameter tuning much more efficient
-if (LIMBO_USE_INTEL_MKL)
+set(LIMBO_USE_BLAS "MKL" CACHE STRING "Which BLAS/LAPACK implementation to build with") #  This makes hyperparameter tuning much more efficient. Different backends work better depending on CPU vendor
+set_property(CACHE LIMBO_USE_BLAS PROPERTY STRINGS MKL AOCL NONE)
+
+if (LIMBO_USE_BLAS STREQUAL "MKL")
 	if(NOT TARGET MKL::MKL) # MKL does not guard against issues if you `find` it twice
 		set(MKL_LINK static)
 		if (LIMBO_USE_TBB)
@@ -57,6 +59,12 @@ if (LIMBO_USE_INTEL_MKL)
 	endif()
 	target_link_libraries(limbo INTERFACE MKL::MKL)
 	target_compile_definitions(limbo INTERFACE LIMBO_USE_INTEL_MKL)
+elseif(LIMBO_USE_BLAS STREQUAL "AOCL")
+	FindBLAS(BLA_STATIC ON BLA_VENDOR AOCL_mt BLA_SIZE_OF_INTEGER 8)
+	target_link_libraries(limbo INTERFACE BLAS::BLAS)
+	FindLAPACK(BLA_STATIC ON BLA_VENDOR AOCL_mt BLA_SIZE_OF_INTEGER 8)
+	target_link_libraries(limbo INTERFACE LAPACK::LAPACK)
+	target_compile_definitions(limbo INTERFACE LIMBO_USE_AOCL)
 endif()
 
 option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)

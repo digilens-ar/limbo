@@ -48,9 +48,18 @@
 
 #ifdef LIMBO_USE_INTEL_MKL
 #ifndef EIGEN_USE_MKL_ALL
-#error If using the LIMBO_USE_INTEL_MKL option then you must also define EIGEN_USE_MKL_ALL in any source file before including limbo. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+#error If using the LIMBO_USE_INTEL_MKL option then you must also define EIGEN_USE_MKL_ALL in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
 #endif
 #endif
+#ifdef LIMBO_USE_AOCL
+#ifndef EIGEN_USE_BLAS
+#error If using the LIMBO_USE_AOCL option then you must also define EIGEN_USE_BLAS in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+#endif
+#ifndef EIGEN_USE_LAPACKE
+#error If using the LIMBO_USE_AOCL option then you must also define EIGEN_USE_LAPACKE in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+#endif
+#endif
+
 
 #include <limbo/acqui.hpp>
 #include <limbo/bayes_opt/boptimizer.hpp>
