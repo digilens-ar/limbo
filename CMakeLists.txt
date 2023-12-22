@@ -43,7 +43,7 @@ if (LIMBO_USE_TBB)
 	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
-set(LIMBO_USE_BLAS "MKL" CACHE STRING "Which BLAS/LAPACK implementation to build with") #  This makes hyperparameter tuning much more efficient. Different backends work better depending on CPU vendor
+set(LIMBO_USE_BLAS "MKL" CACHE STRING "Which BLAS/LAPACK implementation to build with.(MKL, AOCL, NONE)") #  This makes hyperparameter tuning much more efficient. Different backends work better depending on CPU vendor
 set_property(CACHE LIMBO_USE_BLAS PROPERTY STRINGS MKL AOCL NONE)
 
 if (LIMBO_USE_BLAS STREQUAL "MKL")
@@ -68,7 +68,7 @@ elseif(LIMBO_USE_BLAS STREQUAL "AOCL")
 elseif (LIMBO_USE_BLAS STREQUAL "NONE")
 	message(STATUS "Not using a BLAS/LAPACK implementation in LIMBO")
 else()
-	message(FATAL_ERROR "LIMBO_USE_BLAS must be either MKL, AOCL, or NONE. Got ${DL_USE_BLAS}")
+	message(FATAL_ERROR "LIMBO_USE_BLAS must be either MKL, AOCL, or NONE. Got ${LIMBO_USE_BLAS}")
 endif()
 
 option(LIMBO_BUILD_TESTS "Build tests for limbo" OFF)
