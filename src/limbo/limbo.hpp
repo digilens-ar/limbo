@@ -46,18 +46,36 @@
 #ifndef LIMBO_HPP
 #define LIMBO_HPP
 
-#ifdef LIMBO_USE_INTEL_MKL
-#ifndef EIGEN_USE_MKL_ALL
-#error If using the LIMBO_USE_INTEL_MKL option then you must also define EIGEN_USE_MKL_ALL in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+#ifdef EIGEN_CORE_H
+#error Must include this file before including Eigen
 #endif
+
+#ifdef LIMBO_USE_INTEL_MKL
+// #ifndef EIGEN_USE_MKL_ALL
+// #error If using the LIMBO_USE_INTEL_MKL option then you must also define EIGEN_USE_MKL_ALL in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+// #endif
+#define EIGEN_USE_MKL_ALL
 #endif
 #ifdef LIMBO_USE_AOCL
-#ifndef EIGEN_USE_BLAS
-#error If using the LIMBO_USE_AOCL option then you must also define EIGEN_USE_BLAS in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+// This must be included before including Eigen. In many cases it isn't
+// actually needed, but if building with OpenBlas or AOCL on MSVC then compilation will fail
+// without these typedefs
+
+
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <complex.h>
+#define LAPACK_COMPLEX_CUSTOM
+using lapack_complex_float = std::_Fcomplex_value;
+using lapack_complex_double = std::_Dcomplex_value;
 #endif
-#ifndef EIGEN_USE_LAPACKE
-#error If using the LIMBO_USE_AOCL option then you must also define EIGEN_USE_LAPACKE in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
-#endif
+#define EIGEN_USE_BLAS
+#define EIGEN_USE_LAPACKE
+// #ifndef EIGEN_USE_BLAS
+// #error If using the LIMBO_USE_AOCL option then you must also define EIGEN_USE_BLAS in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+// #endif
+// #ifndef EIGEN_USE_LAPACKE
+// #error If using the LIMBO_USE_AOCL option then you must also define EIGEN_USE_LAPACKE in any source file before including limbo and Eigen. This is compile definition is not included with the CMAKE target since it can lead to slow compile times.
+// #endif
 #endif
 
 

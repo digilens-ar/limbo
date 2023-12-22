@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
+#include <limbo/limbo.hpp>
 #include <Eigen/Core>
 #include <random>
-#include <limbo/limbo.hpp>
 
 static std::default_random_engine eng;
 

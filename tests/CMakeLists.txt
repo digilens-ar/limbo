@@ -14,12 +14,6 @@ add_executable(
 target_compile_definitions(limbo_tests PRIVATE LIMBO_TEST_TEMP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/temp")
 target_link_libraries(limbo_tests PUBLIC limbo GTest::gtest_main)
 
-if (LIMBO_USE_BLAS STREQUAL "MKL")
-	target_compile_definitions(limbo_tests PRIVATE EIGEN_USE_MKL_ALL)
-elseif (LIMBO_USE_BLAS STREQUAL "AOCL")
-	target_compile_definitions(limbo_tests PRIVATE EIGEN_USE_BLAS)
-	target_compile_definitions(limbo_tests PRIVATE EIGEN_USE_LAPACKE)
-endif()
 install(TARGETS limbo_tests)
 
 include(GoogleTest) 

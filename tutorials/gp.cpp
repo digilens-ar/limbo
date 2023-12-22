@@ -44,15 +44,7 @@
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
 #include <fstream>
-#include <limbo/kernel/exp.hpp>
-#include <limbo/kernel/squared_exp_ard.hpp>
-#include <limbo/mean/data.hpp>
-#include <limbo/model/gp.hpp>
-#include <limbo/model/gp/kernel_lf_opt.hpp>
-#include <limbo/tools.hpp>
-#include <limbo/tools/macros.hpp>
-#include <limbo/opt.hpp>
-#include <limbo/serialize/text_archive.hpp>
+#include <limbo/limbo.hpp>
 
 // this tutorials shows how to use a Gaussian process for regression
 

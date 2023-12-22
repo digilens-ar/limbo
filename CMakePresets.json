@@ -32,7 +32,14 @@
       "name": "MSVC-Debug-TBB",
       "inherits": "MSVC-Debug",
       "cacheVariables": {
-        "LIMBO_USE_TBB":  "ON"
+        "LIMBO_USE_TBB": "ON"
+      }
+    },
+    {
+      "name": "MSVC-Debug-AOCL",
+      "inherits": "MSVC-Debug",
+      "cacheVariables": {
+        "LIMBO_USE_BLAS": "AOCL"
       }
     },
     {
