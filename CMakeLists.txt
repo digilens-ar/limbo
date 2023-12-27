@@ -43,8 +43,8 @@ if (LIMBO_USE_TBB)
 	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
-set(LIMBO_USE_BLAS "MKL" CACHE STRING "Which BLAS/LAPACK implementation to build with.(MKL, AOCL, NONE)") #  This makes hyperparameter tuning much more efficient. Different backends work better depending on CPU vendor
-set_property(CACHE LIMBO_USE_BLAS PROPERTY STRINGS MKL AOCL NONE)
+set(LIMBO_USE_BLAS "MKL" CACHE STRING "Which BLAS/LAPACK implementation to build with.(MKL, AOCL, OPENBLAS, NONE)") #  This makes hyperparameter tuning much more efficient. Different backends work better depending on CPU vendor
+set_property(CACHE LIMBO_USE_BLAS PROPERTY STRINGS MKL AOCL OPENBLAS NONE)
 
 if (LIMBO_USE_BLAS STREQUAL "MKL")
 	if(NOT TARGET MKL::MKL) # MKL does not guard against issues if you `find` it twice
@@ -64,6 +64,10 @@ elseif(LIMBO_USE_BLAS STREQUAL "AOCL")
 	set(AOCL_FIND_ILP64 "LP64")
 	find_package(AOCL REQUIRED)
 	target_link_libraries(limbo INTERFACE AOCL::BLIS AOCL::LIBFLAME)
+	target_compile_definitions(limbo INTERFACE LIMBO_USE_AOCL)
+elseif (LIMBO_USE_BLAS STREQUAL "OPENBLAS")
+	find_package(OpenBLAS CONFIG REQUIRED)
+	target_link_libraries(limbo INTERFACE OpenBLAS::OpenBLAS)
 	target_compile_definitions(limbo INTERFACE LIMBO_USE_AOCL)
 elseif (LIMBO_USE_BLAS STREQUAL "NONE")
 	message(STATUS "Not using a BLAS/LAPACK implementation in LIMBO")
