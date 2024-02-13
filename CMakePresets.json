@@ -26,7 +26,6 @@
       "inherits": "default",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "/W4"
       }
     },
     {
@@ -70,7 +69,7 @@
       "name": "Clang-Release-Fast",
       "inherits": "Clang-Release",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/W4 /fp:fast /EHsc"
+        "CMAKE_CXX_FLAGS": "/fp:fast /EHsc"
       }
     }
   ]
