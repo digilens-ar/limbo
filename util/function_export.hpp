@@ -34,7 +34,7 @@ namespace limbo::serialize
                 currentIdx_.at(currentDim_) = 0;
                 if (currentDim_ == 0)
                 { // this should only happen once we've iterated through the whole thing and need to roll back to 00000
-                    currentDim_ = numPerDimension_.size() - 1; // reset back to first iteration
+                    currentDim_ = static_cast<unsigned>(numPerDimension_.size()) - 1; // reset back to first iteration
                     currentIteration_ = 0;
                 }
                 else {
@@ -156,7 +156,7 @@ namespace limbo::serialize
             // std::vector<std::vector<int>> coords(dimensions, oneDCoords);
             std::vector<double> out;
             CartesianGenerator cartGen(std::vector<unsigned>(dimensions, samplesPerDim));
-            for (int i=0; i<cartGen.totalIterations(); i++)
+            for (unsigned i=0; i<cartGen.totalIterations(); i++)
             {
                 out.push_back(func(cartGen.currentIndex()));
                 cartGen.iterate();

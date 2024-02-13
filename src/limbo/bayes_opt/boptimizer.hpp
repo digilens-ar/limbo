@@ -393,11 +393,9 @@ namespace limbo {
             stats_t  stat_;
             std::filesystem::path outputDir_;
         private:
-            int _total_iterations = 0;
+            size_t _total_iterations = 0;
             size_t iterations_since_hp_optimize_ = 0;
             acqui_opt_t acqui_optimizer;
-			// std::vector<double> _observations;
-   //          std::vector<Eigen::VectorXd> _samples;
             std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
             std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
             model_type _model;

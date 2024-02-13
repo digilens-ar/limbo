@@ -128,7 +128,7 @@ namespace limbo {
 
             Eigen::VectorXd _h_params;
 
-            friend class BaseKernel<kernel_opt, MaternThreeHalves<kernel_opt, kernel_maternthreehalves>>;
+            friend struct BaseKernel<kernel_opt, MaternThreeHalves<kernel_opt, kernel_maternthreehalves>>;
         };
     } // namespace kernel
 } // namespace limbo

@@ -423,7 +423,7 @@ namespace randutils {
         template <typename T>
         static uint32_t crushto32(T value)
         {
-            if (sizeof(T) <= 4)
+            if constexpr (sizeof(T) <= 4)
                 return uint32_t(value);
             else {
                 uint64_t result = uint64_t(value);

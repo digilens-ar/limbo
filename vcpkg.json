@@ -12,6 +12,6 @@
     "benchmark",
     "zlib"
   ],
-  "builtin-baseline": "877e3dc2323a4d4c3c75e7168c22a0c4e921d4db",
+  "builtin-baseline": "7ba0ba7334c3346e7eee1e049ba85da193a8d821",
   "supports": "windows"
 }

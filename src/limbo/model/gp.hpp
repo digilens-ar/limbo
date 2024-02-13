@@ -266,7 +266,7 @@ namespace limbo {
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_mean_function.h_params_size());
-                for (size_t n_obs = 0; n_obs < _obs_mean.rows(); n_obs++) {
+                for (Eigen::Index n_obs = 0; n_obs < _obs_mean.rows(); n_obs++) {
                     grad += _obs_mean.transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).transpose();
                 }
 

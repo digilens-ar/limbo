@@ -154,10 +154,10 @@ namespace limbo {
                 while (std::getline(ifs, line)) {
                     std::stringstream line_stream(line);
                     std::string cell;
-                    std::vector<double> line;
+                    std::vector<double> lineVec;
                     while (std::getline(line_stream, cell, ' '))
-                        line.push_back(std::stod(cell));
-                    v.push_back(line);
+                        lineVec.push_back(std::stod(cell));
+                    v.push_back(lineVec);
                 }
                 assert(!v.empty() && "empty file");
                 return v;

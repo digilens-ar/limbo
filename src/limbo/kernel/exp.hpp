@@ -115,7 +115,7 @@ namespace limbo {
 
             Eigen::VectorXd _h_params;
 
-            friend class BaseKernel<kernel_opt, Exp<kernel_opt, kernel_exp>>;
+            friend struct BaseKernel<kernel_opt, Exp<kernel_opt, kernel_exp>>;
         };
     } // namespace kernel
 } // namespace limbo

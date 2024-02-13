@@ -56,7 +56,7 @@ namespace limbo {
             Data() {}
 
             template <typename GP>
-            double operator()(const Eigen::VectorXd& v, const GP& gp) const
+            double operator()([[maybe_unused]] const Eigen::VectorXd& v, const GP& gp) const
             {
                 return gp.mean_observation();
             }

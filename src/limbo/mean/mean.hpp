@@ -62,7 +62,7 @@ namespace limbo {
 
             Eigen::VectorXd h_params() const { return Eigen::VectorXd(); }
 
-            void set_h_params(const Eigen::VectorXd& p) {}
+            void set_h_params([[maybe_unused]] const Eigen::VectorXd& p) {}
 
             template <typename GP>
             Eigen::VectorXd grad(const Eigen::VectorXd& x, const GP& gp) const

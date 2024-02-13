@@ -157,7 +157,7 @@ namespace limbo {
             size_t _input_dim;
             Eigen::VectorXd _h_params;
 
-            friend class BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>>;
+            friend struct BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>>;
         };
     } // namespace kernel
 } // namespace limbo
