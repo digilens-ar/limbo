@@ -240,7 +240,7 @@ namespace limbo {
 
                 std::string stopMessage = "";
                 // While no stopping criteria return `true`
-                while (!boost::fusion::accumulate(stopping_criteria_, false, [this, &stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, stopMessage); }))
+                while (boost::fusion::accumulate(stopping_criteria_, false, [this, msgPtr=&stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, *msgPtr); }))
                 {
                     acquisition_function_t acqui(_model, this->_total_iterations);
 
