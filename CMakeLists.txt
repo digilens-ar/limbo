@@ -27,7 +27,6 @@ target_sources(limbo INTERFACE
 	BASE_DIRS src
 	FILES ${LIMBO_SOURCE_FILES}
 )
-#target_include_directories(limbo INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_definitions(limbo INTERFACE "NOMINMAX")  # This prevents windows.h from defining unwanted macros
 target_compile_definitions(limbo INTERFACE "_CRT_SECURE_NO_WARNINGS")  # This prevents windows from pointless deprecation warnings.
 target_link_libraries(limbo INTERFACE Boost::boost spdlog::spdlog Eigen3::Eigen)
@@ -48,7 +47,6 @@ option(LIMBO_USE_TBB "Use Intel TBB for parallelization" ON)
 if (LIMBO_USE_TBB)
 	target_compile_definitions(limbo INTERFACE "LIMBO_USE_TBB")
 	target_link_libraries(limbo INTERFACE TBB::tbb)
-	install(IMPORTED_RUNTIME_ARTIFACTS TBB::tbb)
 endif()
 
 option(LIMBO_USE_INTEL_MKL "Build with Eigen using MKL as a backend" ON) #  This makes hyperparameter tuning much more efficient
