@@ -50,10 +50,9 @@ namespace limbo {
     namespace init {
         ///@ingroup init
         ///Do nothing (dummy initializer).
-        template <typename Params>
         struct NoInit {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
-            void operator()(const StateFunction&, const AggregatorFunction&, Opt&) const {}
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction&, Opt&) const { return OK; }
         };
     }
 }

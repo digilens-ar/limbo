@@ -56,29 +56,49 @@ namespace limbo {
     namespace opt {
 
         // Needed for the variadic data structure
-        template <typename Params, typename... Optimizers>
+        template <typename... Optimizers>
         struct Chained {
         };
 
         // Base case: just 1 optimizer to call
-        template <typename Params, typename Optimizer>
-        struct Chained<Params, Optimizer> {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+        template <concepts::Optimizer Optimizer>
+        struct Chained<Optimizer> {
+            Chained(int dims): dims_(dims) {}
+
+        	static Chained create(int dims)
             {
-                return Optimizer()(f, init, bounded);
+                return Chained(dims);
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+            {
+                return Optimizer::create(dims_).optimize(f, init, bounds);
             };
+
+        protected:
+            int dims_;
         };
 
         // Recursive case: call current optimizer, and pass result as init value for the next one
-        template <typename Params, typename Optimizer, typename... Optimizers>
-        struct Chained<Params, Optimizer, Optimizers...> : Chained<Params, Optimizers...> {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+        template <concepts::Optimizer Optimizer, concepts::Optimizer... Optimizers>
+        struct Chained<Optimizer, Optimizers...> : Chained<Optimizers...> {
+            Chained(int dims):
+				Chained<Optimizers...>(dims)
+        	{}
+
+            static Chained create(int dims)
             {
-                return Chained<Params, Optimizers...>::operator()(f, Optimizer()(f, init, bounded), bounded);
+                return Chained(dims);
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+            {
+                return Chained<Optimizers...>::optimize(f, Optimizer::create(Chained<Optimizers...>::dims_).optimize(f, init, bounds), bounds);
             };
         };
+
     }
 }
 

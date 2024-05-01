@@ -67,18 +67,27 @@ namespace limbo {
             - ``int samples`` (total number of samples)
           \endrst
         */
-        template <typename Params>
+        template <typename init_lhs>
         struct LHS {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
-            void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval,  Opt& opt) const
             {
-                assert(Params::bayes_opt_bobase::bounded());
-
-                Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), Params::init_lhs::samples());
-
-                for (int i = 0; i < Params::init_lhs::samples(); i++) {
-                    opt.eval_and_add(seval, H.row(i));
+                assert(opt.isBounded());
+                if (opt.hasConstraints())
+                {
+                    throw std::runtime_error("This initializer does not support constrained problems.");
                 }
+
+                Eigen::MatrixXd H = tools::random_lhs(StateFunction::dim_in(), init_lhs::samples());
+
+                for (int i = 0; i < init_lhs::samples(); i++) {
+                    auto status = opt.eval_and_add(seval, H.row(i));
+                    if (status == TERMINATE)
+                    {
+                        return TERMINATE;
+                    }
+                }
+                return OK;
             }
         };
     } // namespace init

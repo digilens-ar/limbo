@@ -48,8 +48,8 @@
 
 #include <fstream>
 #include <string>
-
 #include <memory>
+
 
 namespace limbo {
     namespace stat {
@@ -68,29 +68,49 @@ namespace limbo {
           This method allocates an attribute `_log_file` (type: `std::shared_ptr<std::ofstream>`) if it has not been created yet, and does nothing otherwise. This method is designed so that you can safely call it in operator() while being 'guaranteed' that the file exists. Using this method is not mandatory for a statistics class.
           \endrst
         */
-        template <typename Params>
         struct StatBase {
             StatBase() {}
 
+            template<typename T>
+            static constexpr bool always_false = false;
+
             /// main method (to be written in derived classes)
-            template <typename BO>
+            template <typename BO >
             void operator()(const BO& bo)
             {
-                assert(false);
+                static_assert(always_false<BO>);
+            }
+
+            void setOutputDirectory(std::filesystem::path const& dir)
+            {
+                dir_ = dir;
             }
 
         protected:
             std::shared_ptr<std::ofstream> _log_file;
+            std::filesystem::path dir_ = "";
 
-            template <typename BO>
-            void _create_log_file(const BO& bo, const std::string& name)
+            void _create_log_file(const std::string& name)
             {
-                if (!_log_file && bo.stats_enabled()) {
-                    std::string log = bo.res_dir() + "/" + name;
-                    _log_file = std::make_shared<std::ofstream>(log.c_str());
-                    assert(_log_file->good());
+                if (_log_file)
+                    return;
+
+                char date[30];
+                time_t date_time;
+                time(&date_time);
+                strftime(date, 30, "%Y-%m-%d_%H_%M_%S", localtime(&date_time));
+
+                std::filesystem::path res_dir = dir_ / ("stats_" + std::string(date) + "_" + std::to_string(::_getpid()));
+                if (!exists(res_dir))
+                {
+                    create_directory(res_dir);
                 }
+                std::filesystem::path log = res_dir / name;
+                _log_file = std::make_shared<std::ofstream>(log.c_str());
+                assert(_log_file->good());
             }
+
+
         };
     }
 }

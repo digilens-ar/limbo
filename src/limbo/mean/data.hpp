@@ -52,14 +52,13 @@ namespace limbo {
     namespace mean {
         ///@ingroup mean
         ///Use the mean of the observation as a constant mean
-        template <typename Params>
-        struct Data : public BaseMean<Params> {
-            Data(size_t dim_out = 1) {}
+        struct Data : public BaseMean {
+            Data() {}
 
             template <typename GP>
-            Eigen::VectorXd operator()(const Eigen::VectorXd& v, const GP& gp) const
+            double operator()([[maybe_unused]] const Eigen::VectorXd& v, const GP& gp) const
             {
-                return gp.mean_observation().array();
+                return gp.mean_observation();
             }
         };
     } // namespace mean

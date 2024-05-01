@@ -53,8 +53,8 @@
 
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
-#include <boost/filesystem.hpp>
 
+#include <filesystem>
 #include <Eigen/Core>
 
 namespace limbo {
@@ -137,27 +137,41 @@ namespace limbo {
 
             void _create_directory() const
             {
-                boost::filesystem::path my_path(_dir_name);
-                boost::filesystem::create_directories(my_path);
+                std::filesystem::path my_path(_dir_name);
+                std::filesystem::create_directories(my_path);
             }
 
-            template <class Matrix, class Stream>
-            void _write_binary(Stream& out, const Matrix& matrix) const
+            template <class T, class Stream>
+            void _write_binary(Stream& out, const T& matrix) const
             {
-                typename Matrix::Index rows = matrix.rows(), cols = matrix.cols();
-                out.write((char*)(&rows), sizeof(typename Matrix::Index));
-                out.write((char*)(&cols), sizeof(typename Matrix::Index));
-                out.write((char*)matrix.data(), rows * cols * sizeof(typename Matrix::Scalar));
+                if constexpr (std::is_same_v<T, double>)
+                {
+                    out.write((char*)&matrix, sizeof(double));
+                }
+                else 
+                {
+	                typename T::Index rows = matrix.rows(), cols = matrix.cols();
+	                out.write((char*)(&rows), sizeof(typename T::Index));
+	                out.write((char*)(&cols), sizeof(typename T::Index));
+	                out.write((char*)matrix.data(), rows * cols * sizeof(typename T::Scalar));
+	            }
             }
 
-            template <class Matrix, class Stream>
-            void _read_binary(Stream& in, Matrix& matrix) const
+            template <class T, class Stream>
+            void _read_binary(Stream& in, T& matrix) const
             {
-                typename Matrix::Index rows = 0, cols = 0;
-                in.read((char*)(&rows), sizeof(typename Matrix::Index));
-                in.read((char*)(&cols), sizeof(typename Matrix::Index));
-                matrix.resize(rows, cols);
-                in.read((char*)matrix.data(), rows * cols * sizeof(typename Matrix::Scalar));
+                if constexpr (std::is_same_v<T, double>)
+                {
+                    in.read((char*)&matrix, sizeof(double));
+                }
+                else
+                {
+                    typename T::Index rows = 0, cols = 0;
+                    in.read((char*)(&rows), sizeof(typename T::Index));
+                    in.read((char*)(&cols), sizeof(typename T::Index));
+                    matrix.resize(rows, cols);
+                    in.read((char*)matrix.data(), rows * cols * sizeof(typename T::Scalar));
+                }
             }
         };
     } // namespace serialize

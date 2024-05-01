@@ -66,30 +66,43 @@ namespace limbo {
             - ``int bins`` (number of bins)
           \endrst
         */
-        template <typename Params>
+        template <typename init_gridsampling>
         struct GridSampling {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
-            void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval, Opt& opt) const
             {
-                _explore(0, seval, Eigen::VectorXd::Constant(StateFunction::dim_in(), 0), opt);
+                if (opt.hasConstraints())
+                {
+                    throw std::runtime_error("This initializer does not support constrained problems.");
+                }
+                return _explore(0, seval, Eigen::VectorXd::Constant(seval.dim_in(), 0), opt);
             }
 
         private:
             // recursively explore all the dimensions
             template <typename StateFunction, typename Opt>
-            void _explore(int dim_in, const StateFunction& seval, const Eigen::VectorXd& current,
+            EvaluationStatus _explore(int dim_in, const StateFunction& seval, const Eigen::VectorXd& current,
                 Opt& opt) const
             {
-                for (double x = 0; x <= 1.0f; x += 1.0f / (double)Params::init_gridsampling::bins()) {
+                for (double x = 0; x <= 1.0f; x += 1.0f / (double)init_gridsampling::bins()) {
                     Eigen::VectorXd point = current;
                     point[dim_in] = x;
                     if (dim_in == current.size() - 1) {
-                        opt.eval_and_add(seval, point);
+                        EvaluationStatus status = opt.eval_and_add(seval, point);
+                        if (status == TERMINATE)
+                        {
+                            return TERMINATE;
+                        }
                     }
                     else {
-                        _explore(dim_in + 1, seval, point, opt);
+                        EvaluationStatus status = _explore(dim_in + 1, seval, point, opt);
+                        if (status==TERMINATE)
+                        {
+                            return TERMINATE;
+                        }
                     }
                 }
+                return OK;
             }
         };
     }

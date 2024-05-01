@@ -70,37 +70,25 @@ namespace limbo {
             - ``double l`` (characteristic length scale)
           \endrst
         */
-        template <typename Params>
-        struct Exp : public BaseKernel<Params, Exp<Params>> {
-            Exp(size_t dim = 1) : _sf2(Params::kernel_exp::sigma_sq()), _l(Params::kernel_exp::l())
+        template <typename kernel_opt, typename kernel_exp>
+        struct Exp : BaseKernel<kernel_opt, Exp<kernel_opt, kernel_exp>> {
+            Exp(size_t dim = 1) : _sf2(kernel_exp::sigma_sq()), _l(kernel_exp::l())
             {
                 _h_params = Eigen::VectorXd(2);
                 _h_params << std::log(_l), std::log(std::sqrt(_sf2));
             }
 
-            size_t params_size() const { return 2; }
-
-            // Return the hyper parameters in log-space
-            Eigen::VectorXd params() const { return _h_params; }
-
-            // We expect the input parameters to be in log-space
-            void set_params(const Eigen::VectorXd& p)
-            {
-                _h_params = p;
-                _l = std::exp(p(0));
-                _sf2 = std::exp(2.0 * p(1));
-            }
-
-            double kernel(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
+        protected:
+            double kernel_(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2) const
             {
                 double l_sq = _l * _l;
                 double r = (v1 - v2).squaredNorm() / l_sq;
                 return _sf2 * std::exp(-0.5 * r);
             }
 
-            Eigen::VectorXd gradient(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
+            Eigen::VectorXd gradient_(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2) const
             {
-                Eigen::VectorXd grad(this->params_size());
+                Eigen::VectorXd grad(this->params_size_());
                 double l_sq = _l * _l;
                 double r = (x1 - x2).squaredNorm() / l_sq;
                 double k = _sf2 * std::exp(-0.5 * r);
@@ -110,10 +98,24 @@ namespace limbo {
                 return grad;
             }
 
-        protected:
+            size_t params_size_() const { return 2; }
+
+            // Return the hyper parameters in log-space
+            Eigen::VectorXd params_() const { return _h_params; }
+
+            // We expect the input parameters to be in log-space
+            void set_params_(const Eigen::VectorXd& p)
+            {
+                _h_params = p;
+                _l = std::exp(p(0));
+                _sf2 = std::exp(2.0 * p(1));
+            }
+
             double _sf2, _l;
 
             Eigen::VectorXd _h_params;
+
+            friend struct BaseKernel<kernel_opt, Exp<kernel_opt, kernel_exp>>;
         };
     } // namespace kernel
 } // namespace limbo

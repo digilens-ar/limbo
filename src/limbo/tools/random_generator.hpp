@@ -48,16 +48,9 @@
 #define LIMBO_TOOLS_RANDOM_GENERATOR_HPP
 
 #include <Eigen/Core>
-
 #include <cmath>
-#include <cstdlib>
-#include <ctime>
 #include <external/rand_utils.hpp>
-#include <list>
-#include <mutex>
 #include <random>
-#include <stdlib.h>
-#include <utility>
 
 namespace limbo {
     namespace tools {
@@ -93,25 +86,6 @@ namespace limbo {
         };
 
         /// @ingroup tools
-        using rdist_double_t = std::uniform_real_distribution<double>;
-        /// @ingroup tools
-        using rdist_int_t = std::uniform_int_distribution<int>;
-        /// @ingroup tools
-        using rdist_gauss_t = std::normal_distribution<>;
-
-        /// @ingroup tools
-        /// Double random number generator
-        using rgen_double_t = RandomGenerator<rdist_double_t>;
-
-        /// @ingroup tools
-        /// Double random number generator (gaussian)
-        using rgen_gauss_t = RandomGenerator<rdist_gauss_t>;
-
-        /// @ingroup tools
-        /// integer random number generator
-        using rgen_int_t = RandomGenerator<rdist_int_t>;
-
-        /// @ingroup tools
         /// random vector by providing custom RandomGenerator
         template <typename Rng>
         inline Eigen::VectorXd random_vec(int size, Rng& rng)
@@ -129,7 +103,7 @@ namespace limbo {
         /// - we use a C++11 random number generator
         inline Eigen::VectorXd random_vector_bounded(int size)
         {
-            static thread_local rgen_double_t rgen(0.0, 1.0);
+	        static thread_local RandomGenerator<std::uniform_real_distribution<double>> rgen(0.0, 1.0);
             return random_vec(size, rgen);
         }
 
@@ -140,7 +114,7 @@ namespace limbo {
         /// - we use a C++11 random number generator
         inline Eigen::VectorXd random_vector_unbounded(int size)
         {
-            static thread_local rgen_gauss_t rgen(0.0, 10.0);
+	        static thread_local RandomGenerator<std::normal_distribution<>> rgen(0.0, 10.0);
             return random_vec(size, rgen);
         }
 

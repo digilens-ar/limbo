@@ -50,6 +50,7 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -70,23 +71,16 @@ namespace limbo {
           - ``double alpha``
         \endrst
         */
-        template <typename Params, typename Model>
+        template <typename AcquiUcb, concepts::Model Model>
         class UCB {
         public:
             UCB(const Model& model, int iteration = 0) : _model(model) {}
 
-            size_t dim_in() const { return _model.dim_in(); }
-
-            size_t dim_out() const { return _model.dim_out(); }
-
-            template <typename AggregatorFunction>
-            opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
+            opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
             {
                 assert(!gradient);
-                Eigen::VectorXd mu;
-                double sigma;
-                std::tie(mu, sigma) = _model.query(v);
-                return opt::no_grad(afun(mu) + Params::acqui_ucb::alpha() * sqrt(sigma));
+                auto [mu, sigma_sq] = _model.query(v);
+                return opt::no_grad(mu + AcquiUcb::alpha() * sqrt(sigma_sq));
             }
 
         protected:

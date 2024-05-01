@@ -58,13 +58,17 @@
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 
+#include <numeric>
 #include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/kernel/squared_exp_ard.hpp>
-#include <limbo/mean/constant.hpp>
 #include <limbo/mean/data.hpp>
 #include <limbo/model/gp/kernel_lf_opt.hpp>
 #include <limbo/model/gp/no_lf_opt.hpp>
 #include <limbo/tools.hpp>
+#include <spdlog/spdlog.h>
+#ifdef _WIN32
+#include <corecrt_math_defines.h>
+#endif
 
 namespace limbo {
     namespace model {
@@ -74,41 +78,26 @@ namespace limbo {
         /// - a kernel function
         /// - a mean function
         /// - [optional] an optimizer for the hyper-parameters
-        template <typename Params, typename KernelFunction = kernel::MaternFiveHalves<Params>, typename MeanFunction = mean::Data<Params>, typename HyperParamsOptimizer = gp::NoLFOpt<Params>>
+        template <typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
         class GP {
         public:
-            /// useful because the model might be created before knowing anything about the process
-            GP() : _dim_in(-1), _dim_out(-1), _inv_kernel_updated(false) {}
+            GP(int dim_in)
+                : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
-            /// useful because the model might be created before having samples
-            GP(int dim_in, int dim_out)
-                : _dim_in(dim_in), _dim_out(dim_out), _kernel_function(dim_in), _mean_function(dim_out), _inv_kernel_updated(false) {}
-
-            /// Compute the GP from samples and observations. This call needs to be explicit!
-            void compute(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
+            /// Initialize the GP from samples and observations. This call needs to be explicit!
+            void initialize(const std::vector<Eigen::VectorXd>& samples,
+                const std::vector<double>& observations, bool compute_kernel = true)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
-
-                if (_dim_in != samples[0].size()) {
-                    _dim_in = samples[0].size();
-                    _kernel_function = KernelFunction(_dim_in); // the cost of building a functor should be relatively low
-                }
-
-                if (_dim_out != observations[0].size()) {
-                    _dim_out = observations[0].size();
-                    _mean_function = MeanFunction(_dim_out); // the cost of building a functor should be relatively low
-                }
+                assert(_dim_in == samples[0].size());
 
                 _samples = samples;
+                _observations = observations;
 
-                _observations.resize(observations.size(), _dim_out);
-                for (int i = 0; i < _observations.rows(); ++i)
-                    _observations.row(i) = observations[i];
-
-                _mean_observation = _observations.colwise().mean();
+                //calculate the mean observation
+                mean_observation_ = std::accumulate(_observations.begin(), _observations.end(), 0.0) / _observations.size();
 
                 this->_compute_obs_mean();
                 if (compute_kernel)
@@ -123,29 +112,15 @@ namespace limbo {
 
             /// add sample and update the GP. This code uses an incremental implementation of the Cholesky
             /// decomposition. It is therefore much faster than a call to compute()
-            void add_sample(const Eigen::VectorXd& sample, const Eigen::VectorXd& observation)
+            void add_sample(const Eigen::VectorXd& sample, double observation)
             {
-                if (_samples.empty()) {
-                    if (_dim_in != sample.size()) {
-                        _dim_in = sample.size();
-                        _kernel_function = KernelFunction(_dim_in); // the cost of building a functor should be relatively low
-                    }
-                    if (_dim_out != observation.size()) {
-                        _dim_out = observation.size();
-                        _mean_function = MeanFunction(_dim_out); // the cost of building a functor should be relatively low
-                    }
-                }
-                else {
-                    assert(sample.size() == _dim_in);
-                    assert(observation.size() == _dim_out);
-                }
+                assert(sample.size() == _dim_in);
 
                 _samples.push_back(sample);
+                _observations.push_back(observation);
+                //calculate the mean observation
+                mean_observation_ = std::accumulate(_observations.begin(), _observations.end(), 0.0) / _observations.size();
 
-                _observations.conservativeResize(_observations.rows() + 1, _dim_out);
-                _observations.bottomRows<1>() = observation.transpose();
-
-                _mean_observation = _observations.colwise().mean();
 
                 this->_compute_obs_mean();
                 this->_compute_incremental_kernel();
@@ -156,14 +131,15 @@ namespace limbo {
              return :math:`\mu`, :math:`\sigma^2` (un-normalized). If there is no sample, return the value according to the mean function. Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
              \\endrst
             */
-            std::tuple<Eigen::VectorXd, double> query(const Eigen::VectorXd& v) const
+            std::tuple<double, double> query(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
-                    return std::make_tuple(_mean_function(v, *this),
-                        _kernel_function(v, v) + _kernel_function.noise());
+                    return std::make_tuple(
+                        _mean_function(v, *this),
+                        _kernel_function.compute(v, v) + _kernel_function.noise());
 
                 Eigen::VectorXd k = _compute_k(v);
-                return std::make_tuple(_mu(v, k), _sigma(v, k) + _kernel_function.noise());
+                return std::make_tuple(_mu(v, k), _sigma_sq(v, k) + _kernel_function.noise());
             }
 
             /**
@@ -171,7 +147,7 @@ namespace limbo {
              return :math:`\mu` (un-normalized). If there is no sample, return the value according to the mean function.
              \\endrst
             */
-            Eigen::VectorXd mu(const Eigen::VectorXd& v) const
+            double mu(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
                     return _mean_function(v, *this);
@@ -183,25 +159,17 @@ namespace limbo {
              return :math:`\sigma^2` (un-normalized). If there is no sample, return the max :math:`\sigma^2`.
              \\endrst
             */
-            double sigma(const Eigen::VectorXd& v) const
+            double sigma_sq(const Eigen::VectorXd& v) const
             {
                 if (_samples.size() == 0)
-                    return _kernel_function(v, v) + _kernel_function.noise();
-                return _sigma(v, _compute_k(v)) + _kernel_function.noise();
+                    return _kernel_function.compute(v, v) + _kernel_function.noise();
+                return _sigma_sq(v, _compute_k(v)) + _kernel_function.noise();
             }
 
             /// return the number of dimensions of the input
             int dim_in() const
             {
-                assert(_dim_in != -1); // need to compute first!
                 return _dim_in;
-            }
-
-            /// return the number of dimensions of the output
-            int dim_out() const
-            {
-                assert(_dim_out != -1); // need to compute first!
-                return _dim_out;
             }
 
             const KernelFunction& kernel_function() const { return _kernel_function; }
@@ -212,27 +180,11 @@ namespace limbo {
 
             MeanFunction& mean_function() { return _mean_function; }
 
-            /// return the maximum observation (only call this if the output of the GP is of dimension 1)
-            Eigen::VectorXd max_observation() const
-            {
-                if (_observations.cols() > 1)
-                    std::cout << "WARNING max_observation with multi dimensional "
-                                 "observations doesn't make sense"
-                              << std::endl;
-                return tools::make_vector(_observations.maxCoeff());
-            }
-
             /// return the mean observation (only call this if the output of the GP is of dimension 1)
-            Eigen::VectorXd mean_observation() const
+            double mean_observation() const
             {
-                assert(_dim_out > 0);
-                return _samples.size() > 0 ? _mean_observation
-                                           : Eigen::VectorXd::Zero(_dim_out);
+                return mean_observation_;
             }
-
-            const Eigen::MatrixXd& mean_vector() const { return _mean_vector; }
-
-            const Eigen::MatrixXd& obs_mean() const { return _obs_mean; }
 
             /// return the number of samples used to compute the GP
             int nb_samples() const { return _samples.size(); }
@@ -257,32 +209,28 @@ namespace limbo {
                 // K^{-1} using Cholesky decomposition
                 _inv_kernel = Eigen::MatrixXd::Identity(n, n);
 
-                _matrixL.template triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
-                _matrixL.template triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
 
                 _inv_kernel_updated = true;
             }
 
             /// compute and return the log likelihood
-            double compute_log_lik()
+            [[nodiscard]] double compute_log_lik()
             {
-                size_t n = _obs_mean.rows();
 
                 // --- cholesky ---
                 // see:
                 // http://xcorr.net/2008/06/11/log-determinant-of-positive-definite-matrices-in-matlab/
                 long double logdet = 2 * _matrixL.diagonal().array().log().sum();
 
-                double a = (_obs_mean.transpose() * _alpha)
-                               .trace(); // generalization for multi dimensional observation
-
-                _log_lik = -0.5 * a - 0.5 * logdet - 0.5 * n * std::log(2 * M_PI);
-
-                return _log_lik;
+                const double a = _obs_mean.transpose() * _alpha;
+                const double log_2_pi = std::log(2 * M_PI);
+                return 0.5 * (-a - logdet - _obs_mean.rows() * log_2_pi);
             }
 
             /// compute and return the gradient of the log likelihood wrt to the kernel parameters
-            Eigen::VectorXd compute_kernel_grad_log_lik()
+            [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_lik()
             {
                 size_t n = _obs_mean.rows();
 
@@ -290,10 +238,9 @@ namespace limbo {
                 if (!_inv_kernel_updated) {
                     compute_inv_kernel();
                 }
-                Eigen::MatrixXd w = _inv_kernel;
 
                 // alpha * alpha.transpose() - K^{-1}
-                w = _alpha * _alpha.transpose() - w;
+                Eigen::MatrixXd w = _alpha * _alpha.transpose() - _inv_kernel;
 
                 // only compute half of the matrix (symmetrical matrix)
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
@@ -311,32 +258,23 @@ namespace limbo {
             }
 
             /// compute and return the gradient of the log likelihood wrt to the mean parameters
-            Eigen::VectorXd compute_mean_grad_log_lik()
+            [[nodiscard]] Eigen::VectorXd compute_mean_grad_log_lik()
             {
-                size_t n = _obs_mean.rows();
-
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
                     compute_inv_kernel();
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_mean_function.h_params_size());
-                for (int i_obs = 0; i_obs < _dim_out; ++i_obs)
-                    for (size_t n_obs = 0; n_obs < n; n_obs++) {
-                        grad += _obs_mean.col(i_obs).transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).row(i_obs);
-                    }
+                for (Eigen::Index n_obs = 0; n_obs < _obs_mean.rows(); n_obs++) {
+                    grad += _obs_mean.transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).transpose();
+                }
 
                 return grad;
             }
 
-            /// return the likelihood (do not compute it -- return last computed)
-            double get_log_lik() const { return _log_lik; }
-
-            /// set the log likelihood (e.g. computed from outside)
-            void set_log_lik(double log_lik) { _log_lik = log_lik; }
-
             /// compute and return the log probability of LOO CV
-            double compute_log_loo_cv()
+            [[nodiscard]] double compute_log_loo_cv()
             {
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
@@ -345,13 +283,12 @@ namespace limbo {
 
                 Eigen::VectorXd inv_diag = _inv_kernel.diagonal().array().inverse();
 
-                _log_loo_cv = (((-0.5 * (_alpha.array().square().array().colwise() * inv_diag.array())).array().colwise() - 0.5 * inv_diag.array().log().array()) - 0.5 * std::log(2 * M_PI)).colwise().sum().sum();
-
-                return _log_loo_cv;
+                double log_loo_cv = (((-0.5 * (_alpha.array().square().array().colwise() * inv_diag.array())).array().colwise() - 0.5 * inv_diag.array().log().array()) - 0.5 * std::log(2 * M_PI)).colwise().sum().sum();
+                return log_loo_cv;
             }
 
             /// compute and return the gradient of the log probability of LOO CV wrt to the kernel parameters
-            Eigen::VectorXd compute_kernel_grad_log_loo_cv()
+            [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_loo_cv()
             {
                 size_t n = _obs_mean.rows();
                 size_t n_params = _kernel_function.h_params_size();
@@ -362,7 +299,7 @@ namespace limbo {
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(n_params);
-                Eigen::MatrixXd grads = Eigen::MatrixXd::Zero(n_params, _dim_out);
+                Eigen::MatrixXd grads = Eigen::MatrixXd::Zero(n_params, 1);
 
                 // only compute half of the matrix (symmetrical matrix)
                 // TO-DO: Make it better
@@ -401,47 +338,11 @@ namespace limbo {
                 return grad;
             }
 
-            /// return the LOO-CV log probability (do not compute it -- return last computed)
-            double get_log_loo_cv() const { return _log_loo_cv; }
-
-            /// set the LOO-CV log probability (e.g. computed from outside)
-            void set_log_loo_cv(double log_loo_cv) { _log_loo_cv = log_loo_cv; }
-
-            /// LLT matrix (from Cholesky decomposition)
-            const Eigen::MatrixXd& matrixL() const { return _matrixL; }
-
-            const Eigen::MatrixXd& alpha() const { return _alpha; }
-
             /// return the list of samples
             const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
 
             /// return the list of observations
-            std::vector<Eigen::VectorXd> observations() const
-            {
-                std::vector<Eigen::VectorXd> observations;
-                for (int i = 0; i < _observations.rows(); i++) {
-                    observations.push_back(_observations.row(i));
-                }
-
-                return observations;
-            }
-
-            /// return the observations (in matrix form)
-            /// (NxD), where N is the number of points and D is the dimension output
-            const Eigen::MatrixXd& observations_matrix() const
-            {
-                return _observations;
-            }
-
-            bool inv_kernel_computed() { return _inv_kernel_updated; }
-
-            /// save the parameters and the data for the GP to the archive (text or binary)
-            template <typename A>
-            void save(const std::string& directory) const
-            {
-                A archive(directory);
-                save(archive);
-            }
+            std::vector<double> const& observations() const { return _observations; }
 
             /// save the parameters and the data for the GP to the archive (text or binary)
             template <typename A>
@@ -463,88 +364,76 @@ namespace limbo {
             /// if recompute is true, we do not read the kernel matrix
             /// but we recompute it given the data and the hyperparameters
             template <typename A>
-            void load(const std::string& directory, bool recompute = true)
+            static GP load(const A& archive, bool recompute = true)
             {
-                A archive(directory);
-                load(archive, recompute);
-            }
+                std::vector<Eigen::VectorXd> samples;
+                archive.load(samples, "samples");
 
-            /// load the parameters and the data for the GP from the archive (text or binary)
-            /// if recompute is true, we do not read the kernel matrix
-            /// but we recompute it given the data and the hyperparameters
-            template <typename A>
-            void load(const A& archive, bool recompute = true)
-            {
-                _samples.clear();
-                archive.load(_samples, "samples");
+                std::vector<double> observations;
+                archive.load(observations, "observations");
 
-                archive.load(_observations, "observations");
+                GP out(samples[0].size());
+                out._samples = samples;
+                out._observations = observations;
 
-                _dim_in = _samples[0].size();
-                _kernel_function = KernelFunction(_dim_in);
+                //calcualte the mean observation
+                out.mean_observation_ = std::accumulate(out._observations.begin(), out._observations.end(), 0.0) / out._observations.size();
 
-                if (_kernel_function.h_params_size() > 0) {
+                if (out._kernel_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "kernel_params");
-                    assert(h_params.size() == (int)_kernel_function.h_params_size());
-                    _kernel_function.set_h_params(h_params);
+                    assert(h_params.size() == (int)out._kernel_function.h_params_size());
+                    out._kernel_function.set_h_params(h_params);
                 }
 
-                _dim_out = _observations.cols();
-                _mean_function = MeanFunction(_dim_out);
+                out._mean_function = MeanFunction();
 
-                if (_mean_function.h_params_size() > 0) {
+                if (out._mean_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
                     archive.load(h_params, "mean_params");
-                    assert(h_params.size() == (int)_mean_function.h_params_size());
-                    _mean_function.set_h_params(h_params);
+                    assert(h_params.size() == (int)out._mean_function.h_params_size());
+                    out._mean_function.set_h_params(h_params);
                 }
-
-                _mean_observation = _observations.colwise().mean();
 
                 if (recompute)
-                    this->recompute(true, true);
+                    out.recompute(true, true);
                 else {
-                    archive.load(_matrixL, "matrixL");
-                    archive.load(_alpha, "alpha");
+                    archive.load(out._matrixL, "matrixL");
+                    archive.load(out._alpha, "alpha");
                 }
+                return out;
             }
 
         protected:
             int _dim_in;
-            int _dim_out;
 
             KernelFunction _kernel_function;
             MeanFunction _mean_function;
 
             std::vector<Eigen::VectorXd> _samples;
-            Eigen::MatrixXd _observations;
-            Eigen::MatrixXd _mean_vector;
-            Eigen::MatrixXd _obs_mean;
+            std::vector<double> _observations;
+            Eigen::VectorXd _obs_mean; // The differences between the observations at the mean function at the observation locations
+            double mean_observation_ = 0;
 
-            Eigen::MatrixXd _alpha;
-            Eigen::VectorXd _mean_observation;
-
+            Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->_obs_mean;
             Eigen::MatrixXd _kernel, _inv_kernel;
 
-            Eigen::MatrixXd _matrixL;
+            Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition
 
-            double _log_lik, _log_loo_cv;
-            bool _inv_kernel_updated;
+        	bool _inv_kernel_updated;
 
             HyperParamsOptimizer _hp_optimize;
 
             void _compute_obs_mean()
             {
                 assert(!_samples.empty());
-                _mean_vector.resize(_samples.size(), _dim_out);
-                for (int i = 0; i < _mean_vector.rows(); i++) {
+                _obs_mean.resize(_samples.size());
+                for (int i = 0; i < _obs_mean.rows(); i++) {
                     assert(_samples[i].cols() == 1);
                     assert(_samples[i].rows() != 0);
                     assert(_samples[i].rows() == _dim_in);
-                    _mean_vector.row(i) = _mean_function(_samples[i], *this);
+                    _obs_mean(i) = _observations.at(i) - _mean_function(_samples[i], *this);
                 }
-                _obs_mean = _observations - _mean_vector;
             }
 
             void _compute_full_kernel()
@@ -552,18 +441,18 @@ namespace limbo {
                 size_t n = _samples.size();
                 _kernel.resize(n, n);
 
-                // O(n^2) [should be negligible]
+                // Compute lower triangle
                 for (size_t i = 0; i < n; i++)
                     for (size_t j = 0; j <= i; ++j)
-                        _kernel(i, j) = _kernel_function(_samples[i], _samples[j], i, j);
+                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);
 
+                // Copy lower triangle to top (TODO is this needed?)
                 for (size_t i = 0; i < n; i++)
                     for (size_t j = 0; j < i; ++j)
                         _kernel(j, i) = _kernel(i, j);
 
                 // O(n^3)
-                _matrixL = Eigen::LLT<Eigen::MatrixXd>(_kernel).matrixL();
-
+                _matrixL = Eigen::LLT<Eigen::MatrixXd>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
                 this->_compute_alpha();
 
                 // notify change of kernel
@@ -581,7 +470,7 @@ namespace limbo {
                 _kernel.conservativeResize(n, n);
 
                 for (size_t i = 0; i < n; ++i) {
-                    _kernel(i, n - 1) = _kernel_function(_samples[i], _samples[n - 1], i, n - 1);
+                    _kernel(i, n - 1) = _kernel_function.compute(_samples[i], _samples[n - 1], i, n - 1);
                     _kernel(n - 1, i) = _kernel(i, n - 1);
                 }
 
@@ -605,20 +494,20 @@ namespace limbo {
             void _compute_alpha()
             {
                 // alpha = K^{-1} * this->_obs_mean;
-                Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.template triangularView<Eigen::Lower>();
+                Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.triangularView<Eigen::Lower>();
                 _alpha = triang.solve(_obs_mean);
                 triang.adjoint().solveInPlace(_alpha);
             }
 
-            Eigen::VectorXd _mu(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
+            double _mu(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
             {
-                return (k.transpose() * _alpha) + _mean_function(v, *this).transpose();
+                return (k.transpose() * _alpha) + _mean_function(v, *this);
             }
 
-            double _sigma(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
+            double _sigma_sq(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
             {
                 Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k);
-                double res = _kernel_function(v, v) - z.dot(z);
+                double res = _kernel_function.compute(v, v) - z.dot(z);
 
                 return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res;
             }
@@ -627,19 +516,20 @@ namespace limbo {
             {
                 Eigen::VectorXd k(_samples.size());
                 for (int i = 0; i < k.size(); i++)
-                    k[i] = _kernel_function(_samples[i], v);
+                    k[i] = _kernel_function.compute(_samples[i], v);
                 return k;
             }
         };
+
         /// GPBasic is a GP with a "mean data" mean function, Exponential kernel,
         /// and NO hyper-parameter optimization
         template <typename Params>
-        using GPBasic = GP<Params, kernel::MaternFiveHalves<Params>, mean::Data<Params>, gp::NoLFOpt<Params>>;
+        using GPBasic = GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>, mean::Data, gp::NoLFOpt>;
 
         /// GPOpt is a GP with a "mean data" mean function, Exponential kernel with Automatic Relevance
         /// Determination (ARD), and hyper-parameter optimization based on Rprop
         template <typename Params>
-        using GPOpt = GP<Params, kernel::SquaredExpARD<Params>, mean::Data<Params>, gp::KernelLFOpt<Params>>;
+        using GPOpt = GP<kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<opt::Irpropplus<typename Params::opt_irpropplus>>>;
     } // namespace model
 } // namespace limbo
 

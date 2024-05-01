@@ -54,12 +54,11 @@ namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `gp_kernel_hparams.dat`
-        template <typename Params>
-        struct GPKernelHParams : public StatBase<Params> {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+        struct GPKernelHParams : public StatBase {
+            template <typename BO>
+            void operator()(const BO& bo)
             {
-                if (!bo.stats_enabled() || bo.observations().empty())
+                if (bo.observations().empty())
                     return;
 
                 this->_create_log_file(bo, "gp_kernel_hparams.dat");

@@ -47,23 +47,19 @@
 #define LIMBO_STAT_CONSOLE_SUMMARY_HPP
 
 #include <limbo/stat/stat_base.hpp>
+#include <iostream>
 
 namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///write the status of the algorithm on the terminal
-        template <typename Params>
-        struct ConsoleSummary : public StatBase<Params> {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+        struct ConsoleSummary : public StatBase {
+            template <typename BO>
+            void operator()(const BO& bo)
             {
-                if (!bo.stats_enabled() || bo.observations().empty())
+                if (bo.observations().empty())
                     return;
-
-                std::cout << bo.total_iterations() << " new point: "
-                          << bo.samples().back().transpose()
-                          << " value: " << afun(bo.observations().back())
-                          << " best:" << afun(bo.best_observation(afun)) << std::endl;
+                std::cout << bo.total_iterations() << " new point: " << bo.samples().back().transpose() << " value: " << bo.observations().back() << " best: " << bo.best_observation() << "\n";
             }
         };
     }

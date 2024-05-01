@@ -46,37 +46,45 @@
 #ifndef LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 #define LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 
-#include <limbo/model/gp/hp_opt.hpp>
+#include <limbo/opt/irprop_plus.hpp>
 
 namespace limbo {
     namespace model {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the kernel only
-            template <typename Params, typename Optimizer = opt::Rprop<Params>>
-            struct KernelLFOpt : public HPOpt<Params, Optimizer> {
+            template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
+            struct KernelLFOpt {
             public:
+                KernelLFOpt(int dims):
+					optimizer_(Optimizer::create(dims))
+                {}
+
+                static KernelLFOpt create(int dims)
+                {
+                    return KernelLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
-                    this->_called = true;
                     KernelLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
-                    Eigen::VectorXd params = optimizer(optimization, gp.kernel_function().h_params(), false);
+                    Eigen::VectorXd params = optimizer_.optimize(optimization, gp.kernel_function().h_params(), std::nullopt);
                     gp.kernel_function().set_h_params(params);
                     gp.recompute(false);
-                    gp.compute_log_lik();
                 }
 
-            protected:
+            private:
+                Optimizer optimizer_;
+
                 template <typename GP>
                 struct KernelLFOptimization {
                 public:
-                    KernelLFOptimization(const GP& gp) : _original_gp(gp) {}
+                    KernelLFOptimization(const GP& gp) : gp_(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
-                        GP gp(this->_original_gp);
+                        GP gp(gp_);
                         gp.kernel_function().set_h_params(params);
 
                         gp.recompute(false);
@@ -91,8 +99,8 @@ namespace limbo {
                         return {lik, grad};
                     }
 
-                protected:
-                    const GP& _original_gp;
+                private:
+                    GP const& gp_;
                 };
             };
         } // namespace gp

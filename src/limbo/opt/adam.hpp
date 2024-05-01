@@ -52,7 +52,6 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/math.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -90,22 +89,28 @@ namespace limbo {
         /// - double b1
         /// - double b2
         /// - double eps_stop
-        template <typename Params>
+        template <typename opt_adam>
         struct Adam {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+
+            static Adam create(int dims)
             {
-                assert(Params::opt_adam::b1() >= 0. && Params::opt_adam::b1() < 1.);
-                assert(Params::opt_adam::b2() >= 0. && Params::opt_adam::b2() < 1.);
-                assert(Params::opt_adam::alpha() >= 0.);
+                return Adam();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+            {
+                assert(opt_adam::b1() >= 0. && opt_adam::b1() < 1.);
+                assert(opt_adam::b2() >= 0. && opt_adam::b2() < 1.);
+                assert(opt_adam::alpha() >= 0.);
 
                 size_t param_dim = init.size();
-                double b1 = Params::opt_adam::b1();
-                double b2 = Params::opt_adam::b2();
+                double b1 = opt_adam::b1();
+                double b2 = opt_adam::b2();
                 double b1_t = b1;
                 double b2_t = b2;
-                double alpha = Params::opt_adam::alpha();
-                double stop = Params::opt_adam::eps_stop();
+                double alpha = opt_adam::alpha();
+                double stop = opt_adam::eps_stop();
                 double epsilon = 1e-8;
 
                 Eigen::VectorXd m = Eigen::VectorXd::Zero(param_dim);
@@ -113,22 +118,18 @@ namespace limbo {
 
                 Eigen::VectorXd params = init;
 
-                if (bounded) {
+                if (bounds.has_value()) {
                     for (int j = 0; j < params.size(); j++) {
-                        if (params(j) < 0)
-                            params(j) = 0;
-                        if (params(j) > 1)
-                            params(j) = 1;
+                        params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                     }
                 }
 
-                for (int i = 0; i < Params::opt_adam::iterations(); ++i) {
+                for (int i = 0; i < opt_adam::iterations(); ++i) {
                     Eigen::VectorXd prev_params = params;
-                    auto perf = opt::eval_grad(f, params);
+                    auto [funcVal, gradient] = f(params, true);
 
-                    Eigen::VectorXd grad = opt::grad(perf);
-                    m = b1 * m.array() + (1. - b1) * grad.array();
-                    v = b2 * v.array() + (1. - b2) * grad.array().square();
+                    m = b1 * m.array() + (1. - b1) * gradient.value().array();
+                    v = b2 * v.array() + (1. - b2) * gradient.value().array().square();
 
                     Eigen::VectorXd m_hat = m.array() / (1. - b1_t);
                     Eigen::VectorXd v_hat = v.array() / (1. - b2_t);
@@ -138,12 +139,9 @@ namespace limbo {
                     b1_t *= b1;
                     b2_t *= b2;
 
-                    if (bounded) {
+                    if (bounds.has_value()) {
                         for (int j = 0; j < params.size(); j++) {
-                            if (params(j) < 0)
-                                params(j) = 0;
-                            if (params(j) > 1)
-                                params(j) = 1;
+                            params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                         }
                     }
 
@@ -153,7 +151,9 @@ namespace limbo {
 
                 return params;
             }
+
         };
+
     } // namespace opt
 } // namespace limbo
 

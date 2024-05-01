@@ -62,5 +62,6 @@
 #include <limbo/stat/gp_prediction_differences.hpp>
 #include <limbo/stat/observations.hpp>
 #include <limbo/stat/samples.hpp>
-
+#include <limbo/stat/runtime_stats_function.hpp>
+#include <limbo/stat/model_export.hpp>
 #endif

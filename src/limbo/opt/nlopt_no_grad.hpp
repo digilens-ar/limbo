@@ -107,33 +107,58 @@ namespace limbo {
          - double fun_tolerance
          - double xrel_tolerance
         */
-        template <typename Params, nlopt::algorithm Algorithm = nlopt::GN_DIRECT_L_RAND>
-        struct NLOptNoGrad : public NLOptBase<Params, Algorithm> {
+        template <typename opt_nloptnograd, nlopt::algorithm Algorithm = nlopt::GN_DIRECT_L_RAND>
+        class NLOptNoGrad : public NLOptBase {
         public:
-            void initialize(int dim) override
+            static NLOptNoGrad create(int dim)
             {
                 // Assert that the algorithm is non-gradient
                 // TO-DO: Add support for MLSL (Multi-Level Single-Linkage)
                 // TO-DO: Add better support for ISRES (Improved Stochastic Ranking Evolution Strategy)
-                // clang-format off
-                static_assert(Algorithm == nlopt::LN_COBYLA || Algorithm == nlopt::LN_BOBYQA ||
-                    Algorithm == nlopt::LN_NEWUOA || Algorithm == nlopt::LN_NEWUOA_BOUND ||
-                    Algorithm == nlopt::LN_PRAXIS || Algorithm == nlopt::LN_NELDERMEAD ||
-                    Algorithm == nlopt::LN_SBPLX || Algorithm == nlopt::GN_DIRECT ||
-                    Algorithm == nlopt::GN_DIRECT_L || Algorithm == nlopt::GN_DIRECT_L_RAND ||
-                    Algorithm == nlopt::GN_DIRECT_NOSCAL || Algorithm == nlopt::GN_DIRECT_L_NOSCAL ||
-                    Algorithm == nlopt::GN_DIRECT_L_RAND_NOSCAL || Algorithm == nlopt::GN_ORIG_DIRECT ||
-                    Algorithm == nlopt::GN_ORIG_DIRECT_L || Algorithm == nlopt::GN_CRS2_LM ||
-                    Algorithm == nlopt::LN_AUGLAG || Algorithm == nlopt::LN_AUGLAG_EQ ||
-                    Algorithm == nlopt::GN_ISRES || Algorithm == nlopt::GN_ESCH, "NLOptNoGrad accepts gradient free nlopt algorithms only");
-                // clang-format on
+                
+                static_assert(Algorithm == nlopt::LN_COBYLA 
+                    || Algorithm == nlopt::LN_BOBYQA 
+                    || Algorithm == nlopt::LN_NEWUOA 
+                    || Algorithm == nlopt::LN_NEWUOA_BOUND 
+                    || Algorithm == nlopt::LN_PRAXIS 
+                    || Algorithm == nlopt::LN_NELDERMEAD 
+                    ||Algorithm == nlopt::LN_SBPLX 
+                    || Algorithm == nlopt::GN_DIRECT 
+                    || Algorithm == nlopt::GN_DIRECT_L 
+                    || Algorithm == nlopt::GN_DIRECT_L_RAND 
+                    || Algorithm == nlopt::GN_DIRECT_NOSCAL 
+                    || Algorithm == nlopt::GN_DIRECT_L_NOSCAL 
+                    || Algorithm == nlopt::GN_DIRECT_L_RAND_NOSCAL 
+                    || Algorithm == nlopt::GN_ORIG_DIRECT 
+                    || Algorithm == nlopt::GN_ORIG_DIRECT_L
+                    || Algorithm == nlopt::GN_CRS2_LM 
+                    || Algorithm == nlopt::LN_AUGLAG 
+                    || Algorithm == nlopt::LN_AUGLAG_EQ  
+                    || Algorithm == nlopt::AUGLAG 
+                    || Algorithm == nlopt::AUGLAG_EQ 
+                    || Algorithm == nlopt::GN_ISRES 
+                    || Algorithm == nlopt::GN_ESCH,
+                    "NLOptNoGrad accepts gradient free nlopt algorithms only");
 
-                NLOptBase<Params, Algorithm>::initialize(dim);
+                NLOptNoGrad opt(Algorithm, dim);
 
-                this->_opt.set_maxeval(Params::opt_nloptnograd::iterations());
-                this->_opt.set_ftol_rel(Params::opt_nloptnograd::fun_tolerance());
-                this->_opt.set_xtol_rel(Params::opt_nloptnograd::xrel_tolerance());
+                if constexpr (Algorithm == nlopt::AUGLAG)
+                {
+                	nlopt::opt opt2(nlopt::GN_DIRECT_L_RAND, dim); // DIRECT_L_RAND consistently seems to perform better than the other options.
+                    opt2.set_maxeval(opt_nloptnograd::iterations());
+                    opt2.set_ftol_rel(opt_nloptnograd::fun_tolerance());
+                    opt2.set_xtol_rel(opt_nloptnograd::xrel_tolerance());
+                    opt._opt.set_local_optimizer(opt2);
+                }
+
+                opt._opt.set_maxeval(opt_nloptnograd::iterations());
+                opt._opt.set_ftol_rel(opt_nloptnograd::fun_tolerance());
+                opt._opt.set_xtol_rel(opt_nloptnograd::xrel_tolerance());
+                return opt;
             }
+
+        protected:
+            using NLOptBase::NLOptBase;
         };
     } // namespace opt
 } // namespace limbo

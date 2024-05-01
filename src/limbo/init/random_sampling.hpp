@@ -50,6 +50,8 @@
 
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
+#include <limbo/concepts.hpp>
+#include <spdlog/spdlog.h>
 
 namespace limbo {
     namespace defaults {
@@ -67,15 +69,47 @@ namespace limbo {
             - ``int samples`` (total number of samples)
           \endrst
         */
-        template <typename Params>
+        template <typename InitRandomSampling>
         struct RandomSampling {
-            template <typename StateFunction, typename AggregatorFunction, typename Opt>
-            void operator()(const StateFunction& seval, const AggregatorFunction&, Opt& opt) const
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval,  Opt& opt) const
             {
-                for (int i = 0; i < Params::init_randomsampling::samples(); i++) {
-                    auto new_sample = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
-                    opt.eval_and_add(seval, new_sample);
+                for (int i = 0; i < InitRandomSampling::samples(); i++) {
+                    Eigen::VectorXd new_sample;
+                    if (opt.hasConstraints())
+                    {
+                        const auto proposed_new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                        auto ConstFunc = [&proposed_new_sample](Eigen::VectorXd const& position, bool gradient) -> std::pair<double, std::optional<Eigen::VectorXd>> // A function with a max at proposed_new_sample that falls off proportional to the distance.
+                        { 
+                            assert(!gradient);
+                            return {
+                                -.01 * (proposed_new_sample - position).norm(),
+                                std::nullopt};
+                        };
+                        // static_assert(concepts::EvalFunc<ConstFunc>);
+
+                        auto parameterBounds = std::vector<std::pair<double, double>>(seval.dim_in(), std::make_pair( 0.0, 1.0 ));
+
+                        //find the closest coordinate to proposed_new_sample that satisfies the constraints
+	                    new_sample = opt.acquisitionOptimizer().optimize(
+                            ConstFunc, 
+                            proposed_new_sample, 
+                            parameterBounds);
+                    }
+                    else
+                    {
+	                    new_sample = tools::random_vector(seval.dim_in(), opt.isBounded());
+                    }
+
+					EvaluationStatus status = opt.eval_and_add(seval, new_sample);
+                    assert(status != SKIP); // I'm not sure how we should handle this case.
+
+					if (status == TERMINATE)
+					{
+                        return TERMINATE;
+					}
                 }
+                return OK;
             }
         };
     }

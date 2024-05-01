@@ -52,7 +52,6 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/math.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -61,8 +60,8 @@ namespace limbo {
             /// number of max iterations
             BO_PARAM(int, iterations, 300);
 
-            /// gradient norm epsilon for stopping
-            BO_PARAM(double, eps_stop, 0.0);
+            /// gradient norm epsilon for stopping. Set this to some positive value for it to have an effect. Set to 0 to disable.
+            BO_PARAM(double, eps_stop, 0);
         };
     }
     namespace opt {
@@ -78,45 +77,40 @@ namespace limbo {
         /// Parameters:
         /// - int iterations
         /// - double eps_stop
-        template <typename Params>
+        template <typename opt_rprop>
         struct Rprop {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            static Rprop create(int dims)
             {
-                assert(Params::opt_rprop::eps_stop() >= 0.);
+                return Rprop();
+            }
 
-                size_t param_dim = init.size();
-                double delta0 = 0.1;
-                double deltamin = 1e-6;
-                double deltamax = 50;
-                double etaminus = 0.5;
-                double etaplus = 1.2;
-                double eps_stop = Params::opt_rprop::eps_stop();
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+            {
+                assert(opt_rprop::eps_stop() >= 0.);
+                assert(!bounds.has_value() && "rprop doesn't suppoert bounds");
+
+                const size_t param_dim = init.size();
+                constexpr double delta0 = 0.1;
+                constexpr double deltamin = 1e-6;
+                constexpr double deltamax = 50;
+                constexpr double etaminus = 0.5;
+                constexpr double etaplus = 1.2;
 
                 Eigen::VectorXd delta = Eigen::VectorXd::Ones(param_dim) * delta0;
                 Eigen::VectorXd grad_old = Eigen::VectorXd::Zero(param_dim);
                 Eigen::VectorXd params = init;
 
-                if (bounded) {
-                    for (int j = 0; j < params.size(); j++) {
-                        if (params(j) < 0)
-                            params(j) = 0;
-                        if (params(j) > 1)
-                            params(j) = 1;
-                    }
-                }
-
                 Eigen::VectorXd best_params = params;
-                double best = log(0);
+                double best = -INFINITY;
 
-                for (int i = 0; i < Params::opt_rprop::iterations(); ++i) {
-                    auto perf = opt::eval_grad(f, params);
-                    double lik = opt::fun(perf);
-                    if (lik > best) {
-                        best = lik;
+                for (int i = 0; i < opt_rprop::iterations(); ++i) {
+                    auto [funcVal, gradient] = f(params, true);
+                    if (funcVal > best) {
+                        best = funcVal;
                         best_params = params;
                     }
-                    Eigen::VectorXd grad = -opt::grad(perf);
+                    Eigen::VectorXd grad = -gradient.value();
                     grad_old = grad_old.cwiseProduct(grad);
 
                     for (int j = 0; j < grad_old.size(); ++j) {
@@ -127,20 +121,24 @@ namespace limbo {
                             delta(j) = std::max(delta(j) * etaminus, deltamin);
                             grad(j) = 0;
                         }
-                        params(j) += -tools::signum(grad(j)) * delta(j);
-
-                        if (bounded && params(j) < 0)
-                            params(j) = 0;
-                        if (bounded && params(j) > 1)
-                            params(j) = 1;
+                        params(j) += -signum(grad(j)) * delta(j);
                     }
 
                     grad_old = grad;
-                    if (grad_old.norm() < eps_stop)
+                    if (grad_old.norm() < opt_rprop::eps_stop())
                         break;
                 }
 
                 return best_params;
+            }
+
+        private:
+            /// return -1 if x < 0;
+            /// return 0 if x = 0;
+            /// return 1 if x > 0.
+            static int signum(double x)
+            {
+                return (0 < x) - (x < 0);
             }
         };
     }

@@ -73,34 +73,53 @@ namespace limbo {
         ///
         /// Parameters:
         /// - int repeats
-        template <typename Params, typename Optimizer>
+        template <typename opt_parallelrepeater, concepts::Optimizer Optimizer>
         struct ParallelRepeater {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+
+            static ParallelRepeater create(int dims)
             {
-                assert(Params::opt_parallelrepeater::repeats() > 0);
-                assert(Params::opt_parallelrepeater::epsilon() > 0.);
-                tools::par::init();
+                return ParallelRepeater();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(F const& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+            {
+                assert(opt_parallelrepeater::repeats() > 0);
+                assert(opt_parallelrepeater::epsilon() > 0.);
                 using pair_t = std::pair<Eigen::VectorXd, double>;
 
-                auto body = [&](int i) {
-                    // clang-format off
-                    Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * Params::opt_parallelrepeater::epsilon() - Params::opt_parallelrepeater::epsilon();
-                    Eigen::VectorXd v = Optimizer()(f, init + r_deviation, bounded);
+                auto body = [&init, &bounds, &f](int i) {
+                    Eigen::VectorXd newPoint;
+                    if (i == 0)
+                    { // For the first repeat don't do any randomization
+                        newPoint = init;
+                    }
+                    else
+                    {
+                        Eigen::VectorXd r_deviation = tools::random_vector(init.size()).array() * 2. * opt_parallelrepeater::epsilon() - opt_parallelrepeater::epsilon();
+                    	newPoint = init + r_deviation;
+                    }
+                 
+                    if (bounds.has_value())
+                    { // Make sure initil point is in bounds
+	                    for (int j=0; j<newPoint.size(); j++)
+	                    {
+                            newPoint(j) = std::clamp(newPoint(j), bounds.value().at(j).first, bounds.value().at(j).second);
+	                    }
+                    }
+                    Eigen::VectorXd v = Optimizer::create(init.size()).optimize(f, newPoint, bounds);
                     double val = opt::eval(f, v);
-
                     return std::make_pair(v, val);
-                    // clang-format on
                 };
 
                 auto comp = [](const pair_t& v1, const pair_t& v2) {
-                    // clang-format off
+                    
                     return v1.second > v2.second;
-                    // clang-format on
+                    
                 };
 
                 pair_t init_v = std::make_pair(init, -std::numeric_limits<float>::max());
-                auto m = tools::par::max(init_v, Params::opt_parallelrepeater::repeats(), body, comp);
+                auto m = tools::par::max(init_v, opt_parallelrepeater::repeats(), body, comp);
 
                 return m.first;
             };

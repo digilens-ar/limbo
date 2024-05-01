@@ -46,29 +46,36 @@
 #ifndef LIMBO_MODEL_GP_MEAN_LF_OPT_HPP
 #define LIMBO_MODEL_GP_MEAN_LF_OPT_HPP
 
-#include <limbo/model/gp/hp_opt.hpp>
 
 namespace limbo {
     namespace model {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of the mean only (try to align the mean function)
-            template <typename Params, typename Optimizer = opt::Rprop<Params>>
-            struct MeanLFOpt : public HPOpt<Params, Optimizer> {
+            template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
+            struct MeanLFOpt {
             public:
+                MeanLFOpt(int dims):
+					opt_(Optimizer::create(dims))
+                {}
+
+                static MeanLFOpt create(int dims)
+                {
+                    return MeanLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
-                    this->_called = true;
                     MeanLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
-                    Eigen::VectorXd params = optimizer(optimization, gp.mean_function().h_params(), false);
+                    Eigen::VectorXd params = opt_.optimize(optimization, gp.mean_function().h_params(), std::nullopt);
                     gp.mean_function().set_h_params(params);
                     gp.recompute(true, false);
-                    gp.compute_log_lik();
                 }
 
-            protected:
+            private:
+                Optimizer opt_;
+
                 template <typename GP>
                 struct MeanLFOptimization {
                 public:

@@ -54,12 +54,11 @@ namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `gp_likelihood.dat`
-        template <typename Params>
-        struct GPLikelihood : public StatBase<Params> {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+        struct GPLikelihood : public StatBase {
+            template <typename BO>
+            void operator()(const BO& bo)
             {
-                if (!bo.stats_enabled() || bo.observations().empty())
+                if (bo.observations().empty())
                     return;
 
                 this->_create_log_file(bo, "gp_likelihood.dat");

@@ -30,3 +30,6 @@ docs/defaults.rst
 # Ignored folders/files of the paper
 paper.pdf
 paper.xml
+.vs/
+tests/temp/
+out/

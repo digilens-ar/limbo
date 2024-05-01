@@ -54,30 +54,20 @@ namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `gp_acquisitions.dat`
-        template <typename Params>
-        struct GPAcquisitions : public StatBase<Params> {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+        struct GPAcquisitions : public StatBase {
+            template <typename BO>
+            void operator()(const BO& bo)
             {
-                if (!bo.stats_enabled())
-                    return;
-
                 this->_create_log_file(bo, "gp_acquisitions.dat");
 
                 if (bo.total_iterations() == 0)
                     (*this->_log_file) << "#iteration mu sigma acquisition" << std::endl;
 
-                Eigen::VectorXd mu;
-                double sigma, acqui;
-
                 if (!bo.samples().empty()) {
-                    std::tie(mu, sigma) = bo.model().query(bo.samples().back());
-                    acqui = opt::fun(typename BO::acquisition_function_t(bo.model(), bo.current_iteration())(bo.samples().back(), afun, false));
+                    auto [mu, sigma] = bo.model().query(bo.samples().back());
+                    auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.total_iterations())(bo.samples().back(), false);
+                    (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
                 }
-                else
-                    return;
-
-                (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
             }
         };
     }

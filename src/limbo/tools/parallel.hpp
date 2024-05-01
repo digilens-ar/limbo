@@ -49,7 +49,7 @@
 #include <algorithm>
 #include <vector>
 
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 #include <tbb/blocked_range.h>
@@ -58,7 +58,6 @@
 #include <tbb/parallel_for_each.h>
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
-#include <tbb/task_scheduler_init.h>
 #endif
 
 ///@defgroup par_tools
@@ -66,7 +65,7 @@
 namespace limbo {
     namespace tools {
         namespace par {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
             template <typename X> // old fashion way to create template alias (for GCC
             // 4.6...)
@@ -105,30 +104,16 @@ namespace limbo {
             }
 
 #endif
-
-#ifdef USE_TBB
-            inline void init()
-            {
-                static tbb::task_scheduler_init init;
-            }
-#else
-            /// @ingroup par_tools
-            /// init TBB (if activated) for multi-core computing
-            inline void init()
-            {
-            }
-#endif
-
             ///@ingroup par_tools
             /// parallel for
             template <typename F>
             inline void loop(size_t begin, size_t end, const F& f)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(begin), end, size_t(1), [&](size_t i) {
-                    // clang-format off
+                    
                 f(i);
-                    // clang-format on
+                    
                 });
 #else
                 for (size_t i = begin; i < end; ++i)
@@ -141,7 +126,7 @@ namespace limbo {
             template <typename Iterator, typename F>
             inline void for_each(Iterator begin, Iterator end, const F& f)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_for_each(begin, end, f);
 #else
                 for (Iterator i = begin; i != end; ++i)
@@ -154,27 +139,24 @@ namespace limbo {
             template <typename T, typename F, typename C>
             inline T max(const T& init, int num_steps, const F& f, const C& comp)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 auto body = [&](const tbb::blocked_range<size_t>& r, T current_max) -> T {
-                    // clang-format off
-            for (size_t i = r.begin(); i != r.end(); ++i)
-            {
-                T v = f(i);
-                if (comp(v, current_max))
-                  current_max = v;
-            }
-            return current_max;
-                    // clang-format on
+                    
+		            for (size_t i = r.begin(); i != r.end(); ++i)
+		            {
+		                T v = f(i);
+		                if (comp(v, current_max))
+		                  current_max = v;
+		            }
+		            return current_max;
+	                    
+	            };
+	            auto joint = [&](const T& p1, const T& p2) -> T {
+		            if (comp(p1, p2))
+		                return p1;
+		            return p2;
                 };
-                auto joint = [&](const T& p1, const T& p2) -> T {
-                    // clang-format off
-            if (comp(p1, p2))
-                return p1;
-            return p2;
-                    // clang-format on
-                };
-                return tbb::parallel_reduce(tbb::blocked_range<size_t>(0, num_steps), init,
-                    body, joint);
+                return tbb::parallel_reduce(tbb::blocked_range<size_t>(0, num_steps), init, body, joint);
 #else
                 T current_max = init;
                 for (int i = 0; i < num_steps; ++i) {
@@ -190,7 +172,7 @@ namespace limbo {
             template <typename T1, typename T2, typename T3>
             inline void sort(T1 i1, T2 i2, T3 comp)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_sort(i1, i2, comp);
 #else
                 std::sort(i1, i2, comp);
@@ -202,11 +184,11 @@ namespace limbo {
             template <typename F>
             inline void replicate(size_t nb, const F& f)
             {
-#ifdef USE_TBB
+#ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(0), nb, size_t(1), [&](size_t i) {
-                    // clang-format off
+                    
                 f();
-                    // clang-format on
+                    
                 });
 #else
                 for (size_t i = 0; i < nb; ++i)

@@ -52,7 +52,6 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/math.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -90,34 +89,37 @@ namespace limbo {
         /// - double gamma
         /// - bool nesterov
         /// - double eps_stop
-        template <typename Params>
+        template <typename opt_gradient_ascent>
         struct GradientAscent {
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+
+            static GradientAscent create(int dims)
             {
-                assert(Params::opt_gradient_ascent::gamma() >= 0. && Params::opt_gradient_ascent::gamma() < 1.);
-                assert(Params::opt_gradient_ascent::alpha() >= 0.);
+                return GradientAscent();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
+            {
+                assert(opt_gradient_ascent::gamma() >= 0. && opt_gradient_ascent::gamma() < 1.);
+                assert(opt_gradient_ascent::alpha() >= 0.);
 
                 size_t param_dim = init.size();
-                double gamma = Params::opt_gradient_ascent::gamma();
-                double alpha = Params::opt_gradient_ascent::alpha();
-                double stop = Params::opt_gradient_ascent::eps_stop();
-                bool is_nesterov = Params::opt_gradient_ascent::nesterov();
+                double gamma = opt_gradient_ascent::gamma();
+                double alpha = opt_gradient_ascent::alpha();
+                double stop = opt_gradient_ascent::eps_stop();
+                bool is_nesterov = opt_gradient_ascent::nesterov();
 
                 Eigen::VectorXd v = Eigen::VectorXd::Zero(param_dim);
 
                 Eigen::VectorXd params = init;
 
-                if (bounded) {
+                if (bounds.has_value()) {
                     for (int j = 0; j < params.size(); j++) {
-                        if (params(j) < 0)
-                            params(j) = 0;
-                        if (params(j) > 1)
-                            params(j) = 1;
+                        params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                     }
                 }
 
-                for (int i = 0; i < Params::opt_gradient_ascent::iterations(); ++i) {
+                for (int i = 0; i < opt_gradient_ascent::iterations(); ++i) {
                     Eigen::VectorXd prev_params = params;
                     Eigen::VectorXd query_params = params;
                     // if Nesterov momentum, change query parameters
@@ -125,28 +127,21 @@ namespace limbo {
                         query_params.array() += gamma * v.array();
 
                         // make sure that the parameters are still in bounds, if needed
-                        if (bounded) {
+                        if (bounds.has_value()) {
                             for (int j = 0; j < query_params.size(); j++) {
-                                if (query_params(j) < 0)
-                                    query_params(j) = 0;
-                                if (query_params(j) > 1)
-                                    query_params(j) = 1;
+                                query_params(j) = std::clamp(query_params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                             }
                         }
                     }
-                    auto perf = opt::eval_grad(f, query_params);
+                    auto [funcVal, gradient] = f(query_params, true);
 
-                    Eigen::VectorXd grad = opt::grad(perf);
-                    v = gamma * v.array() + alpha * grad.array();
+                    v = gamma * v.array() + alpha * gradient.value().array();
 
                     params.array() += v.array();
 
-                    if (bounded) {
+                    if (bounds.has_value()) {
                         for (int j = 0; j < params.size(); j++) {
-                            if (params(j) < 0)
-                                params(j) = 0;
-                            if (params(j) > 1)
-                                params(j) = 1;
+                            params(j) = std::clamp(params(j), bounds.value().at(j).first, bounds.value().at(j).second);
                         }
                     }
 

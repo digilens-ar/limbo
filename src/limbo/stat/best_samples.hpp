@@ -52,12 +52,11 @@ namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `best_samples.dat`
-        template <typename Params>
-        struct BestSamples : public StatBase<Params> {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+        struct BestSamples : public StatBase {
+            template <typename BO>
+            void operator()(const BO& bo)
             {
-                if (!bo.stats_enabled() || bo.samples().empty())
+                if (bo.samples().empty())
                     return;
 
                 this->_create_log_file(bo, "best_samples.dat");
@@ -65,7 +64,7 @@ namespace limbo {
                 if (bo.total_iterations() == 0)
                     (*this->_log_file) << "#iteration best_sample" << std::endl;
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.best_sample(afun).transpose() << std::endl;
+                (*this->_log_file) << bo.total_iterations() << " " << bo.best_sample().transpose() << std::endl;
             }
         };
     }

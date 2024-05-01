@@ -50,11 +50,12 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <fstream>
 
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
-#include <boost/filesystem.hpp>
 
+#include <filesystem>
 #include <Eigen/Core>
 
 namespace limbo {
@@ -68,8 +69,8 @@ namespace limbo {
             /// write an Eigen::Matrix*
             void save(const Eigen::MatrixXd& v, const std::string& object_name) const
             {
-                _create_directory();
-                std::ofstream ofs(fname(object_name).c_str());
+                create_directories(_dir_name);
+            	std::ofstream ofs(fname(object_name).c_str());
                 ofs << v.format(_fmt) << std::endl;
             }
 
@@ -77,11 +78,23 @@ namespace limbo {
             template <typename T>
             void save(const std::vector<T>& v, const std::string& object_name) const
             {
-                _create_directory();
+                create_directories(_dir_name);
                 std::ofstream ofs(fname(object_name).c_str());
-                for (auto& x : v) {
-                    ofs << x.transpose().format(_fmt) << std::endl;
+                if constexpr (std::is_same_v<T, double>)
+                {
+                    ofs << std::setprecision(15);
+		             for (auto const& x : v)
+		             {
+	                     ofs << x << "\n";
+		             }
                 }
+                else
+                {
+                    for (auto& x : v) {
+                        ofs << x.transpose().format(_fmt) << "\n";
+                    }
+                }
+             
             }
 
             /// load an Eigen matrix (or vector)
@@ -103,33 +116,34 @@ namespace limbo {
                 auto values = _load(object_name);
                 assert(!values.empty());
                 for (size_t i = 0; i < values.size(); ++i) {
-                    V v(values[i].size());
-                    for (size_t j = 0; j < values[i].size(); ++j)
-                        v(j) = values[i][j];
-                    m_list.push_back(v);
+                    if constexpr (std::is_same_v<double, V>)
+                    {
+                        m_list.push_back(values[i][0]);
+                    }
+                    else
+                    {
+                        V v(values[i].size());
+                        for (size_t j = 0; j < values[i].size(); ++j)
+                            v(j) = values[i][j];
+                        m_list.push_back(v);
+                    }
                 }
                 assert(!m_list.empty());
             }
 
             std::string fname(const std::string& object_name) const
             {
-                return _dir_name + "/" + object_name + ".dat";
+                return (_dir_name / (object_name + ".dat")).string();
             }
 
-            const std::string& directory() const
+            std::string directory() const
             {
-                return _dir_name;
+                return _dir_name.string();
             }
 
         protected:
-            std::string _dir_name;
+            std::filesystem::path _dir_name;
             Eigen::IOFormat _fmt;
-
-            void _create_directory() const
-            {
-                boost::filesystem::path my_path(_dir_name);
-                boost::filesystem::create_directories(my_path);
-            }
 
             std::vector<std::vector<double>> _load(const std::string& object_name) const
             {
@@ -140,10 +154,10 @@ namespace limbo {
                 while (std::getline(ifs, line)) {
                     std::stringstream line_stream(line);
                     std::string cell;
-                    std::vector<double> line;
+                    std::vector<double> lineVec;
                     while (std::getline(line_stream, cell, ' '))
-                        line.push_back(std::stod(cell));
-                    v.push_back(line);
+                        lineVec.push_back(std::stod(cell));
+                    v.push_back(lineVec);
                 }
                 assert(!v.empty() && "empty file");
                 return v;

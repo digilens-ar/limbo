@@ -50,111 +50,147 @@
 #warning No NLOpt
 #else
 #include <Eigen/Core>
-
 #include <vector>
-
 #include <nlopt.hpp>
+#include <spdlog/spdlog.h>
 
-#include <limbo/opt/optimizer.hpp>
-#include <limbo/tools/macros.hpp>
+namespace limbo::opt {
+    /**
+      @ingroup opt
+    Base class for NLOpt wrappers
+    */
+    class NLOptBase {
+    public:
+        template <concepts::EvalFunc F>
+        Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds, double* bestVal = nullptr) const
+        {
+            assert(init.size() == dim_);
 
-namespace limbo {
-    namespace opt {
-        /**
-          @ingroup opt
-        Base class for NLOpt wrappers
-        */
-        template <typename Params, nlopt::algorithm Algorithm>
-        struct NLOptBase {
-        public:
-            virtual void initialize(int dim)
-            {
-                _opt = nlopt::opt(Algorithm, dim);
-                _initialized = true;
+            _opt.set_max_objective(nlopt_func<F>, (void*)&f);
+
+            std::vector<double> x(dim_);
+            Eigen::VectorXd::Map(&x[0], dim_) = init;
+
+            if (bounds.has_value()) {
+                std::vector<double> lowerBounds;
+                std::vector<double> upperBounds;
+                std::for_each(bounds.value().begin(), bounds.value().end(), [&lowerBounds, &upperBounds](auto const& bound) {lowerBounds.push_back(bound.first); upperBounds.push_back(bound.second); });
+                _opt.set_lower_bounds(lowerBounds);
+                _opt.set_upper_bounds(upperBounds);
             }
 
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded)
+            double max;
+
+            // try {
+            //     nlopt::result result = _opt.optimize(x, max);
+            // }
+            // catch (nlopt::roundoff_limited const& e) {
+            //     // In theory it's ok to ignore these errors
+            //     spdlog::error("[NLOptNoGrad roundoff_limited]: {}", e.what());
+            // }
+            // catch (std::invalid_argument const& e) {
+            //     // In theory it's ok to ignore this error
+            //     spdlog::error("[NLOptNoGrad invalid_argument]: {}", e.what());
+            // }
+            // catch (std::runtime_error const& e) {
+            //     // In theory it's ok to ignore this error
+            //     spdlog::error("[NLOptGrad runtime_error]: {}", e.what());
+            // }
+            nlopt::result result = _opt.optimize(x, max);
+
+            if (bestVal)
             {
-                int dim = init.size();
-                if (!_initialized)
-                    initialize(dim);
-
-                _opt.set_max_objective(nlopt_func<F>, (void*)&f);
-
-                std::vector<double> x(dim);
-                Eigen::VectorXd::Map(&x[0], dim) = init;
-
-                if (bounded) {
-                    _opt.set_lower_bounds(std::vector<double>(dim, 0));
-                    _opt.set_upper_bounds(std::vector<double>(dim, 1));
-                }
-
-                double max;
-
-                try {
-                    _opt.optimize(x, max);
-                }
-                catch (nlopt::roundoff_limited& e) {
-                    // In theory it's ok to ignore this error
-                    std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-                }
-                catch (std::invalid_argument& e) {
-                    // In theory it's ok to ignore this error
-                    std::cerr << "[NLOptNoGrad]: " << e.what() << std::endl;
-                }
-                catch (std::runtime_error& e) {
-                    // In theory it's ok to ignore this error
-                    std::cerr << "[NLOptGrad]: " << e.what() << std::endl;
-                }
-
-                return Eigen::VectorXd::Map(x.data(), x.size());
+                *bestVal = max;
             }
 
-            // Inequality constraints of the form f(x) <= 0
-            template <typename F>
-            void add_inequality_constraint(const F& f, double tolerance = 1e-8)
-            {
-                if (_initialized)
-                    _opt.add_inequality_constraint(nlopt_func<F>, (void*)&f, tolerance);
-                else
-                    std::cerr << "[NLOptNoGrad]: Trying to set an inequality constraint without having initialized the optimizer! Nothing will be done!" << std::endl;
-            }
 
-            // Equality constraints of the form f(x) = 0
-            template <typename F>
-            void add_equality_constraint(const F& f, double tolerance = 1e-8)
-            {
-                if (_initialized)
-                    _opt.add_equality_constraint(nlopt_func<F>, (void*)&f, tolerance);
-                else
-                    std::cerr << "[NLOptNoGrad]: Trying to set an equality constraint without having initialized the optimizer! Nothing will be done!" << std::endl;
-            }
+            return Eigen::VectorXd::Map(x.data(), x.size());
+        }
 
-        protected:
-            nlopt::opt _opt;
-            bool _initialized = false;
-
-            template <typename F>
-            static double nlopt_func(const std::vector<double>& x, std::vector<double>& grad, void* my_func_data)
+        // Inequality constraints of the form f(x) <= 0
+        template <concepts::EvalFunc F>
+        void add_inequality_constraint(F* f, double tolerance = 1e-8)
+        {
+            if (!supportsInequalityConstraints(_opt.get_algorithm()))
             {
-                F* f = (F*)(my_func_data);
-                Eigen::VectorXd params = Eigen::VectorXd::Map(x.data(), x.size());
-                double v;
-                if (!grad.empty()) {
-                    auto r = eval_grad(*f, params);
-                    v = opt::fun(r);
-                    Eigen::VectorXd g = opt::grad(r);
-                    Eigen::VectorXd::Map(&grad[0], g.size()) = g;
-                }
-                else {
-                    v = eval(*f, params);
-                }
-                return v;
+                throw std::runtime_error("This NLOPT algorithm does not support inequality constraints");
             }
-        };
-    } // namespace opt
-} // namespace limbo
+            _opt.add_inequality_constraint(nlopt_func<F>, (void*)f, tolerance);
+        }
+
+        // Equality constraints of the form f(x) = 0
+        template <concepts::EvalFunc F>
+        void add_equality_constraint(F* f, double tolerance = 1e-8)
+        {
+            if (!supportsEqualityConstraints(_opt.get_algorithm()))
+            {
+                throw std::runtime_error("This NLOPT algorithm does not support equality constraints");
+            }
+            _opt.add_equality_constraint(nlopt_func<F>, (void*)f, tolerance);
+		}
+
+        nlopt::algorithm getAlgorithm() const { return _opt.get_algorithm(); }
+
+    protected:
+
+        NLOptBase(nlopt::algorithm algorithm, int dim) :
+            dim_(dim)
+        {
+            _opt = nlopt::opt(algorithm, dim);
+        }
+
+        mutable nlopt::opt _opt;
+
+    private:
+        template <concepts::EvalFunc F>
+        static double nlopt_func(const std::vector<double>& x, std::vector<double>& grad, void* my_func_data)
+        {
+            F* f = (F*)(my_func_data);
+            Eigen::VectorXd params = Eigen::VectorXd::Map(x.data(), x.size());
+            auto [funcVal, gradient] = (*f)(params, !grad.empty());
+
+            if (!grad.empty()) { // Copy our new gradient data to nlopt's array.
+                Eigen::VectorXd::Map(&grad[0], gradient.value().size()) = gradient.value();
+            }
+            return funcVal;
+        }
+
+        static bool supportsInequalityConstraints(nlopt::algorithm alg)
+        {
+	        switch (alg)
+	        {
+	        case nlopt::algorithm::AUGLAG:
+	        case nlopt::algorithm::AUGLAG_EQ:
+	        case nlopt::algorithm::GN_ISRES:
+	        case nlopt::algorithm::GN_AGS:
+	        case nlopt::algorithm::GN_ORIG_DIRECT:
+	        case nlopt::algorithm::LN_COBYLA:
+	        case nlopt::algorithm::LD_MMA:
+	        case nlopt::algorithm::LD_SLSQP:
+                return true;
+	        default:
+                return false;
+	        }
+        }
+
+        static bool supportsEqualityConstraints(nlopt::algorithm alg)
+        {
+            switch (alg)
+            {
+            case nlopt::algorithm::AUGLAG:
+            case nlopt::algorithm::AUGLAG_EQ:
+            case nlopt::algorithm::GN_ISRES:
+            case nlopt::algorithm::LN_COBYLA:
+            case nlopt::algorithm::LD_SLSQP:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        int dim_;
+    };
+} // namespace limbo::opt
 
 #endif
 #endif

@@ -46,22 +46,29 @@
 #ifndef LIMBO_MODEL_GP_KERNEL_MEAN_LF_OPT_HPP
 #define LIMBO_MODEL_GP_KERNEL_MEAN_LF_OPT_HPP
 
-#include <limbo/model/gp/hp_opt.hpp>
+#include "limbo/opt/rprop.hpp"
 
 namespace limbo {
     namespace model {
         namespace gp {
             ///@ingroup model_opt
             ///optimize the likelihood of both the kernel and the mean (try to align the mean function)
-            template <typename Params, typename Optimizer = opt::Rprop<Params>>
-            struct KernelMeanLFOpt : public HPOpt<Params, Optimizer> {
-            public:
+            template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
+            struct KernelMeanLFOpt {
+
+                KernelMeanLFOpt(int dims):
+					opt_(Optimizer::create(dims))
+                {}
+
+                static KernelMeanLFOpt create(int dims)
+                {
+                    return KernelMeanLFOpt(dims);
+                }
+
                 template <typename GP>
                 void operator()(GP& gp)
                 {
-                    this->_called = true;
                     KernelMeanLFOptimization<GP> optimization(gp);
-                    Optimizer optimizer;
 
                     int dim = gp.kernel_function().h_params_size() + gp.mean_function().h_params_size();
 
@@ -69,18 +76,18 @@ namespace limbo {
                     init.head(gp.kernel_function().h_params_size()) = gp.kernel_function().h_params();
                     init.tail(gp.mean_function().h_params_size()) = gp.mean_function().h_params();
 
-                    Eigen::VectorXd params = optimizer(optimization, init, false);
+                    Eigen::VectorXd params = opt_.optimize(optimization, init, std::nullopt);
                     gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
                     gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
 
                     gp.recompute(true);
-                    gp.compute_log_lik();
                 }
 
-            protected:
+            private:
+                Optimizer opt_;
+
                 template <typename GP>
                 struct KernelMeanLFOptimization {
-                public:
                     KernelMeanLFOptimization(const GP& gp) : _original_gp(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const

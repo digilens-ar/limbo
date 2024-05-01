@@ -50,6 +50,9 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/macros.hpp>
+#ifdef _WIN32
+#include <corecrt_math_defines.h>
+#endif
 
 namespace limbo {
     namespace defaults {
@@ -77,29 +80,22 @@ namespace limbo {
           - `double delta` (a small number in [0,1], e.g. 0.1)
         \endrst
         */
-        template <typename Params, typename Model>
+        template <typename acqui_gpucb, concepts::Model Model>
         class GP_UCB {
         public:
             GP_UCB(const Model& model, int iteration) : _model(model)
             {
-                double nt = std::pow(iteration, dim_in() / 2.0 + 2.0);
-                static constexpr double delta3 = Params::acqui_gpucb::delta() * 3;
+                double nt = std::pow(iteration + 1, _model.dim_in() / 2.0 + 2.0); // According to the reference `t` (iteration) starts at 1, not 0. if it is 0 then the resuling _beta is NaN.
+                static constexpr double delta3 = acqui_gpucb::delta() * 3;
                 static constexpr double pi2 = M_PI * M_PI;
                 _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3));
             }
 
-            size_t dim_in() const { return _model.dim_in(); }
-
-            size_t dim_out() const { return _model.dim_out(); }
-
-            template <typename AggregatorFunction>
-            opt::eval_t operator()(const Eigen::VectorXd& v, const AggregatorFunction& afun, bool gradient) const
+            opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
             {
                 assert(!gradient);
-                Eigen::VectorXd mu;
-                double sigma;
-                std::tie(mu, sigma) = _model.query(v);
-                return opt::no_grad(afun(mu) + _beta * std::sqrt(sigma));
+                auto [mu, sigma_sq] = _model.query(v);
+                return opt::no_grad(mu + _beta * std::sqrt(sigma_sq));
             }
 
         protected:

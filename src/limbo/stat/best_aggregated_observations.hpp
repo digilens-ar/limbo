@@ -51,15 +51,13 @@
 namespace limbo {
     namespace stat {
         ///@ingroup stat
-        /// TODO fallocati
         /// Write the best observation at each iteration
         /// filename: `best_aggregated_observations.dat`
-        template <typename Params>
-        struct BestAggregatedObservations : public StatBase<Params> {
-            template <typename BO, typename AggregatorFunction>
-            void operator()(const BO& bo, const AggregatorFunction& afun)
+        struct BestAggregatedObservations : public StatBase {
+            template <typename BO>
+            void operator()(const BO& bo)
             {
-                if (!bo.stats_enabled() || bo.observations().empty())
+                if (bo.observations().empty())
                     return;
 
                 this->_create_log_file(bo, "best_aggregated_observations.dat");
@@ -67,7 +65,7 @@ namespace limbo {
                 if (bo.total_iterations() == 0)
                     (*this->_log_file) << "#iteration best_aggregated_observation" << std::endl;
 
-                (*this->_log_file) << bo.total_iterations() << " " << afun(bo.best_observation(afun)) << std::endl;
+                (*this->_log_file) << bo.total_iterations() << " " << bo.best_observation() << std::endl;
             }
         };
     }

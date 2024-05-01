@@ -67,28 +67,36 @@ namespace limbo {
         ///
         /// Parameters:
         /// - int bins
-        template <typename Params>
+        template <typename opt_gridsearch>
         struct GridSearch {
         public:
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, bool bounded) const
+            static GridSearch create(int dims)
+            {
+                return GridSearch();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, std::optional<std::vector<std::pair<double, double>>> const& bounds) const
             {
                 // Grid search does not support unbounded search
-                assert(bounded);
+                assert(bounds.has_value());
                 size_t dim = init.size();
-                return _inner_search(f, 0, Eigen::VectorXd::Constant(dim, 0.5));
+                return _inner_search(f, 0, Eigen::VectorXd::Constant(dim, 0.5), bounds.value());
             }
 
         protected:
-            template <typename F>
-            Eigen::VectorXd _inner_search(const F& f, size_t depth, const Eigen::VectorXd& current) const
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd _inner_search(const F& f, size_t depth, const Eigen::VectorXd& current, std::vector<std::pair<double, double>> const& bounds) const
             {
                 size_t dim = current.size();
-                double step_size = 1.0 / (double)Params::opt_gridsearch::bins();
-                double upper_lim = 1.0 + step_size;
+                auto& thisBound = bounds.at(depth);
+                assert(thisBound.second > thisBound.first);
+                double step_size = (thisBound.second - thisBound.first) / (double)opt_gridsearch::bins();
+                const double lower_lim = thisBound.first;
+                const double upper_lim = thisBound.second + step_size;
                 double best_fit = -std::numeric_limits<double>::max();
                 Eigen::VectorXd current_result(dim);
-                for (double x = 0; x < upper_lim; x += step_size) {
+                for (double x = lower_lim; x < upper_lim; x += step_size) {
                     Eigen::VectorXd new_point = current;
                     new_point[depth] = x;
                     double val;
@@ -100,7 +108,7 @@ namespace limbo {
                         }
                     }
                     else {
-                        Eigen::VectorXd temp_result = _inner_search(f, depth + 1, new_point);
+                        Eigen::VectorXd temp_result = _inner_search(f, depth + 1, new_point, bounds);
                         val = eval(f, temp_result);
                         if (val > best_fit) {
                             best_fit = val;

@@ -54,9 +54,7 @@
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/parallel.hpp>
 
-#ifndef USE_LIBCMAES
-#warning NO libcmaes support
-#else
+#ifdef USE_LIBCMAES
 
 #include <libcmaes/cmaes.h>
 
@@ -171,8 +169,13 @@ namespace limbo {
             using ProgressFunctionUnbounded = std::function<int(const libcmaes::CMAParameters<libcmaes::GenoPheno<libcmaes::NoBoundStrategy>>&, const libcmaes::CMASolutions&)>;
             using ProgressFunctionBounded = std::function<int(const libcmaes::CMAParameters<libcmaes::GenoPheno<libcmaes::pwqBoundStrategy>>&, const libcmaes::CMASolutions&)>;
 
-            template <typename F>
-            Eigen::VectorXd operator()(const F& f, const Eigen::VectorXd& init, double bounded) const
+            static Cmaes create(int dims)
+            {
+                return CMaes();
+            }
+
+            template <concepts::EvalFunc F>
+            Eigen::VectorXd optimize(const F& f, const Eigen::VectorXd& init, double bounded) const
             {
                 size_t dim = init.size();
 
