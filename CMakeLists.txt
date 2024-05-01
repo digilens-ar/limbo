@@ -1,11 +1,5 @@
 cmake_minimum_required (VERSION 3.20)
 
-if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED VCPKG_OVERLAY_TRIPLETS)
-    set(VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/custom-triplets/" CACHE STRING "")  # Use our locally stored custom triplets.
-    set(VCPKG_TARGET_TRIPLET "x64-windows-limbo" CACHE STRING "")  
-    set(VCPKG_HOST_TRIPLET "x64-windows-limbo" CACHE STRING "") 
-endif()
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(GitVersionDetect)
 set(LIMBO_VERSION_MAJOR ${GITVERSIONDETECT_VERSION_MAJOR})

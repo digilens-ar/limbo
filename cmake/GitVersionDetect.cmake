@@ -28,7 +28,7 @@ This will define the following variables:
 #]=======================================================================]
 
 # Required packages
-find_package(Git)
+find_package(Git REQUIRED)
 
 # Check if a git executable was found
 if(GIT_EXECUTABLE)
