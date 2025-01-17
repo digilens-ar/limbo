@@ -86,7 +86,7 @@ namespace limbo {
             GP_UCB(const Model& model, int iteration) : _model(model)
             {
                 double nt = std::pow(iteration + 1, _model.dim_in() / 2.0 + 2.0); // According to the reference `t` (iteration) starts at 1, not 0. if it is 0 then the resuling _beta is NaN.
-                static constexpr double delta3 = acqui_gpucb::delta() * 3;
+                static const double delta3 = acqui_gpucb::delta() * 3;
                 static constexpr double pi2 = M_PI * M_PI;
                 _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3));
             }

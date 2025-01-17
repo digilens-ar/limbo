@@ -20,6 +20,8 @@ option(LIMBO_USE_NLOPT "Link to NLOPT and enable its algorithms for optimization
 option(LIMBO_USE_CMAES "Link to libcmaes and enable its algorithms for optimization" OFF)
 
 add_library(limbo INTERFACE)
+add_library(limbo::limbo ALIAS limbo)
+
 file(GLOB_RECURSE LIMBO_SOURCE_FILES CONFIGURE_DEPENDS "src/*.hpp")
 target_sources(limbo INTERFACE
 	FILE_SET limbo_public_headers
