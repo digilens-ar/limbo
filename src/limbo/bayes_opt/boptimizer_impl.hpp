@@ -1,5 +1,14 @@
 #pragma once
 
+#define SAVE_HP_MODELS
+
+#ifdef SAVE_HP_MODELS
+#include <limbo/serialize/text_archive.hpp>
+#include <filesystem>
+#include <fstream>
+#include <chrono>
+#endif
+
 namespace limbo::bayes_opt
 {
 
@@ -105,7 +114,9 @@ namespace limbo::bayes_opt
 				if ((iterations_since_hp_optimize_ + 1) % static_cast<int>(Params::bayes_opt_boptimizer::hp_period() + _total_iterations * Params::bayes_opt_boptimizer::hp_period_scaler()) == 0)
 				{
 					iterations_since_hp_optimize_ = 0;
+					const auto start = std::chrono::high_resolution_clock::now();
 					_model.optimize_hyperparams();
+					spdlog::info("Hyperparameter optimization for iteration {} took {} ms", _total_iterations, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count());
 #ifdef SAVE_HP_MODELS
                         _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_total_iterations))).string()));
 #endif

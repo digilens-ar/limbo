@@ -46,7 +46,6 @@
 #ifndef LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 #define LIMBO_BAYES_OPT_BOPTIMIZER_HPP
 
-// #define SAVE_HP_MODELS
 
 #include <algorithm>
 #include <iterator>
@@ -69,12 +68,6 @@
 #include <limbo/opt/cmaes.hpp>
 #else
 #include <limbo/opt/grid_search.hpp>
-#endif
-
-#ifdef SAVE_HP_MODELS
-#include <limbo/serialize/text_archive.hpp>
-#include <filesystem>
-#include <fstream>
 #endif
 
 namespace limbo {
