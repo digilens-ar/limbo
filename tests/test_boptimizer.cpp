@@ -85,7 +85,7 @@ namespace {
         };
 
         struct acqui_ucb {
-            BO_PARAM(double, alpha, 1.0);
+            BO_PARAM(double, kappa, 1.0);
         };
 
         struct acqui_ei {

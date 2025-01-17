@@ -71,7 +71,7 @@ using namespace limbo;
               };
 #endif
               struct acqui_ucb {
-                  BO_PARAM(double, alpha, 0.1);
+                  BO_PARAM(double, kappa, 0.1);
               };
 
               struct kernel : public defaults::kernel {
