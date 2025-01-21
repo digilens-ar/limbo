@@ -123,7 +123,7 @@ int main()
 {
     using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
     using Mean_t = mean::Data;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
     using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
         limbo::stat::Samples,

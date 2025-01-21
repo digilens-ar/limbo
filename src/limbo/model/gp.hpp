@@ -79,12 +79,12 @@ namespace limbo {
         /// - a mean function
         /// - [optional] an optimizer for the hyper-parameters
         template <typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
-        class GP {
+        class GaussianProcess {
         public:
-            GP(int dim_in)
+            GaussianProcess(int dim_in)
                 : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
-            /// Initialize the GP from samples and observations. This call needs to be explicit!
+            /// Initialize the GaussianProcess from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,
                 const std::vector<double>& observations, bool compute_kernel = true)
             {
@@ -110,7 +110,7 @@ namespace limbo {
                 _hp_optimize(*this);
             }
 
-            /// add sample and update the GP. This code uses an incremental implementation of the Cholesky
+            /// add sample and update the GaussianProcess. This code uses an incremental implementation of the Cholesky
             /// decomposition. It is therefore much faster than a call to compute()
             void add_sample(const Eigen::VectorXd& sample, double observation)
             {
@@ -180,16 +180,16 @@ namespace limbo {
 
             MeanFunction& mean_function() { return _mean_function; }
 
-            /// return the mean observation (only call this if the output of the GP is of dimension 1)
+            /// return the mean observation
             double mean_observation() const
             {
                 return mean_observation_;
             }
 
-            /// return the number of samples used to compute the GP
+            /// return the number of samples used to compute the GaussianProcess
             int nb_samples() const { return _samples.size(); }
 
-            ///  recomputes the GP
+            ///  recomputes the GaussianProcess
             void recompute(bool update_obs_mean = true, bool update_full_kernel = true)
             {
                 assert(!_samples.empty());
@@ -287,7 +287,7 @@ namespace limbo {
                 return log_loo_cv;
             }
 
-            /// compute and return the gradient of the log probability of LOO CV wrt to the kernel parameters
+            /// compute and return the gradient of the log probability of LOO CV w.r.t. to the kernel parameters
             [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_loo_cv()
             {
                 size_t n = _obs_mean.rows();
@@ -328,9 +328,6 @@ namespace limbo {
                     Eigen::MatrixXd Zeta_j_K = Zeta_j * _inv_kernel;
 
                     grads.row(j) = ((_alpha.array() * Zeta_j_alpha.array() - 0.5 * ((1. + _alpha.array().square().array().colwise() * inv_diag.array()).array().colwise() * Zeta_j_K.diagonal().array())).array().colwise() * inv_diag.array()).colwise().sum();
-
-                    // for (size_t i = 0; i < n; i++)
-                    //     grads.row(j).array() += (_alpha.row(i).array() * Zeta_j_alpha.row(i).array() - 0.5 * (1. + _alpha.row(i).array().square() / _inv_kernel.diagonal()(i)) * Zeta_j_K.diagonal()(i)) / _inv_kernel.diagonal()(i);
                 }
 
                 grad = grads.rowwise().sum();
@@ -339,12 +336,12 @@ namespace limbo {
             }
 
             /// return the list of samples
-            const std::vector<Eigen::VectorXd>& samples() const { return _samples; }
+            std::vector<Eigen::VectorXd> const& samples() const { return _samples; }
 
             /// return the list of observations
             std::vector<double> const& observations() const { return _observations; }
 
-            /// save the parameters and the data for the GP to the archive (text or binary)
+            /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
             template <typename A>
             void save(const A& archive) const
             {
@@ -360,11 +357,11 @@ namespace limbo {
                 archive.save(_alpha, "alpha");
             }
 
-            /// load the parameters and the data for the GP from the archive (text or binary)
+            /// load the parameters and the data for the GaussianProcess from the archive (text or binary)
             /// if recompute is true, we do not read the kernel matrix
             /// but we recompute it given the data and the hyperparameters
             template <typename A>
-            static GP load(const A& archive, bool recompute = true)
+            static GaussianProcess load(const A& archive, bool recompute = true)
             {
                 std::vector<Eigen::VectorXd> samples;
                 archive.load(samples, "samples");
@@ -372,7 +369,7 @@ namespace limbo {
                 std::vector<double> observations;
                 archive.load(observations, "observations");
 
-                GP out(samples[0].size());
+                GaussianProcess out(samples[0].size());
                 out._samples = samples;
                 out._observations = observations;
 
@@ -404,7 +401,7 @@ namespace limbo {
                 return out;
             }
 
-        protected:
+        private:
             int _dim_in;
 
             KernelFunction _kernel_function;
@@ -416,7 +413,8 @@ namespace limbo {
             double mean_observation_ = 0;
 
             Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->_obs_mean;
-            Eigen::MatrixXd _kernel, _inv_kernel;
+            Eigen::MatrixXd _kernel;
+        	Eigen::MatrixXd _inv_kernel;
 
             Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition
 
@@ -499,12 +497,12 @@ namespace limbo {
                 triang.adjoint().solveInPlace(_alpha);
             }
 
-            double _mu(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
+            double _mu(Eigen::VectorXd const& v, Eigen::VectorXd const& k) const
             {
                 return (k.transpose() * _alpha) + _mean_function(v, *this);
             }
 
-            double _sigma_sq(const Eigen::VectorXd& v, const Eigen::VectorXd& k) const
+            double _sigma_sq(Eigen::VectorXd const& v, Eigen::VectorXd const& k) const
             {
                 Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k);
                 double res = _kernel_function.compute(v, v) - z.dot(z);
@@ -512,7 +510,7 @@ namespace limbo {
                 return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res;
             }
 
-            Eigen::VectorXd _compute_k(const Eigen::VectorXd& v) const
+            Eigen::VectorXd _compute_k(Eigen::VectorXd const& v) const
             {
                 Eigen::VectorXd k(_samples.size());
                 for (int i = 0; i < k.size(); i++)
@@ -521,15 +519,15 @@ namespace limbo {
             }
         };
 
-        /// GPBasic is a GP with a "mean data" mean function, Exponential kernel,
+        /// GPBasic is a GaussianProcess with a "mean data" mean function, Exponential kernel,
         /// and NO hyper-parameter optimization
         template <typename Params>
-        using GPBasic = GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>, mean::Data, gp::NoLFOpt>;
+        using GPBasic = GaussianProcess<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>, mean::Data, gp::NoLFOpt>;
 
-        /// GPOpt is a GP with a "mean data" mean function, Exponential kernel with Automatic Relevance
+        /// GPOpt is a GaussianProcess with a "mean data" mean function, Exponential kernel with Automatic Relevance
         /// Determination (ARD), and hyper-parameter optimization based on Rprop
         template <typename Params>
-        using GPOpt = GP<kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<opt::Irpropplus<typename Params::opt_irpropplus>>>;
+        using GPOpt = GaussianProcess<kernel::SquaredExpARD<typename Params::kernel, typename Params::kernel_squared_exp_ard>, mean::Data, gp::KernelLFOpt<opt::Irpropplus<typename Params::opt_irpropplus>>>;
     } // namespace model
 } // namespace limbo
 

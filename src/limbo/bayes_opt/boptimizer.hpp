@@ -123,7 +123,7 @@ namespace limbo {
 		+================+=============+=========+===============+
 		|init. func.     |InitializerT | initfun | RandomSampling|
 		+----------------+-------------+---------+---------------+
-		|model           |model_t      | modelfun| GP<...>       |
+		|model           |model_t      | modelfun| GaussianProcess<...>       |
 		+----------------+-------------+---------+---------------+
 		|acquisition fun.|aqui_t       | acquifun| GP_UCB        |
 		+----------------+-------------+---------+---------------+
@@ -135,7 +135,7 @@ namespace limbo {
         +----------------+-------------+----------+---------------+
        \endrst
 
-       For GP, the default value is: ``model::GP<Params, kf_t, mean_t, opt_t>>``,
+       For GaussianProcess, the default value is: ``model::GaussianProcess<Params, kf_t, mean_t, opt_t>>``,
          - with ``kf_t = kernel::SquaredExpARD<Params>``
          - with ``mean_t = mean::Data<Params>``
          - with ``opt_t = model::gp::KernelLFOpt<Params>``
@@ -160,7 +160,7 @@ namespace limbo {
        */
 		template <
             class Params,
-        	concepts::Model model_type = model::GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
+        	concepts::Model model_type = model::GaussianProcess<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
 			concepts::AcquisitionFunc acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,

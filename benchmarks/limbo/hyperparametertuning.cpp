@@ -95,7 +95,7 @@ void kernelLFOpt(benchmark::State& state)
 
 		for (auto _ : state)
 		{
-			limbo::model::GP<
+			limbo::model::GaussianProcess<
 				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
 				limbo::mean::Data,
 				limbo::model::gp::KernelLFOpt<limbo::opt::Rprop<Params::opt_rprop>>
@@ -110,7 +110,7 @@ void kernelLFOpt(benchmark::State& state)
 
 		for (auto _ : state)
 		{
-			limbo::model::GP<
+			limbo::model::GaussianProcess<
 				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
 				limbo::mean::Data,
 				limbo::model::gp::KernelLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>
@@ -126,7 +126,7 @@ void kernelLFOpt(benchmark::State& state)
 
 		for (auto _ : state)
 		{
-			limbo::model::GP<
+			limbo::model::GaussianProcess<
 				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
 				limbo::mean::Data,
 				limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
@@ -143,7 +143,7 @@ void kernelLFOpt(benchmark::State& state)
 
 		for (auto _ : state)
 		{
-			limbo::model::GP<
+			limbo::model::GaussianProcess<
 				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
 				limbo::mean::Data,
 				limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>

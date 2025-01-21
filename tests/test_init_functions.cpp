@@ -102,7 +102,7 @@ namespace {
 TEST(Limbo_Init_Functions, no_init)
 {
     std::cout << "NoInit" << std::endl;
-    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Model_t =  model::GaussianProcess<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, Model_t>;
     using Init_t = init::NoInit;
     using Opt_t = bayes_opt::BOptimizer<Params, Model_t, Acqui_t, Init_t>;
@@ -123,7 +123,7 @@ TEST(Limbo_Init_Functions, random_lhs)
 {
     std::cout << "LHS" << std::endl;
 
-    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Model_t =  model::GaussianProcess<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
     using Acqui_t = acqui::UCB<RandLHSParams::acqui_ucb, Model_t>;
     using Init_t = init::LHS<RandLHSParams::init_lhs>;
     using Opt_t = bayes_opt::BOptimizer<RandLHSParams, Model_t, Acqui_t, Init_t>;
@@ -154,7 +154,7 @@ TEST(Limbo_Init_Functions, random_sampling)
     std::cout << "RandomSampling" << std::endl;
 
 
-    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Model_t =  model::GaussianProcess<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
     using Acqui_t = acqui::UCB<RandSamplParams::acqui_ucb, Model_t>;
     using Init_t = init::RandomSampling<RandSamplParams::init_randomsampling>;
     using Opt_t = bayes_opt::BOptimizer<RandSamplParams, Model_t, Acqui_t, Init_t>;
@@ -186,7 +186,7 @@ TEST(Limbo_Init_Functions, random_sampling_grid)
     std::cout << "RandomSamplingGrid" << std::endl;
    
 
-    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Model_t =  model::GaussianProcess<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
     using Acqui_t = acqui::UCB<RandSamplGridParams::acqui_ucb, Model_t>;
     using Init_t = init::RandomSamplingGrid<RandSamplGridParams::init_randomsamplinggrid>;
     using Opt_t = bayes_opt::BOptimizer<RandSamplGridParams, Model_t, Acqui_t, Init_t>;
@@ -217,7 +217,7 @@ TEST(Limbo_Init_Functions, grid_sampling)
     std::cout << "GridSampling" << std::endl;
 
 
-    using Model_t =  model::GP<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
+    using Model_t =  model::GaussianProcess<kernel::MaternFiveHalves<limbo::defaults::kernel, limbo::defaults::kernel_maternfivehalves>>;
     using Acqui_t = acqui::UCB<GridSamplParams::acqui_ucb, Model_t>;
     using Init_t = init::GridSampling<GridSamplParams::init_gridsampling>;
     using Opt_t = bayes_opt::BOptimizer<GridSamplParams, Model_t, Acqui_t, Init_t>;

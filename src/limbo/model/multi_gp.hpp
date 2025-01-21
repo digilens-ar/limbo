@@ -53,7 +53,7 @@ namespace limbo {
         /// @ingroup model
         /// A wrapper for N-output Gaussian processes.
         /// It is parametrized by:
-        /// - GP class
+        /// - GaussianProcess class
         /// - a kernel function (the same type for all GPs, but can have different parameters)
         /// - a mean function (the same type and parameters for all GPs)
         /// - [optional] an optimizer for the hyper-parameters
@@ -73,7 +73,7 @@ namespace limbo {
                 }
             }
 
-            /// Compute the GP from samples and observations. This call needs to be explicit!
+            /// Compute the GaussianProcess from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,
                 const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
             {
@@ -84,7 +84,7 @@ namespace limbo {
                 assert(_dim_out == observations[0].size());
 
                 // save observations
-                // TO-DO: Check how can we improve for not saving observations twice (one here and one for each GP)!?
+                // TO-DO: Check how can we improve for not saving observations twice (one here and one for each GaussianProcess)!?
                 _observations = observations;
 
                 // compute the new observations for the GPs
@@ -133,7 +133,7 @@ namespace limbo {
 
             /**
              \\rst
-             return :math:`\mu`, :math:`\sigma^2` (un-normalized; this will return a vector --- one for each GP). Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
+             return :math:`\mu`, :math:`\sigma^2` (un-normalized; this will return a vector --- one for each GaussianProcess). Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
              \\endrst
             */
             std::tuple<Eigen::VectorXd, Eigen::VectorXd> query(const Eigen::VectorXd& v) const
@@ -173,7 +173,7 @@ namespace limbo {
 
             /**
              \\rst
-             return :math:`\sigma^2` (un-normalized). This returns a vector; one value for each GP.
+             return :math:`\sigma^2` (un-normalized). This returns a vector; one value for each GaussianProcess.
              \\endrst
             */
             Eigen::VectorXd sigma(const Eigen::VectorXd& v) const
@@ -199,7 +199,7 @@ namespace limbo {
                 return _dim_out;
             }
 
-            /// return the number of samples used to compute the GP
+            /// return the number of samples used to compute the GaussianProcess
             int nb_samples() const
             {
                 return _observations.size();
@@ -256,7 +256,7 @@ namespace limbo {
             }
 
 
-            /// save the parameters and the data for the GP to the archive (text or binary)
+            /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
             template <typename A>
             void save(const A& archive) const
             {
@@ -275,7 +275,7 @@ namespace limbo {
                 }
             }
 
-            /// load the parameters and the data for the GP from the archive (text or binary)
+            /// load the parameters and the data for the GaussianProcess from the archive (text or binary)
             /// if recompute is true, we do not read the kernel matrix
             /// but we recompute it given the data and the hyperparameters
             template <typename A>
