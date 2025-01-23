@@ -56,7 +56,7 @@ namespace limbo {
     namespace defaults {
         struct acqui_ucb {
             /// @ingroup acqui_defaults
-            BO_PARAM(double, alpha, 0.5);
+            BO_PARAM(double, kappa, 0.5);
         };
     }
     namespace acqui {
@@ -65,10 +65,10 @@ namespace limbo {
         Classic UCB (Upper Confidence Bound). See :cite:`brochu2010tutorial`, p. 14
 
           .. math::
-            UCB(x) = \mu(x) + \alpha \sigma(x).
+            UCB(x) = \mu(x) + \kappa \sigma(x).
 
         Parameters:
-          - ``double alpha``
+          - ``double kappa``
         \endrst
         */
         template <typename AcquiUcb, concepts::Model Model>
@@ -80,7 +80,7 @@ namespace limbo {
             {
                 assert(!gradient);
                 auto [mu, sigma_sq] = _model.query(v);
-                return opt::no_grad(mu + AcquiUcb::alpha() * sqrt(sigma_sq));
+                return opt::no_grad(mu + AcquiUcb::kappa() * sqrt(sigma_sq));
             }
 
         protected:

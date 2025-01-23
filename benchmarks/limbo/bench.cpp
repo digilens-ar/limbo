@@ -74,7 +74,7 @@ struct Params {
         BO_PARAM(double, l, 1);
     };
     struct acqui_ucb : public defaults::acqui_ucb {
-        BO_PARAM(double, alpha, 0.125);
+        BO_PARAM(double, kappa, 0.125);
     };
     struct acqui_ei : public defaults::acqui_ei {
     };

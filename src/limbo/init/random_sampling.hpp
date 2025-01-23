@@ -88,10 +88,13 @@ namespace limbo {
                         };
                         // static_assert(concepts::EvalFunc<ConstFunc>);
 
-                        auto parameterBounds = std::vector<std::pair<double, double>>(seval.dim_in(), std::make_pair( 0.0, 1.0 ));
+                        std::optional<std::vector<std::pair<double, double>>> parameterBounds = std::nullopt;
+                        if (opt.isBounded()) {
+                            parameterBounds = std::vector<std::pair<double, double>>(seval.dim_in(), std::make_pair(0.0, 1.0));
+                        }
 
                         //find the closest coordinate to proposed_new_sample that satisfies the constraints
-	                    new_sample = opt.acquisitionOptimizer().optimize(
+	                    new_sample = opt.optimizeFunction(
                             ConstFunc, 
                             proposed_new_sample, 
                             parameterBounds);

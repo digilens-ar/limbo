@@ -5,7 +5,10 @@
   "dependencies": [
     "nlopt",
     "boost-fusion",
-    "tbb",
+    {
+      "name": "tbb",
+      "default-features":  false
+    },
     "gtest",
     "eigen3",
     "spdlog",

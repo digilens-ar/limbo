@@ -283,7 +283,7 @@ TEST(Limbo_Optimizers, classic_optimizers)
 TEST(Limbo_Optimizers, parallel_repeater)
 {
 #ifdef LIMBO_USE_TBB
-    tbb::global_control(tbb::global_control::max_allowed_parallelism, 1);
+    tbb::global_control globalControl(tbb::global_control::max_allowed_parallelism, 1); // We must limit to a single thread because the `simpleFunc` we are optimizing is not thread safe
 #endif
     using namespace limbo;
 
@@ -293,12 +293,14 @@ TEST(Limbo_Optimizers, parallel_repeater)
     check_grad = false;
     starting_points.clear();
     Eigen::VectorXd best_point = optimizer.optimize(simple_func, Eigen::VectorXd::Constant(1, 2.0), std::nullopt);
-    ASSERT_EQ(best_point.size(), 1);
-    ASSERT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
-    ASSERT_EQ(simple_calls, Params::opt_parallelrepeater::repeats() * Params::opt_rprop::iterations() + Params::opt_parallelrepeater::repeats());
-    ASSERT_EQ(starting_points.size(), simple_calls);
-    ASSERT_TRUE(starting_points[0](0) >= 2. - Params::opt_parallelrepeater::epsilon() && starting_points[0](0) <= 2. + Params::opt_parallelrepeater::epsilon());
-    ASSERT_TRUE(starting_points[Params::opt_rprop::iterations() + 1](0) >= 2. - Params::opt_parallelrepeater::epsilon() && starting_points[Params::opt_rprop::iterations() + 1](0) <= 2. + Params::opt_parallelrepeater::epsilon());
+    EXPECT_EQ(best_point.size(), 1);
+    EXPECT_TRUE(std::abs(best_point(0) + 1.) < 1e-3);
+    EXPECT_EQ(simple_calls, Params::opt_parallelrepeater::repeats() * Params::opt_rprop::iterations() + Params::opt_parallelrepeater::repeats());
+    EXPECT_EQ(starting_points.size(), simple_calls);
+    const double firstSPoint = starting_points[0](0);
+    EXPECT_TRUE(std::abs(firstSPoint - 2) <= Params::opt_parallelrepeater::epsilon());
+    const double sPoint = starting_points[Params::opt_rprop::iterations() + 1](0);
+    EXPECT_TRUE(std::abs(sPoint - 2) <= Params::opt_parallelrepeater::epsilon());
 }
 
 TEST(Limbo_Optimizers, chained)

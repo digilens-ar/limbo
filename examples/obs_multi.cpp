@@ -112,7 +112,7 @@ int main()
 {
     using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
     using Mean_t = mean::Data;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
     using Acqui_t = acqui::GP_UCB<Params::acqui_gpucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);

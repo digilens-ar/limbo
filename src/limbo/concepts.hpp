@@ -4,9 +4,10 @@
 #include <Eigen/Dense>
 
 
-
+//These concepts are used for constraining the types passed as template parameters to the template classes
 namespace limbo::concepts
 {
+	// Helper template for a functor with return type and argument types
 	template <typename F, typename Ret, class... Args >
 	concept Callable = std::invocable<F, Args...> && std::same_as<Ret, std::invoke_result_t<F, Args...>>;
 
@@ -59,7 +60,6 @@ namespace limbo::concepts
 		{a.isBounded()} -> std::convertible_to<bool>;
 		{a.addInequalityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
 		{a.addEqualityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
-		{a.constraintsAreSatisfied(Eigen::VectorXd{})} -> std::convertible_to<bool>;
 		{a.hasConstraints()} -> std::convertible_to<bool>;
 	};
 

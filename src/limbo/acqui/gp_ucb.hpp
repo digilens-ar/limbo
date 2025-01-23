@@ -64,7 +64,7 @@ namespace limbo {
     namespace acqui {
         /** @ingroup acqui
         \rst
-        GP-UCB (Upper Confidence Bound). See :cite:`brochu2010tutorial`, p. 15. See also: http://arxiv.org/abs/0912.3995
+        GaussianProcess-UCB (Upper Confidence Bound). See :cite:`brochu2010tutorial`, p. 15. See also: http://arxiv.org/abs/0912.3995
 
         .. math::
           UCB(x) = \mu(x) + \kappa \sigma(x).
