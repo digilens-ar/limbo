@@ -7,7 +7,7 @@
     "boost-fusion",
     {
       "name": "tbb",
-      "default-features":  false
+      "default-features": false
     },
     "gtest",
     "eigen3",
@@ -15,7 +15,7 @@
     "benchmark",
     "zlib"
   ],
-  "builtin-baseline": "7ba0ba7334c3346e7eee1e049ba85da193a8d821",
+  "builtin-baseline": "1a66c32c6f90c2f646529975c3c076ed3dbdae0c",
   "supports": "windows",
   "vcpkg-configuration": {
     "overlay-triplets": [ "C:/Users/NicholasAnthony/source/repos/digilens_vcpkg_registry/custom-triplets" ]
