@@ -79,7 +79,7 @@ namespace limbo {
             /// @ingroup par_tools
             /// convert a std::vector to something else (e.g. a std::list)
             template <typename V>
-            inline std::vector<typename V::value_type> convert_vector(const V& v)
+            std::vector<typename V::value_type> convert_vector(const V& v)
             {
                 std::vector<typename V::value_type> v2(v.size());
                 std::copy(v.begin(), v.end(), v2.begin());
@@ -98,7 +98,7 @@ namespace limbo {
 #endif
 
             template <typename V>
-            inline V convert_vector(const V& v)
+            V convert_vector(const V& v)
             {
                 return v;
             }
@@ -107,7 +107,7 @@ namespace limbo {
             ///@ingroup par_tools
             /// parallel for
             template <typename F>
-            inline void loop(size_t begin, size_t end, const F& f)
+            void loop(size_t begin, size_t end, const F& f)
             {
 #ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(begin), end, size_t(1), [&](size_t i) {
@@ -124,7 +124,7 @@ namespace limbo {
             /// @ingroup par_tools
             /// parallel for_each
             template <typename Iterator, typename F>
-            inline void for_each(Iterator begin, Iterator end, const F& f)
+            void for_each(Iterator begin, Iterator end, const F& f)
             {
 #ifdef LIMBO_USE_TBB
                 tbb::parallel_for_each(begin, end, f);
@@ -137,7 +137,7 @@ namespace limbo {
             /// @ingroup par_tools
             /// parallel max
             template <typename T, typename F, typename C>
-            inline T max(const T& init, int num_steps, const F& f, const C& comp)
+            T max(const T& init, int num_steps, const F& f, const C& comp)
             {
 #ifdef LIMBO_USE_TBB
                 auto body = [&](const tbb::blocked_range<size_t>& r, T current_max) -> T {
@@ -170,7 +170,7 @@ namespace limbo {
             /// @ingroup par_tools
             /// parallel sort
             template <typename T1, typename T2, typename T3>
-            inline void sort(T1 i1, T2 i2, T3 comp)
+            void sort(T1 i1, T2 i2, T3 comp)
             {
 #ifdef LIMBO_USE_TBB
                 tbb::parallel_sort(i1, i2, comp);
@@ -182,7 +182,7 @@ namespace limbo {
             /// @ingroup par_tools
             /// replicate a function nb times
             template <typename F>
-            inline void replicate(size_t nb, const F& f)
+            void replicate(size_t nb, const F& f)
             {
 #ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(0), nb, size_t(1), [&](size_t i) {

@@ -26,14 +26,14 @@
       "description": "Target Windows with the Visual Studio development environment.",
       "inherits": "default",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "MSVC-Debug-TBB",
       "inherits": "MSVC-Debug",
       "cacheVariables": {
-        "LIMBO_USE_TBB":  "ON"
+        "LIMBO_USE_TBB": "ON"
       }
     },
     {
@@ -49,6 +49,20 @@
       "inherits": "MSVC-Release",
       "cacheVariables": {
         "CMAKE_CXX_FLAGS": "/fp:fast /EHsc"
+      }
+    },
+    {
+      "name": "MSVC_ASAN",
+      "description": "Target Windows with the Visual Studio development environment.",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-digilens-asan",
+        "VCPKG_HOST_TRIPLET": "x64-windows-digilens-asan"
+      },
+      "environment": {
+         "CFLAGS": "/fsanitize=address",
+         "CXXFLAGS": "/fsanitize=address"
       }
     },
     {
