@@ -64,7 +64,6 @@
 #include <limbo/mean/data.hpp>
 #include <limbo/model/gp/kernel_lf_opt.hpp>
 #include <limbo/model/gp/no_lf_opt.hpp>
-#include <limbo/tools.hpp>
 #include <spdlog/spdlog.h>
 #ifdef _WIN32
 #include <corecrt_math_defines.h>

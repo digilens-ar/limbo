@@ -52,7 +52,7 @@
 #include <limbo/mean/function_ard.hpp>
 #include <limbo/mean/null_function.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 using namespace limbo;
 

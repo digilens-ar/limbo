@@ -56,7 +56,7 @@
 #include <boost/fusion/algorithm.hpp>
 #include <limbo/public.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 #include <limbo/stat.hpp>
 
 #include "limbo/acqui/ucb.hpp"

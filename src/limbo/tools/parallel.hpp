@@ -66,17 +66,10 @@ namespace limbo {
     namespace tools {
         namespace par {
 #ifdef LIMBO_USE_TBB
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-            template <typename X> // old fashion way to create template alias (for GCC
-            // 4.6...)
-            struct vector {
-                typedef tbb::concurrent_vector<X> type;
-            };
-#else
             template <typename X>
             using vector = tbb::concurrent_vector<X>; // Template alias (for GCC 4.7 and later)
-#endif
-            /// @ingroup par_tools
+
+        	/// @ingroup par_tools
             /// convert a std::vector to something else (e.g. a std::list)
             template <typename V>
             std::vector<typename V::value_type> convert_vector(const V& v)
@@ -86,16 +79,6 @@ namespace limbo {
                 return v2;
             }
 #else
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-            template <typename X> // old fashion way to create template alias (for GCC
-            // 4.6...)
-            struct vector {
-                typedef std::vector<X> type;
-            };
-#else
-            template <typename X>
-            using vector = std::vector<X>; // Template alias (for GCC 4.7 and later)
-#endif
 
             template <typename V>
             V convert_vector(const V& v)
@@ -186,9 +169,7 @@ namespace limbo {
             {
 #ifdef LIMBO_USE_TBB
                 tbb::parallel_for(size_t(0), nb, size_t(1), [&](size_t i) {
-                    
-                f();
-                    
+					f();
                 });
 #else
                 for (size_t i = 0; i < nb; ++i)

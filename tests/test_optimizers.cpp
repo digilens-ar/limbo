@@ -45,7 +45,6 @@
 //|
 #include <gtest/gtest.h>
 #include <limbo/opt.hpp>
-#include "limbo/tools.hpp"
 #ifdef LIMBO_USE_TBB
 #include <tbb/global_control.h>
 #endif
@@ -112,7 +111,7 @@ opt::eval_t simple_func(const Eigen::VectorXd& v, bool eval_grad)
     assert(!check_grad || eval_grad);
     simple_calls++;
     starting_points.push_back(v);
-    return { -(v(0) * v(0) + 2. * v(0)), tools::make_vector(-(2 * v(0) + 2.)) };
+    return { -(v(0) * v(0) + 2. * v(0)), Eigen::VectorXd{{(-(2 * v(0) + 2.))}} };
 }
 
 TEST(Limbo_Optimizers, random_mono_dim)

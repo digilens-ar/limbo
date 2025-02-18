@@ -46,12 +46,10 @@
 #ifndef LIMBO_STOP_MAX_PREDICTED_VALUE_HPP
 #define LIMBO_STOP_MAX_PREDICTED_VALUE_HPP
 
-#include <iostream>
-
 #include <Eigen/Core>
 #include <spdlog/fmt/fmt.h>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 namespace limbo {
     namespace defaults {

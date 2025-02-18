@@ -1,6 +1,5 @@
 #pragma once
 #include <limbo/stat/stat_base.hpp>
-#include <limbo/tools.hpp>
 #include <limbo/serialize/text_archive.hpp>
 
 namespace limbo::stat
@@ -18,7 +17,7 @@ namespace limbo::stat
 			using acqFuncT = typename std::decay_t<decltype(bo)>::acquisition_function_t;
 			acqFuncT acquisitionFunction(bo.model(), bo.total_iterations());
 			for (int i = 0; i < 100; ++i) {
-				Eigen::VectorXd v = tools::make_vector(i / 99.0);
+				Eigen::VectorXd v{ { i / 99.0 } };
 				auto [mu, sigma_sq] = bo.model().query(v);
 				auto [acqVal, grad] = acquisitionFunction(v, false);
 				f << v.transpose() << " " << mu[0] << " " << std::sqrt(sigma_sq) << " " << acqVal << std::endl;

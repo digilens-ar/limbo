@@ -49,7 +49,7 @@
 #include <Eigen/Core>
 
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 namespace limbo {
     namespace defaults {

@@ -44,7 +44,6 @@
 //| knowledge of the CeCILL-C license and that you accept its terms.
 //|
 #include <limbo/opt.hpp>
-#include <limbo/tools.hpp>
 #include <iostream>
 
 // this short tutorial shows how to use the optimization api of limbo (opt::)

@@ -47,6 +47,7 @@
 #define LIMBO_MODEL_MULTI_GP_HPP
 
 #include <limbo/mean/null_function.hpp>
+#include <limbo/tools/parallel.hpp>
 
 namespace limbo {
     namespace model {
@@ -94,7 +95,7 @@ namespace limbo {
                     Eigen::VectorXd mean_vector = _mean_function(samples[j], *this);
                     assert(mean_vector.size() == _dim_out);
                     for (int i = 0; i < _dim_out; i++) {
-                        obs[i].push_back(tools::make_vector(observations[j][i] - mean_vector[i]));
+                        obs[i].push_back(Eigen::VectorXd { {observations[j][i] - mean_vector[i]} });
                     }
                 }
 
@@ -127,7 +128,7 @@ namespace limbo {
                 assert(mean_vector.size() == _dim_out);
 
                 limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                    _gp_models[i].add_sample(sample, tools::make_vector(observation[i] - mean_vector[i]));
+                    _gp_models[i].add_sample(sample, { {observation[i] - mean_vector[i]} });
                 });
             }
 

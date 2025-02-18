@@ -6,7 +6,7 @@
 
 #include <limbo/opt/optimizer.hpp>
 #include <limbo/tools/parallel.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 namespace limbo {
 

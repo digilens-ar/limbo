@@ -121,7 +121,7 @@ namespace {
 
         Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
         {
-            return tools::make_vector(-std::pow(x(0) - 2.5, 2.0));
+            return Eigen::VectorXd{ {-std::pow(x(0) - 2.5, 2.0)} };
         }
     };
 #endif

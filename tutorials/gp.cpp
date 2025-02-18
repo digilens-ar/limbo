@@ -49,7 +49,6 @@
 #include <limbo/mean/data.hpp>
 #include <limbo/model/gp.hpp>
 #include <limbo/model/gp/kernel_lf_opt.hpp>
-#include <limbo/tools.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/opt.hpp>
 #include <limbo/serialize/text_archive.hpp>
@@ -99,7 +98,7 @@ int main(int argc, char** argv)
     // write the predicted data in a file (e.g. to be plotted)
     std::ofstream ofs("gp.dat");
     for (int i = 0; i < 100; ++i) {
-        Eigen::VectorXd v = tools::make_vector(i / 100.0).array() * 4.0 - 2.0;
+        Eigen::VectorXd v{ { i / 100.0 * 4.0 - 2.0} };
         auto [mu, sigma] = gp.query(v);
         // an alternative (slower) is to query mu and sigma separately:
         //  double mu = gp.mu(v)[0]; // mu() returns a 1-D vector
@@ -121,7 +120,7 @@ int main(int argc, char** argv)
     // write the predicted data in a file (e.g. to be plotted)
     std::ofstream ofs_ard("gp_ard.dat");
     for (int i = 0; i < 100; ++i) {
-        Eigen::VectorXd v = tools::make_vector(i / 100.0).array() * 4.0 - 2.0;
+        Eigen::VectorXd v { {i / 100.0 * 4.0 - 2.0} };
         auto [mu, sigma] = gp_ard.query(v);
         ofs_ard << v.transpose() << " " << mu << " " << sqrt(sigma) << std::endl;
     }

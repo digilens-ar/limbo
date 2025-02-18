@@ -51,6 +51,7 @@
 #include <limbo/mean/constant.hpp>
 #include <limbo/mean/function_ard.hpp>
 #include <limbo/mean/null_function.hpp>
+#include <limbo/tools/random.hpp>
 #include <limbo/model/gp.hpp>
 #include <limbo/model/gp/mean_lf_opt.hpp>
 #include <limbo/model/multi_gp.hpp>
