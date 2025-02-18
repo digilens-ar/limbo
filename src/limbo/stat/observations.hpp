@@ -47,27 +47,28 @@
 #define LIMBO_STAT_OBSERVATIONS_HPP
 
 #include <limbo/stat/stat_base.hpp>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace stat {
         ///@ingroup stat
         ///filename: `observations.dat`
         struct Observations : public StatBase {
-            template <typename BO>
+            template <concepts::BayesOptimizer BO>
             void operator()(const BO& bo)
             {
                 if (bo.observations().empty())
                     return;
 
-                this->_create_log_file("observations.dat");
+                auto& logFile = this->get_log_file("observations.dat");
 
                 if (bo.total_iterations() == 0) {
-                    (*this->_log_file) << "#iteration observation" << std::endl;
+                    logFile << "#iteration observation" << std::endl;
                     for (size_t i = 0; i < bo.observations().size() - 1; i++)
-                        (*this->_log_file) << "-1 " << bo.observations()[i] << std::endl;
+                        logFile << "-1 " << bo.observations()[i] << std::endl;
                 }
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.observations().back() << std::endl;
+                logFile << bo.total_iterations() << " " << bo.observations().back() << std::endl;
             }
         };
     }

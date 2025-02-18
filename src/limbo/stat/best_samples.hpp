@@ -59,12 +59,12 @@ namespace limbo {
                 if (bo.samples().empty())
                     return;
 
-                this->_create_log_file(bo, "best_samples.dat");
+                auto& logFile = this->get_log_file(bo, "best_samples.dat");
 
                 if (bo.total_iterations() == 0)
-                    (*this->_log_file) << "#iteration best_sample" << std::endl;
+                    logFile << "#iteration best_sample" << std::endl;
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.best_sample().transpose() << std::endl;
+                logFile << bo.total_iterations() << " " << bo.best_sample().transpose() << std::endl;
             }
         };
     }
