@@ -54,21 +54,21 @@ namespace limbo {
         ///@ingroup stat
         ///filename: `samples.dat`
         struct Samples : public StatBase {
-            template <typename BO>
+            template <limbo::concepts::BayesOptimizer BO>
             void operator()(const BO& bo)
             {
                 if (bo.samples().empty())
                     return;
 
-                this->_create_log_file("samples.dat");
+                auto& logFile = this->get_log_file("samples.dat");
 
                 if (bo.total_iterations() == 0) {
-                    (*this->_log_file) << "#iteration sample" << std::endl;
+                    logFile << "#iteration sample" << std::endl;
                     for (size_t i = 0; i < bo.samples().size() - 1; i++)
-                        (*this->_log_file) << "-1 " << bo.samples()[i].transpose() << std::endl;
+                        logFile << "-1 " << bo.samples()[i].transpose() << std::endl;
                 }
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.samples().back().transpose() << std::endl;
+                logFile << bo.total_iterations() << " " << bo.samples().back().transpose() << std::endl;
             }
         };
     }

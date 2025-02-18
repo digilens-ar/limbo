@@ -115,11 +115,11 @@ struct WorstObservation : public limbo::stat::StatBase {
             return;
 
         // [optional] we create a file to write / you can use your own file but remember that this method is called at each iteration (you need to create it in the constructor)
-        this->_create_log_file("worst_observations.dat");
+        auto& logFile = get_log_file("worst_observations.dat");
 
         // [optional] we add a header to the file to make it easier to read later
         if (bo.total_iterations() == 0)
-            (*this->_log_file) << "#iteration worst_observation sample" << std::endl;
+            logFile << "#iteration worst_observation sample" << std::endl;
 
         // ----- search for the worst observation ----
         // 1. get the aggregated observations
@@ -130,8 +130,7 @@ struct WorstObservation : public limbo::stat::StatBase {
         auto min_sample = bo.samples()[std::distance(rewards.begin(), min_e)];
 
         // ----- write what we have found ------
-        // the file is (*this->_log_file)
-        (*this->_log_file) << bo.total_iterations() << " " << min_obs << " " << min_sample.transpose() << std::endl;
+        logFile << bo.total_iterations() << " " << min_obs << " " << min_sample.transpose() << std::endl;
     }
 };
 

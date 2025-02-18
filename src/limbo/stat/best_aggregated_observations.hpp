@@ -60,12 +60,12 @@ namespace limbo {
                 if (bo.observations().empty())
                     return;
 
-                this->_create_log_file(bo, "best_aggregated_observations.dat");
+                auto& logFile = this->get_log_file(bo, "best_aggregated_observations.dat");
 
                 if (bo.total_iterations() == 0)
-                    (*this->_log_file) << "#iteration best_aggregated_observation" << std::endl;
+                    logFile << "#iteration best_aggregated_observation" << std::endl;
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.best_observation() << std::endl;
+                logFile << bo.total_iterations() << " " << bo.best_observation() << std::endl;
             }
         };
     }

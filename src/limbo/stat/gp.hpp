@@ -59,10 +59,10 @@ namespace limbo {
             template <typename BO>
             void operator()(const BO& bo)
             {
-                _create_log_file("gp_" + std::to_string(bo.total_iterations()) + ".dat");
+                auto& logFile = get_log_file("gp_" + std::to_string(bo.total_iterations()) + ".dat");
                 int gp_in = bo.model().dim_in();
-                *_log_file << "#Point[" << gp_in << "d] mu[1d] sigma[1d] acquisition[1d]" << std::endl;
-                _explore(0, *_log_file, bo, Eigen::VectorXd::Constant(bo.model().dim_in(), 0));
+                logFile << "#Point[" << gp_in << "d] mu[1d] sigma[1d] acquisition[1d]" << std::endl;
+                _explore(0, logFile, bo, Eigen::VectorXd::Constant(bo.model().dim_in(), 0));
             }
 
         protected:

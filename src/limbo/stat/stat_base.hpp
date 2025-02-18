@@ -48,25 +48,11 @@
 
 #include <fstream>
 #include <string>
-#include <memory>
-
 
 namespace limbo {
     namespace stat {
         /**
           Base class for statistics
-
-          The only method provided is protected :
-
-          \rst
-          .. code-block:: cpp
-
-            template <typename BO>
-            void _create_log_file(const BO& bo, const std::string& name)
-
-
-          This method allocates an attribute `_log_file` (type: `std::shared_ptr<std::ofstream>`) if it has not been created yet, and does nothing otherwise. This method is designed so that you can safely call it in operator() while being 'guaranteed' that the file exists. Using this method is not mandatory for a statistics class.
-          \endrst
         */
         struct StatBase {
             StatBase() {}
@@ -87,13 +73,15 @@ namespace limbo {
             }
 
         protected:
-            std::shared_ptr<std::ofstream> _log_file;
-            std::filesystem::path dir_ = "";
 
-            void _create_log_file(const std::string& name)
+            /**
+             * return a reference to the log file for this stat. If a file for this stat does not already exist, the file will be created with `name`.
+             * @param name 
+             */
+            std::ofstream& get_log_file(std::string const& name)
             {
-                if (_log_file)
-                    return;
+                if (log_file_.has_value())
+                    return *log_file_;
 
                 char date[30];
                 time_t date_time;
@@ -106,10 +94,19 @@ namespace limbo {
                     create_directory(res_dir);
                 }
                 std::filesystem::path log = res_dir / name;
-                _log_file = std::make_shared<std::ofstream>(log.c_str());
+                log_file_ = std::ofstream(log.c_str());
                 assert(_log_file->good());
+                return *log_file_;
             }
 
+            std::filesystem::path const& get_log_directory() const
+            {
+                return dir_;
+            }
+
+        private:
+            std::optional<std::ofstream> log_file_;
+            std::filesystem::path dir_ = "";
 
         };
     }

@@ -58,15 +58,15 @@ namespace limbo {
             template <typename BO>
             void operator()(const BO& bo)
             {
-                this->_create_log_file(bo, "gp_acquisitions.dat");
+                auto& logFile = get_log_file(bo, "gp_acquisitions.dat");
 
                 if (bo.total_iterations() == 0)
-                    (*this->_log_file) << "#iteration mu sigma acquisition" << std::endl;
+                    logFile<< "#iteration mu sigma acquisition" << std::endl;
 
                 if (!bo.samples().empty()) {
                     auto [mu, sigma] = bo.model().query(bo.samples().back());
                     auto [acqui, gradient] = typename BO::acquisition_function_t(bo.model(), bo.total_iterations())(bo.samples().back(), false);
-                    (*this->_log_file) << bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
+                    logFile<< bo.total_iterations() << " " << afun(mu) << " " << sigma << " " << acqui << std::endl;
                 }
             }
         };
