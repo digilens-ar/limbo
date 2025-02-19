@@ -84,13 +84,13 @@ namespace limbo {
                 /// if the number of samples is less or equal than the desired
                 /// compute the normal GaussianProcess
                 if (samples.size() <= ModelSparseGP::max_points())
-                    base_gp_t::initialize(samples, observations, compute_kernel);
+                    base_gp_t::initialize(std::move(samples), std::move(observations), compute_kernel);
                 /// otherwise, sparsify the samples
                 else {
                     auto [samp, obs] = _sparsify(samples, observations);
 
                     /// now compute the normal GaussianProcess with less points
-                    base_gp_t::initialize(samp, obs, compute_kernel);
+                    base_gp_t::initialize(std::move(samp), std::move(obs), compute_kernel);
                 }
             }
 

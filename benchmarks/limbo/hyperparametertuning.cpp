@@ -123,7 +123,6 @@ void kernelLFOpt(benchmark::State& state)
 	else if (state.range(1) == 2) {
 		Params::opt_parallel::set_repeats(2);
 
-
 		for (auto _ : state)
 		{
 			limbo::model::GaussianProcess<

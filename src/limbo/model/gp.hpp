@@ -84,21 +84,21 @@ namespace limbo {
                 : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
             /// Initialize the GaussianProcess from samples and observations. This call needs to be explicit!
-            void initialize(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<double>& observations, bool compute_kernel = true)
+            void initialize(std::vector<Eigen::VectorXd> samples, std::vector<double> observations, bool compute_kernel = true)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
                 assert(_dim_in == samples[0].size());
 
-                _samples = samples;
-                _observations = observations;
+                _samples = std::move(samples);
+                _observations = std::move(observations);
 
                 //calculate the mean observation
-                mean_observation_ = std::accumulate(_observations.begin(), _observations.end(), 0.0) / _observations.size();
+                observation_sum_ = std::accumulate(_observations.begin(), _observations.end(), 0.0);
+                observation_mean_ = observation_sum_ / _observations.size();
 
-                this->_compute_obs_mean();
+                this->_compute_observation_deviation();
                 if (compute_kernel)
                     this->_compute_full_kernel();
             }
@@ -117,18 +117,16 @@ namespace limbo {
 
                 _samples.push_back(sample);
                 _observations.push_back(observation);
-                //calculate the mean observation
-                mean_observation_ = std::accumulate(_observations.begin(), _observations.end(), 0.0) / _observations.size();
+                observation_sum_ += observation;
+                observation_mean_ = observation_sum_ / _observations.size();
 
-
-                this->_compute_obs_mean();
+                this->_compute_observation_deviation();
                 this->_compute_incremental_kernel();
             }
 
             /**
-             \\rst
+            
              return :math:`\mu`, :math:`\sigma^2` (un-normalized). If there is no sample, return the value according to the mean function. Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
-             \\endrst
             */
             std::tuple<double, double> query(const Eigen::VectorXd& v) const
             {
@@ -182,7 +180,7 @@ namespace limbo {
             /// return the mean observation
             double mean_observation() const
             {
-                return mean_observation_;
+                return observation_mean_;
             }
 
             /// return the number of samples used to compute the GaussianProcess
@@ -194,7 +192,7 @@ namespace limbo {
                 assert(!_samples.empty());
 
                 if (update_obs_mean)
-                    this->_compute_obs_mean();
+                    this->_compute_observation_deviation();
 
                 if (update_full_kernel)
                     this->_compute_full_kernel();
@@ -204,7 +202,7 @@ namespace limbo {
 
             void compute_inv_kernel()
             {
-                size_t n = _obs_mean.rows();
+                size_t n = observation_deviation_.rows();
                 // K^{-1} using Cholesky decomposition
                 _inv_kernel = Eigen::MatrixXd::Identity(n, n);
 
@@ -217,21 +215,20 @@ namespace limbo {
             /// compute and return the log likelihood
             [[nodiscard]] double compute_log_lik()
             {
-
                 // --- cholesky ---
                 // see:
                 // http://xcorr.net/2008/06/11/log-determinant-of-positive-definite-matrices-in-matlab/
                 long double logdet = 2 * _matrixL.diagonal().array().log().sum();
 
-                const double a = _obs_mean.transpose() * _alpha;
+                const double a = observation_deviation_.transpose() * _alpha;
                 const double log_2_pi = std::log(2 * M_PI);
-                return 0.5 * (-a - logdet - _obs_mean.rows() * log_2_pi);
+                return 0.5 * (-a - logdet - observation_deviation_.rows() * log_2_pi);
             }
 
             /// compute and return the gradient of the log likelihood wrt to the kernel parameters
             [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_lik()
             {
-                size_t n = _obs_mean.rows();
+                size_t n = observation_deviation_.rows();
 
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
@@ -265,8 +262,8 @@ namespace limbo {
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_mean_function.h_params_size());
-                for (Eigen::Index n_obs = 0; n_obs < _obs_mean.rows(); n_obs++) {
-                    grad += _obs_mean.transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).transpose();
+                for (Eigen::Index n_obs = 0; n_obs < observation_deviation_.rows(); n_obs++) {
+                    grad += observation_deviation_.transpose() * _inv_kernel.col(n_obs) * _mean_function.grad(_samples[n_obs], *this).transpose();
                 }
 
                 return grad;
@@ -289,7 +286,7 @@ namespace limbo {
             /// compute and return the gradient of the log probability of LOO CV w.r.t. to the kernel parameters
             [[nodiscard]] Eigen::VectorXd compute_kernel_grad_log_loo_cv()
             {
-                size_t n = _obs_mean.rows();
+                size_t n = observation_deviation_.rows();
                 size_t n_params = _kernel_function.h_params_size();
 
                 // compute K^{-1} only if needed
@@ -373,7 +370,8 @@ namespace limbo {
                 out._observations = observations;
 
                 //calcualte the mean observation
-                out.mean_observation_ = std::accumulate(out._observations.begin(), out._observations.end(), 0.0) / out._observations.size();
+                out.observation_sum_ = std::accumulate(out._observations.begin(), out._observations.end(), 0.0);
+                out.observation_mean_ = out.observation_sum_ / out._observations.size();
 
                 if (out._kernel_function.h_params_size() > 0) {
                     Eigen::VectorXd h_params;
@@ -408,10 +406,11 @@ namespace limbo {
 
             std::vector<Eigen::VectorXd> _samples;
             std::vector<double> _observations;
-            Eigen::VectorXd _obs_mean; // The differences between the observations at the mean function at the observation locations
-            double mean_observation_ = 0;
+            Eigen::VectorXd observation_deviation_; // The differences between the observations at the mean function at the observation locations
+            double observation_sum_ = 0;
+            double observation_mean_ = 0;
 
-            Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->_obs_mean;
+            Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->observation_deviation_;
             Eigen::MatrixXd _kernel;
         	Eigen::MatrixXd _inv_kernel;
 
@@ -421,15 +420,15 @@ namespace limbo {
 
             HyperParamsOptimizer _hp_optimize;
 
-            void _compute_obs_mean()
+            void _compute_observation_deviation()
             {
                 assert(!_samples.empty());
-                _obs_mean.resize(_samples.size());
-                for (int i = 0; i < _obs_mean.rows(); i++) {
+                observation_deviation_.resize(_samples.size());
+                for (int i = 0; i < observation_deviation_.rows(); i++) {
                     assert(_samples[i].cols() == 1);
                     assert(_samples[i].rows() != 0);
                     assert(_samples[i].rows() == _dim_in);
-                    _obs_mean(i) = _observations.at(i) - _mean_function(_samples[i], *this);
+                    observation_deviation_(i) = _observations.at(i) - _mean_function(_samples[i], *this);
                 }
             }
 
@@ -490,9 +489,9 @@ namespace limbo {
 
             void _compute_alpha()
             {
-                // alpha = K^{-1} * this->_obs_mean;
+                // alpha = K^{-1} * this->observation_deviation_;
                 Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.triangularView<Eigen::Lower>();
-                _alpha = triang.solve(_obs_mean);
+                _alpha = triang.solve(observation_deviation_);
                 triang.adjoint().solveInPlace(_alpha);
             }
 

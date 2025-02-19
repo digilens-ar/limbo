@@ -1,6 +1,7 @@
 #pragma once
 #include <limbo/public.hpp>
 #include <concepts>
+#include <optional>
 #include <Eigen/Dense>
 
 
