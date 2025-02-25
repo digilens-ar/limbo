@@ -109,8 +109,8 @@ TEST(Limbo_Init_Functions, no_init)
 
     Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
-    ASSERT_TRUE(opt.observations().size() == 0);
-    ASSERT_TRUE(opt.samples().size() == 0);
+    ASSERT_TRUE(opt.model().observations().size() == 0);
+    ASSERT_TRUE(opt.model().samples().size() == 0);
 }
 
 struct RandLHSParams : public Params {
@@ -130,10 +130,10 @@ TEST(Limbo_Init_Functions, random_lhs)
 
     Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
-    ASSERT_TRUE(opt.observations().size() == 10);
-    ASSERT_TRUE(opt.samples().size() == 10);
-    for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
-        const Eigen::VectorXd& x = opt.samples()[j];
+    ASSERT_TRUE(opt.model().observations().size() == 10);
+    ASSERT_TRUE(opt.model().samples().size() == 10);
+    for (size_t j = 0; j < opt.model().samples().size() - 1; ++j) {
+        const Eigen::VectorXd& x = opt.model().samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
             ASSERT_TRUE(x[i] >= 0);
@@ -161,10 +161,10 @@ TEST(Limbo_Init_Functions, random_sampling)
 
     Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
-    ASSERT_TRUE(opt.observations().size() == 10);
-    ASSERT_TRUE(opt.samples().size() == 10);
-    for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
-        const Eigen::VectorXd& x = opt.samples()[j];
+    ASSERT_TRUE(opt.model().observations().size() == 10);
+    ASSERT_TRUE(opt.model().samples().size() == 10);
+    for (size_t j = 0; j < opt.model().samples().size() - 1; ++j) {
+        const Eigen::VectorXd& x = opt.model().samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
             ASSERT_TRUE(x[i] >= 0);
@@ -193,10 +193,10 @@ TEST(Limbo_Init_Functions, random_sampling_grid)
 
     Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
-    ASSERT_TRUE(opt.observations().size() == 10);
-    ASSERT_TRUE(opt.samples().size() == 10);
-    for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
-        const Eigen::VectorXd& x = opt.samples()[j];
+    ASSERT_TRUE(opt.model().observations().size() == 10);
+    ASSERT_TRUE(opt.model().samples().size() == 10);
+    for (size_t j = 0; j < opt.model().samples().size() - 1; ++j) {
+        const Eigen::VectorXd& x = opt.model().samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
             ASSERT_TRUE(x[i] >= 0);
@@ -224,11 +224,11 @@ TEST(Limbo_Init_Functions, grid_sampling)
 
     Opt_t opt(fit_eval::dim_in());
     opt.optimize(fit_eval());
-    std::cout << opt.observations().size() << std::endl;
-    ASSERT_TRUE(opt.observations().size() == 25);
-    ASSERT_TRUE(opt.samples().size() == 25);
-    for (size_t j = 0; j < opt.samples().size() - 1; ++j) {
-        const Eigen::VectorXd& x = opt.samples()[j];
+    std::cout << opt.model().observations().size() << std::endl;
+    ASSERT_TRUE(opt.model().observations().size() == 25);
+    ASSERT_TRUE(opt.model().samples().size() == 25);
+    for (size_t j = 0; j < opt.model().samples().size() - 1; ++j) {
+        const Eigen::VectorXd& x = opt.model().samples()[j];
         std::cout << x.transpose() << std::endl;
         for (int i = 0; i < x.size(); ++i) {
             ASSERT_TRUE(x[i] >= 0);

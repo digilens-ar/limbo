@@ -215,7 +215,7 @@ TEST(Limbo_Boptimizer, bo_gp)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.model().best_observation().second).squaredNorm() < 1e-3);
 }
 
 TEST(Limbo_Boptimizer, bo_gp_auto)
@@ -242,7 +242,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.model().best_observation().second).squaredNorm() < 1e-3);
 }
 
 TEST(Limbo_Boptimizer, bo_gp_mean)
@@ -269,5 +269,5 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.model().best_observation().second).squaredNorm() < 1e-3);
 }

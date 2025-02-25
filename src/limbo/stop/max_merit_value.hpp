@@ -25,7 +25,8 @@ namespace limbo {
             {
                 if (!stop_max_merit_value::enabled())
                     return false;
-                if (bo.best_observation() >= stop_max_merit_value::stopValue())
+
+                if (bo.model().best_observation().first >= stop_max_merit_value::stopValue())
                 {
                     stopMessage = fmt::format("The maximum merit function value of {} was reached", stop_max_merit_value::stopValue());
                     return true;

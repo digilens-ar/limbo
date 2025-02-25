@@ -83,7 +83,7 @@ namespace limbo {
                 }
                 Eigen::VectorXd starting_point = tools::random_vector(bo.model().dim_in());
                 auto model_optimization = [&](const Eigen::VectorXd& x, bool g) { return opt::no_grad(afun(bo.model().mu(x))); };
-                auto x = bo.optimizeFunction(model_optimization, starting_point, parameterBounds);
+                auto x = bo.acquisition_optimizer().optimize(model_optimization, starting_point, parameterBounds);
                 double val = afun(bo.model().mu(x));
 
                 if (afun(bo.best_observation()) <= stop_maxpredictedvalue::ratio() * val)

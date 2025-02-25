@@ -48,8 +48,6 @@
 
 // #define SAVE_HP_MODELS
 
-#include <algorithm>
-#include <iterator>
 #include <filesystem>
 #include <Eigen/Core>
 #include <boost/fusion/container.hpp>
@@ -176,6 +174,7 @@ namespace limbo {
             using model_t = model_type;
             using stats_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
             using constraint_func_t = std::function<std::pair<double, std::optional<Eigen::VectorXd>>(Eigen::VectorXd, bool)>;
+            using acquisition_optimizer_t = acqui_opt_t;
 
             /// default constructor
             BOptimizer(int dimIn);
@@ -192,25 +191,12 @@ namespace limbo {
             template <concepts::StateFunc StateFunction>
             std::string optimize(const StateFunction& sfun, bool reset = true, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt);
 
-            /// return the best observation so far (i.e. max(f(x)))
-            double best_observation() const;
+            model_t const& model() const;
 
-            /// return the best sample so far (i.e. the argmax(f(x)))
-            const Eigen::VectorXd& best_sample() const;
-
-            model_type const& model() const;
-
-            /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
-            std::vector<double> const& observations() const;
-
-            /// return the list of the points that have been evaluated so far (x)
-            std::vector<Eigen::VectorXd> const& samples() const;
+            acquisition_optimizer_t const& acquisition_optimizer() const;
 
             /// return the current iteration number
             int total_iterations() const;
-
-            template<concepts::EvalFunc EvalFunc>
-            Eigen::VectorXd optimizeFunction(const EvalFunc& evalFunc, Eigen::VectorXd const& initPoint, std::optional<std::vector<std::pair<double, double>>> const& bounds) const;
 
             /// Evaluate a sample and add the result to the 'database' (sample / observations vectors)
             template <concepts::StateFunc StateFunction>

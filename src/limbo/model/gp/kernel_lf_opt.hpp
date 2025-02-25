@@ -55,7 +55,6 @@ namespace limbo {
             ///optimize the likelihood of the kernel only
             template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct KernelLFOpt {
-            public:
                 KernelLFOpt(int dims):
 					optimizer_(Optimizer::create(dims))
                 {}
@@ -79,7 +78,6 @@ namespace limbo {
 
                 template <typename GP>
                 struct KernelLFOptimization {
-                public:
                     KernelLFOptimization(const GP& gp) : gp_(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const

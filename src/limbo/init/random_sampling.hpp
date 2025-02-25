@@ -94,7 +94,7 @@ namespace limbo {
                         }
 
                         //find the closest coordinate to proposed_new_sample that satisfies the constraints
-	                    new_sample = opt.optimizeFunction(
+	                    new_sample = opt.acquisition_optimizer().optimize(
                             ConstFunc, 
                             proposed_new_sample, 
                             parameterBounds);

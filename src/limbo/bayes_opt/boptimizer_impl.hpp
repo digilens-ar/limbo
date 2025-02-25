@@ -121,36 +121,16 @@ namespace limbo::bayes_opt
 		return stopMessage;
 	}
 
-	OptClass(double)::best_observation() const
-	{
-		auto max_e = std::max_element(observations().begin(), observations().end());
-		return observations()[std::distance(observations().begin(), max_e)];
-	}
-
-	OptClass(Eigen::VectorXd const&)::best_sample() const
-	{
-		auto max_e = std::max_element(observations().begin(), observations().end());
-		return samples()[std::distance(observations().begin(), max_e)];
-	}
-
 	OptClass(model_type const&)::model() const
 	{ return _model; }
 
-	OptClass(std::vector<double> const&)::observations() const
-	{ return _model.observations(); }
-
-	OptClass(std::vector<Eigen::VectorXd> const&)::samples() const
-	{ return _model.samples(); }
+	OptClass(acqui_opt_t const&)::acquisition_optimizer() const
+	{
+		return acqui_optimizer;
+	}
 
 	OptClass(int)::total_iterations() const
 	{ return _total_iterations; }
-
-	OptClassTemplateFunction(template <concepts::EvalFunc EvalFunc>, Eigen::VectorXd)::optimizeFunction(
-		const EvalFunc& evalFunc, const Eigen::VectorXd& initPoint,
-		std::optional<std::vector<std::pair<double, double>>> const& bounds) const
-	{
-		return acqui_optimizer.optimize(evalFunc, initPoint, bounds);
-	}
 
 	OptClassTemplateFunction(template <concepts::StateFunc StateFunction>, EvaluationStatus)::eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
 	{

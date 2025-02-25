@@ -337,6 +337,13 @@ namespace limbo {
             /// return the list of observations
             std::vector<double> const& observations() const { return _observations; }
 
+            std::pair<double, Eigen::VectorXd> best_observation() const
+            {
+                const auto max_e = std::max_element(observations().begin(), observations().end());
+                const auto index = std::distance(observations().begin(), max_e);
+                return { observations()[index], samples()[index] };
+            }
+
             /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
             template <typename A>
             void save(const A& archive) const

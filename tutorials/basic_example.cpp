@@ -114,6 +114,12 @@ int main()
     // run the evaluation
     boptimizer.optimize(Eval());
     // the best sample found
-    std::cout << "Best sample: " << boptimizer.best_sample()(0) << " - Best observation: " << boptimizer.best_observation() << std::endl;
+    auto const& gaussianProcess = boptimizer.model();
+    const auto max_e = std::max_element(gaussianProcess.observations().begin(), gaussianProcess.observations().end());
+    const auto index = std::distance(gaussianProcess.observations().begin(), max_e);
+    const double bestObs = gaussianProcess.observations()[index];
+    const Eigen::VectorXd bestSample = gaussianProcess.samples()[index];
+
+    std::cout << "Best sample: " << bestSample(0) << " - Best observation: " << bestObs << std::endl;
     return 0;
 }

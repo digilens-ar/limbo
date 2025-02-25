@@ -133,13 +133,16 @@ int main()
     using BD = bayes_opt::BOptimizer<Params>;
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2);
     opt.optimize(fit_eval());
-    std::cout << opt.best_observation() << " res  "
-              << opt.best_sample().transpose() << std::endl;
+    auto [bestObs, bestSample] = opt.model().best_observation();
+    std::cout << bestObs << " res  "
+              << bestSample.transpose() << std::endl;
 
     // example with basic HP opt
     bayes_opt::BOptimizerHPOpt<Params> opt_hp(2);
     opt_hp.optimize(fit_eval());
-    std::cout << opt_hp.best_observation() << " res  "
-              << opt_hp.best_sample().transpose() << std::endl;
+    std::tie(bestObs, bestSample) = opt_hp.model().best_observation();
+
+    std::cout << bestObs << " res  "
+              << bestSample.transpose() << std::endl;
     return 0;
 }

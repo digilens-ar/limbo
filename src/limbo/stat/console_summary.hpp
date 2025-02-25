@@ -57,9 +57,9 @@ namespace limbo {
             template <typename BO>
             void operator()(const BO& bo)
             {
-                if (bo.observations().empty())
+                if (bo.model().observations().empty())
                     return;
-                std::cout << bo.total_iterations() << " new point: " << bo.samples().back().transpose() << " value: " << bo.observations().back() << " best: " << bo.best_observation() << "\n";
+                std::cout << bo.total_iterations() << " new point: " << bo.model().samples().back().transpose() << " value: " << bo.model().observations().back() << " best: " << *std::max_element(bo.model().observations().begin(), bo.model().observations().end()) << "\n";
             }
         };
     }

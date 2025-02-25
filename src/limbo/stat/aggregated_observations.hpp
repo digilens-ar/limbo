@@ -58,18 +58,18 @@ namespace limbo {
             template <limbo::concepts::BayesOptimizer BO>
             void operator()(const BO& bo)
             {
-                if (bo.observations().empty())
+                if (bo.model().observations().empty())
                     return;
 
                 auto& logFile = this->get_log_file("aggregated_observations.dat");
 
                 if (bo.total_iterations() == 0) {
 					logFile << "#iteration aggregated_observation" << std::endl;
-                    for (size_t i = 0; i < bo.observations().size() - 1; i++)
-						logFile << "-1 " << bo.observations()[i] << std::endl;
+                    for (size_t i = 0; i < bo.model().observations().size() - 1; i++)
+						logFile << "-1 " << bo.model().observations()[i] << std::endl;
                 }
 
-				logFile << bo.total_iterations() << " " << bo.observations().back() << std::endl;
+				logFile << bo.total_iterations() << " " << bo.model().observations().back() << std::endl;
             }
         };
     }
