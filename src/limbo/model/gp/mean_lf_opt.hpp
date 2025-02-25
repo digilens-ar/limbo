@@ -69,8 +69,8 @@ namespace limbo {
                 {
                     MeanLFOptimization<GP> optimization(gp);
                     Eigen::VectorXd params = opt_.optimize(optimization, gp.mean_function().h_params(), std::nullopt);
-                    gp.mean_function().set_h_params(params);
-                    gp.recompute(true, false);
+                    gp.set_mean_hyperparams(params);
+
                 }
 
             private:
@@ -87,9 +87,8 @@ namespace limbo {
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
                         GP gp(this->_original_gp);
-                        gp.mean_function().set_h_params(params);
+                        gp.set_mean_hyperparams(params);
 
-                        gp.recompute(true, false);
 
                         double lik = gp.compute_log_lik();
 

@@ -77,7 +77,7 @@ namespace limbo {
         /// - a kernel function
         /// - a mean function
         /// - [optional] an optimizer for the hyper-parameters
-        template <typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
+        template <typename KernelFunction, std::derived_from<mean::BaseMean> MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
         class GaussianProcess {
         public:
             GaussianProcess(int dim_in)
@@ -170,30 +170,31 @@ namespace limbo {
 
             const KernelFunction& kernel_function() const { return _kernel_function; }
 
-            KernelFunction& kernel_function() { return _kernel_function; }
-
             const MeanFunction& mean_function() const { return _mean_function; }
 
-            MeanFunction& mean_function() { return _mean_function; }
+            void set_kernel_hyperparams(Eigen::VectorXd const& hp)
+            {
+                _kernel_function.set_h_params(hp);
+                recompute_(false, true);
+            }
+
+            void set_mean_hyperparams(Eigen::VectorXd const& hp)
+            {
+                _mean_function.set_h_params(hp);
+                recompute_(true, false);
+            }
+
+            void set_all_hyperparams(Eigen::VectorXd const& kernel_hp, Eigen::VectorXd const& mean_hp)
+            {
+                _mean_function.set_h_params(mean_hp);
+                _kernel_function.set_h_params(kernel_hp);
+                recompute_(true, true);
+            }
 
             /// return the mean observation
             double mean_observation() const
             {
                 return observation_mean_;
-            }
-
-            ///  recomputes the GaussianProcess
-            void recompute(bool update_obs_mean = true, bool update_full_kernel = true)
-            {
-                assert(!_samples.empty());
-
-                if (update_obs_mean)
-                    this->_compute_observation_deviation();
-
-                if (update_full_kernel)
-                    this->_compute_full_kernel();
-                else
-                    this->_compute_alpha();
             }
 
             void compute_inv_kernel()
@@ -357,8 +358,8 @@ namespace limbo {
             }
 
             /// load the parameters and the data for the GaussianProcess from the archive (text or binary)
-            /// if recompute is true, we do not read the kernel matrix
-            /// but we recompute it given the data and the hyperparameters
+            /// if recompute_ is true, we do not read the kernel matrix
+            /// but we recompute_ it given the data and the hyperparameters
             template <typename A>
             static GaussianProcess load(const A& archive, bool recompute = true)
             {
@@ -393,7 +394,7 @@ namespace limbo {
                 }
 
                 if (recompute)
-                    out.recompute(true, true);
+                    out.recompute_(true, true);
                 else {
                     archive.load(out._matrixL, "matrixL");
                     archive.load(out._alpha, "alpha");
@@ -517,6 +518,20 @@ namespace limbo {
                 for (int i = 0; i < k.size(); i++)
                     k[i] = _kernel_function.compute(_samples[i], v);
                 return k;
+            }
+
+            ///  recomputes the GaussianProcess
+            void recompute_(bool update_obs_mean, bool update_full_kernel)
+            {
+                assert(!_samples.empty());
+
+                if (update_obs_mean)
+                    this->_compute_observation_deviation();
+
+                if (update_full_kernel)
+                    this->_compute_full_kernel();
+                else
+                    this->_compute_alpha();
             }
         };
 

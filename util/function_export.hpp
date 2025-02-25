@@ -136,8 +136,7 @@ namespace limbo::serialize
                         {
                             x(i) = 2 * LIMIT * (static_cast<double>(coord.at(i)) / (samplesPerDim - 1) - 0.5);
                         }
-                        copy.kernel_function().set_h_params(x);
-                        copy.recompute(false);
+                        copy.set_kernel_hyperparams(x);
                         return copy.compute_log_lik();
                     });
                 std::ofstream(directory / "loglik.txt") << -LIMIT << "," <<  LIMIT << "\n";

@@ -203,7 +203,7 @@ namespace limbo {
             ///  recomputes the GPs
             void recompute(bool update_obs_mean = true, bool update_full_kernel = true)
             {
-                // if there are no GPs, there's nothing to recompute
+                // if there are no GPs, there's nothing to recompute_
                 if (_gp_models.size() == 0)
                     return;
 
@@ -271,8 +271,8 @@ namespace limbo {
             }
 
             /// load the parameters and the data for the GaussianProcess from the archive (text or binary)
-            /// if recompute is true, we do not read the kernel matrix
-            /// but we recompute it given the data and the hyperparameters
+            /// if recompute_ is true, we do not read the kernel matrix
+            /// but we recompute_ it given the data and the hyperparameters
             template <typename A>
             static MultiGP load(const A& archive, bool recompute = true)
             {
@@ -296,7 +296,7 @@ namespace limbo {
                 out._gp_models.clear();
 
                 for (int i = 0; i < out._dim_out; i++) {
-                    // do not recompute the individual GPs on their own
+                    // do not recompute_ the individual GPs on their own
                     out._gp_models.emplace_back(GP_t::load(A(archive.directory() + "/gp_" + std::to_string(i)), false));
                 }
 

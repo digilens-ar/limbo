@@ -69,8 +69,7 @@ namespace limbo {
                 {
                     KernelLFOptimization<GP> optimization(gp);
                     Eigen::VectorXd params = optimizer_.optimize(optimization, gp.kernel_function().h_params(), std::nullopt);
-                    gp.kernel_function().set_h_params(params);
-                    gp.recompute(false);
+                    gp.set_kernel_hyperparams(params);
                 }
 
             private:
@@ -83,9 +82,7 @@ namespace limbo {
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
                         GP gp(gp_);
-                        gp.kernel_function().set_h_params(params);
-
-                        gp.recompute(false);
+                        gp.set_kernel_hyperparams(params);
 
                         double lik = gp.compute_log_lik();
 

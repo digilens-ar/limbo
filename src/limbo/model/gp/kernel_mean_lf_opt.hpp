@@ -77,10 +77,7 @@ namespace limbo {
                     init.tail(gp.mean_function().h_params_size()) = gp.mean_function().h_params();
 
                     Eigen::VectorXd params = opt_.optimize(optimization, init, std::nullopt);
-                    gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
-                    gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
-
-                    gp.recompute(true);
+                    gp.set_all_hyperparams(params.head(gp.kernel_function().h_params_size()), params.tail(gp.mean_function().h_params_size()));
                 }
 
             private:
@@ -93,10 +90,7 @@ namespace limbo {
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
                         GP gp(this->_original_gp);
-                        gp.kernel_function().set_h_params(params.head(gp.kernel_function().h_params_size()));
-                        gp.mean_function().set_h_params(params.tail(gp.mean_function().h_params_size()));
-
-                        gp.recompute(true);
+                        gp.set_all_hyperparams(params.head(gp.kernel_function().h_params_size()), params.tail(gp.mean_function().h_params_size()));
 
                         double lik = gp.compute_log_lik();
 

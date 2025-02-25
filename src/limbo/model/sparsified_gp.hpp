@@ -99,7 +99,7 @@ namespace limbo {
             {
                 base_gp_t::add_sample(sample, observation);
                 /// if we surpassed the maximum points, re-sparsify
-                /// and recompute
+                /// and recompute_
                 if (this->_samples.size() > ModelSparseGP::max_points()) {
                     /// get observations in appropriate format
                     std::vector<Eigen::VectorXd> observations;
