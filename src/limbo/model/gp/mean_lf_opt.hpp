@@ -81,7 +81,7 @@ namespace limbo {
                 public:
                     MeanLFOptimization(const GP& gp) : _original_gp(gp)
                     {
-                        _original_gp.compute_inv_kernel();
+                        std::ignore = _original_gp.compute_mean_grad_log_lik(); // this should update the inverse kernel to save computation later
                     }
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const

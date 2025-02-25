@@ -197,18 +197,6 @@ namespace limbo {
                 return observation_mean_;
             }
 
-            void compute_inv_kernel()
-            {
-                const size_t n = observation_deviation_.rows();
-                // K^{-1} using Cholesky decomposition
-                _inv_kernel = Eigen::MatrixXd::Identity(n, n);
-
-                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
-                _matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
-
-                _inv_kernel_updated = true;
-            }
-
             /// compute and return the log likelihood
             [[nodiscard]] double compute_log_lik()
             {
@@ -229,7 +217,7 @@ namespace limbo {
 
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
-                    compute_inv_kernel();
+                    compute_inv_kernel_();
                 }
 
                 // alpha * alpha.transpose() - K^{-1}
@@ -246,7 +234,6 @@ namespace limbo {
                             grad += w(i, j) * g;
                     }
                 }
-
                 return grad;
             }
 
@@ -255,7 +242,7 @@ namespace limbo {
             {
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
-                    compute_inv_kernel();
+                    compute_inv_kernel_();
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_mean_function.h_params_size());
@@ -271,7 +258,7 @@ namespace limbo {
             {
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
-                    compute_inv_kernel();
+                    compute_inv_kernel_();
                 }
 
                 Eigen::VectorXd inv_diag = _inv_kernel.diagonal().array().inverse();
@@ -288,7 +275,7 @@ namespace limbo {
 
                 // compute K^{-1} only if needed
                 if (!_inv_kernel_updated) {
-                    compute_inv_kernel();
+                    compute_inv_kernel_();
                 }
 
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(n_params);
@@ -532,6 +519,18 @@ namespace limbo {
                     this->_compute_full_kernel();
                 else
                     this->_compute_alpha();
+            }
+
+            void compute_inv_kernel_()
+            {
+                const size_t n = observation_deviation_.rows();
+                // K^{-1} using Cholesky decomposition
+                _inv_kernel = Eigen::MatrixXd::Identity(n, n);
+
+                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
+
+                _inv_kernel_updated = true;
             }
         };
 
