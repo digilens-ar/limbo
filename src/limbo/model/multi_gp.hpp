@@ -113,8 +113,6 @@ namespace limbo {
 
             const MeanFunction& mean_function() const { return _mean_function; }
 
-            MeanFunction& mean_function() { return _mean_function; }
-
             /// add sample and update the GPs. This code uses an incremental implementation of the Cholesky
             /// decomposition. It is therefore much faster than a call to compute()
             void add_sample(const Eigen::VectorXd& sample, const Eigen::VectorXd& observation)
@@ -200,21 +198,6 @@ namespace limbo {
                 return _dim_out;
             }
 
-            ///  recomputes the GPs
-            void recompute(bool update_obs_mean = true, bool update_full_kernel = true)
-            {
-                // if there are no GPs, there's nothing to recompute_
-                if (_gp_models.size() == 0)
-                    return;
-
-                if (update_obs_mean) // if the mean is updated, we need to fully re-compute
-                    return initialize(_gp_models[0].samples(), _observations, update_full_kernel);
-                else
-                    limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                        _gp_models[i].recompute(false, update_full_kernel);
-                    });
-            }
-
             /// return the list of samples
             const std::vector<Eigen::VectorXd>& samples() const
             {
@@ -239,7 +222,7 @@ namespace limbo {
             }
 
             /// return the list of GPs
-            std::vector<GP_t> gp_models() const
+            std::vector<GP_t> const& gp_models() const
             {
                 return _gp_models;
             }
@@ -249,7 +232,6 @@ namespace limbo {
             {
                 return _gp_models;
             }
-
 
             /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
             template <typename A>
@@ -301,17 +283,32 @@ namespace limbo {
                 }
 
                 if (recompute)
-                    out.recompute(true, true);
+                    out.recompute_(true, true);
 
                 return out;
             }
 
-        protected:
+        private:
             std::vector<GP_t> _gp_models;
             int _dim_in, _dim_out;
             HyperParamsOptimizer _hp_optimize;
             MeanFunction _mean_function;
             std::vector<Eigen::VectorXd> _observations;
+
+            ///  recomputes the GPs
+            void recompute_(bool update_obs_mean, bool update_full_kernel)
+            {
+                // if there are no GPs, there's nothing to recompute_
+                if (_gp_models.size() == 0)
+                    return;
+
+                if (update_obs_mean) // if the mean is updated, we need to fully re-compute
+                    return initialize(_gp_models[0].samples(), _observations, update_full_kernel);
+                else
+                    limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
+                    _gp_models[i].recompute_(false, update_full_kernel);
+                        });
+            }
         };
     } // namespace model
 } // namespace limbo

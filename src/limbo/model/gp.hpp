@@ -168,9 +168,9 @@ namespace limbo {
                 return _dim_in;
             }
 
-            const KernelFunction& kernel_function() const { return _kernel_function; }
+            KernelFunction const& kernel_function() const { return _kernel_function; }
 
-            const MeanFunction& mean_function() const { return _mean_function; }
+            MeanFunction const& mean_function() const { return _mean_function; }
 
             void set_kernel_hyperparams(Eigen::VectorXd const& hp)
             {
@@ -199,7 +199,7 @@ namespace limbo {
 
             void compute_inv_kernel()
             {
-                size_t n = observation_deviation_.rows();
+                const size_t n = observation_deviation_.rows();
                 // K^{-1} using Cholesky decomposition
                 _inv_kernel = Eigen::MatrixXd::Identity(n, n);
 
