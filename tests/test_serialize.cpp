@@ -142,7 +142,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     // attempt to load -- use only the name
     GPLoad gp2 = GPLoad::load(Archive(name));
 
-    GTEST_ASSERT_EQ(gp.nb_samples(), gp2.nb_samples());
+    GTEST_ASSERT_EQ(gp.samples().size(), gp2.samples().size());
 
     // check that the two GPs make the same predictions
     size_t k = 1000;
@@ -168,7 +168,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
     Archive a3(name);
     auto gp3 = GPLoad::load(a3, false);
 
-    GTEST_ASSERT_EQ(gp.nb_samples(), gp3.nb_samples());
+    GTEST_ASSERT_EQ(gp.samples().size(), gp3.samples().size());
 
     // check that the two GPs make the same predictions
     for (size_t i = 0; i < k; i++) {

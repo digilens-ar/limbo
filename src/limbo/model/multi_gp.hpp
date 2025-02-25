@@ -76,7 +76,7 @@ namespace limbo {
 
             /// Compute the GaussianProcess from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
+                const std::vector<Eigen::VectorXd>& observations)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
@@ -101,7 +101,7 @@ namespace limbo {
 
                 // do the actual computation
                 limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                    _gp_models[i].initialize(samples, obs[i], compute_kernel);
+                    _gp_models[i].initialize(samples, obs[i]);
                 });
             }
 
@@ -198,12 +198,6 @@ namespace limbo {
             int dim_out() const
             {
                 return _dim_out;
-            }
-
-            /// return the number of samples used to compute the GaussianProcess
-            int nb_samples() const
-            {
-                return _observations.size();
             }
 
             ///  recomputes the GPs

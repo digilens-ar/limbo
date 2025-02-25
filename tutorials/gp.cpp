@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 
     GP2_t gp_ard(1);
     // do not forget to call the optimization!
-    gp_ard.initialize(samples, observations, false);
+    gp_ard.initialize(samples, observations);
     gp_ard.optimize_hyperparams();
 
     // write the predicted data in a file (e.g. to be plotted)

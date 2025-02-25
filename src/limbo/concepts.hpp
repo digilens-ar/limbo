@@ -23,7 +23,6 @@ namespace limbo::concepts
         { a.mu(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.sigma_sq(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.dim_in() } -> std::convertible_to<int>;
-        { a.nb_samples() } -> std::convertible_to<int>;
         { a.samples() } -> std::convertible_to<const std::vector<Eigen::VectorXd>&>;
 	};
 
