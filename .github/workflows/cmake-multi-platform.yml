@@ -63,7 +63,7 @@ jobs:
     - name: Setup anew (or from cache) vcpkg (and does not build any package)
       uses: lukka/run-vcpkg@v11
     - name: Run CMake
-      uses: lukka/run-cmake@10
+      uses: lukka/run-cmake@v10
       with:
        configurePreset: 'MSVC-Release'
        buildPreset: 'MSVC-Release'
