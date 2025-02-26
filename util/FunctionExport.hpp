@@ -36,7 +36,7 @@ namespace limbo::serialize
             std::vector<double> out;
             out.reserve(dimensions * samplesPerDim);
             CartesianGenerator cartGen(std::vector<unsigned>(dimensions, samplesPerDim));
-            for (unsigned i = 0; i < cartGen.totalIterations(); i++)
+            for (size_t i = 0; i < cartGen.totalIterations(); i++)
             {
                 out.push_back(func(cartGen.currentIndex()));
                 cartGen.iterate();
