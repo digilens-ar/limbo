@@ -17,17 +17,18 @@ namespace limbo::bayes_opt
 
 	template <class Params, concepts::Model model_type, concepts::AcquisitionFunc acqui_t, typename init_t,
 		typename StoppingCriteria, typename Stat, concepts::Optimizer acqui_opt_t> 
-	BOptimizer<Params, model_type, acqui_t, init_t, StoppingCriteria, Stat, acqui_opt_t>::BOptimizer(int dimIn) :
-		acqui_optimizer(acqui_opt_t::create(dimIn)),
-		_model(dimIn)
+	BOptimizer<Params, model_type, acqui_t, init_t, StoppingCriteria, Stat, acqui_opt_t>::BOptimizer(int dimIn):
+		_model(dimIn),
+		acqui_optimizer(acqui_opt_t::create(dimIn))
 	{}
 
-	OptClassTemplateFunction(template <typename Archive>, void)::loadFromArchive(
-		Archive const& archive)
-	{
-		_model = model_type::load(archive);
-		_total_iterations = _model.observations().size();
-	}
+	template <class Params, concepts::Model model_type, concepts::AcquisitionFunc acqui_t, typename init_t,
+		typename StoppingCriteria, typename Stat, concepts::Optimizer acqui_opt_t>
+	BOptimizer<Params, model_type, acqui_t, init_t, StoppingCriteria, Stat, acqui_opt_t>::BOptimizer(model_type&& model):
+		_model(model),
+		acqui_optimizer(acqui_opt_t::create(_model.dim_in())),
+		_total_iterations(_model.observations().size())
+	{}
 
 	OptClassTemplateFunction(template <concepts::StateFunc StateFunction>, std::string)::optimize(
 		StateFunction const& sfun, bool reset, std::optional<Eigen::VectorXd> const& initialPoint)

@@ -176,16 +176,16 @@ namespace limbo {
             using constraint_func_t = std::function<std::pair<double, std::optional<Eigen::VectorXd>>(Eigen::VectorXd, bool)>;
             using acquisition_optimizer_t = acqui_opt_t;
 
-            /// default constructor
+            /// Construct an optimizer with no observations
             BOptimizer(int dimIn);
+
+            /// Construct an optimizer with a prebuilt model
+            BOptimizer(model_t&& model);
 
             BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer& operator=(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer(BOptimizer&& other) = default;
             BOptimizer& operator=(BOptimizer&& other) = default;
-
-            template <typename Archive>
-            void loadFromArchive(Archive const& archive );
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction>
@@ -217,12 +217,12 @@ namespace limbo {
             stats_t  stat_;
             std::filesystem::path outputDir_;
         private:
+            model_type _model;
             size_t _total_iterations = 0;
             size_t iterations_since_hp_optimize_ = 0;
             acqui_opt_t acqui_optimizer;
             std::vector<constraint_func_t> equalityConstraints_;
             std::vector<constraint_func_t> inequalityConstraints_;
-            model_type _model;
         };
 
 
