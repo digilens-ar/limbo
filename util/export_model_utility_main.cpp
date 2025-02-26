@@ -3,7 +3,7 @@
 #include <limbo/model.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/serialize/text_archive.hpp>
-#include "function_export.hpp"
+#include "FunctionExport.hpp"
 
 using namespace limbo;
 
@@ -38,14 +38,13 @@ int main()
 {
     using Kernel = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Model = model::GaussianProcess<Kernel, mean::Data, model::gp::KernelLFOpt<opt::Irpropplus<Params::opt_irpropplus>>>;
-    // using Model = model::GaussianProcess<Kernel, mean::Data, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
 
     std::filesystem::path rootDir(R"(C:\Users\NicholasAnthony\source\repos\wt_gui\external\WaveTracer\testing\optimizerTests\resources\DIA_highD\optimizations\hp_10_irpropplus_ser_1eneg3)");
     Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_init").string()));
 
-    serialize::FunctionExport(
+    serialize::exportFunction(
         rootDir / "pre",
-        serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood,
+        serialize::MeanFunction | serialize::KernelFunction | serialize::LogLikelihood,
         m,
         6);
 

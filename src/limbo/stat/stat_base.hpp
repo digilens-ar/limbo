@@ -95,7 +95,7 @@ namespace limbo {
                 }
                 std::filesystem::path log = res_dir / name;
                 log_file_ = std::ofstream(log.c_str());
-                assert(_log_file->good());
+                assert(log_file_->good());
                 return *log_file_;
             }
 

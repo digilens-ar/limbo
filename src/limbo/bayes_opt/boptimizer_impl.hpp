@@ -39,6 +39,7 @@ namespace limbo::bayes_opt
 		}
 
 		if (_total_iterations == 0) {
+			// Run pre-optimizer initialization routine
 			EvaluationStatus initStatus;
 			if (initialPoint.has_value())
 			{
@@ -58,11 +59,11 @@ namespace limbo::bayes_opt
 		if (Params::bayes_opt_boptimizer::hp_period() > 0)
 		{ // If hyperparameter tuning is enabled then run it after initialization
 #ifdef SAVE_HP_MODELS
-                _model.save(serialize::TextArchive((outputDir_ / "modelArchive_init").string()));
+            _model.save(serialize::TextArchive((outputDir_ / "modelArchive_init").string()));
 #endif
 			_model.optimize_hyperparams();
 #ifdef SAVE_HP_MODELS
-				_model.save(serialize::TextArchive((outputDir_ / "modelArchive_post_init").string()));
+			_model.save(serialize::TextArchive((outputDir_ / "modelArchive_post_init").string()));
 #endif
 		}
 
@@ -73,17 +74,19 @@ namespace limbo::bayes_opt
 		}
 
 		std::string stopMessage = "";
-		// While no stopping criteria return `true`
+		// While no stopping criteria returns `true`
 		while (!boost::fusion::accumulate(stopping_criteria_, false, [this, msgPtr=&stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, *msgPtr); }))
 		{
 			acquisition_function_t acqui(_model, this->_total_iterations);
 
+			// Find maximum of acquisition function to determine new place to evaluate our objective function at.
 			Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
 			Eigen::VectorXd new_sample = acqui_optimizer.optimize(
-				[&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, g); },
+				acqui,
 				starting_point, 
 				parameterBounds);
 
+			// Evaluate objective function and update the GP model.
 			auto status = this->eval_and_add(sfun, new_sample);
 			if (status == TERMINATE)
 			{
