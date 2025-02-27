@@ -25,7 +25,7 @@ namespace limbo::serialize
 
 
     template<concepts::Model Model>
-    void exportFunction(std::filesystem::path const& directory, FunctionFlag flags, Model const& model, size_t samplesPerDim)
+    void exportFunction(std::filesystem::path const& directory, FunctionFlag flags, Model const& model, size_t samplesPerDim, std::optional<std::function<void(std::string)>> progressCB = std::nullopt)
 	{
 		if (!exists(directory))
 		{
@@ -105,20 +105,34 @@ namespace limbo::serialize
             class ReceiveGPVals
             {
             public:
-                ReceiveGPVals(std::vector<double>* muOut_, std::vector<double>* sigOut_):
+                ReceiveGPVals(std::vector<double>* muOut_, std::vector<double>* sigOut_, size_t total_iters, std::optional<std::function<void(std::string)>>& progressCB) :
 					muOut(muOut_),
-					sigOut(sigOut_)
+					sigOut(sigOut_),
+					prog_(progressCB),
+					total_iters_(total_iters)
             	{}
 
                 void operator()(std::tuple<double, double> const& vals) const
                 {
                     muOut->push_back(std::get<0>(vals));
                     sigOut->push_back(std::get<1>(vals));
+                    if (prog_ && muOut->size())
+                    {
+                        double percent = static_cast<double>(muOut->size()) / total_iters_ * 100;
+                        if (percent >= lastPercent_ + 5)
+                        {
+                            prog_.value()(std::format("{:d}", static_cast<int>(percent)));
+                            lastPercent_ = percent;
+                        }
+                    }
                 }
 
             private:
                 std::vector<double>* muOut;
                 std::vector<double>* sigOut;
+                mutable double lastPercent_ = 0;
+                size_t total_iters_;
+                std::optional<std::function<void(std::string)>>& prog_;
             };
 
             CartesianGenerator gen(std::vector<unsigned>(model.dim_in(), samplesPerDim));
@@ -130,7 +144,7 @@ namespace limbo::serialize
             // Use TBB pipeline to evaluate GP values in parallel with order maintained
             tbb::filter<void, std::vector<unsigned>> f1(tbb::filter_mode::serial_in_order, CoordGenerator(&gen));
             tbb::filter<std::vector<unsigned>, std::tuple<double, double>> f2(tbb::filter_mode::parallel, QueryCoord(model, samplesPerDim));
-            tbb::filter<std::tuple<double, double>, void> f3(tbb::filter_mode::serial_in_order, ReceiveGPVals(&muOut, &sigOut));
+            tbb::filter<std::tuple<double, double>, void> f3(tbb::filter_mode::serial_in_order, ReceiveGPVals(&muOut, &sigOut, gen.totalIterations(), progressCB));
             tbb::filter<void, void> allFilters = f1 & f2 & f3;
             tbb::parallel_pipeline(std::thread::hardware_concurrency(),
                allFilters);

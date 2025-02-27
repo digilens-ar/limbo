@@ -329,8 +329,8 @@ namespace limbo {
             }
 
             /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
-            template <typename A>
-            void save(const A& archive) const
+            template <concepts::Archive A>
+            void save(A const& archive) const
             {
                 if (_kernel_function.h_params_size() > 0) {
                     archive.save(_kernel_function.h_params(), "kernel_params");
@@ -347,8 +347,8 @@ namespace limbo {
             /// load the parameters and the data for the GaussianProcess from the archive (text or binary)
             /// if recompute_ is true, we do not read the kernel matrix
             /// but we recompute_ it given the data and the hyperparameters
-            template <typename A>
-            static GaussianProcess load(const A& archive, bool recompute = true)
+            template <concepts::Archive A>
+            static GaussianProcess load(A const& archive, bool recompute = true)
             {
                 std::vector<Eigen::VectorXd> samples;
                 archive.load(samples, "samples");
