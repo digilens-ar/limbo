@@ -60,17 +60,43 @@
 
 namespace limbo {
     namespace serialize {
+	    namespace txt_impl
+	    {
+
+            inline std::string getFileName(std::filesystem::path const& dir, std::string const& object_name)
+            {
+                return (dir / (object_name + ".dat")).string();
+            }
+
+            inline std::vector<std::vector<double>> load(std::filesystem::path const& dir, std::string const& object_name)
+            {
+                std::ifstream ifs(getFileName(dir, object_name).c_str());
+                assert(ifs.good() && "file not found");
+                std::string line;
+                std::vector<std::vector<double>> v;
+                while (std::getline(ifs, line)) {
+                    std::stringstream line_stream(line);
+                    std::string cell;
+                    std::vector<double> lineVec;
+                    while (std::getline(line_stream, cell, ' '))
+                        lineVec.push_back(std::stod(cell));
+                    v.push_back(lineVec);
+                }
+                assert(!v.empty() && "empty file");
+                return v;
+            }
+	    }
 
         class TextArchive {
         public:
-            TextArchive(const std::string& dir_name) : _dir_name(dir_name),
+            TextArchive(std::filesystem::path const& dir_name) : _dir_name(dir_name),
                                                        _fmt(Eigen::FullPrecision, Eigen::DontAlignCols, " ", "\n", "", "") {}
 
             /// write an Eigen::Matrix*
             void save(const Eigen::MatrixXd& v, const std::string& object_name) const
             {
                 create_directories(_dir_name);
-            	std::ofstream ofs(fname(object_name).c_str());
+            	std::ofstream ofs(txt_impl::getFileName(_dir_name, object_name).c_str());
                 ofs << v.format(_fmt) << std::endl;
             }
 
@@ -79,7 +105,7 @@ namespace limbo {
             void save(const std::vector<T>& v, const std::string& object_name) const
             {
                 create_directories(_dir_name);
-                std::ofstream ofs(fname(object_name).c_str());
+                std::ofstream ofs(txt_impl::getFileName(_dir_name, object_name).c_str());
                 if constexpr (std::is_same_v<T, double>)
                 {
                     ofs << std::setprecision(15);
@@ -101,7 +127,7 @@ namespace limbo {
             template <typename M>
             void load(M& m, const std::string& object_name) const
             {
-                auto values = _load(object_name);
+                auto values = txt_impl::load(_dir_name, object_name);
                 m.resize(values.size(), values[0].size());
                 for (size_t i = 0; i < values.size(); ++i)
                     for (size_t j = 0; j < values[i].size(); ++j)
@@ -113,7 +139,7 @@ namespace limbo {
             void load(std::vector<V>& m_list, const std::string& object_name) const
             {
                 m_list.clear();
-                auto values = _load(object_name);
+                auto values = txt_impl::load(_dir_name, object_name);
                 assert(!values.empty());
                 for (size_t i = 0; i < values.size(); ++i) {
                     if constexpr (std::is_same_v<double, V>)
@@ -131,37 +157,9 @@ namespace limbo {
                 assert(!m_list.empty());
             }
 
-            std::string fname(const std::string& object_name) const
-            {
-                return (_dir_name / (object_name + ".dat")).string();
-            }
-
-            std::string directory() const
-            {
-                return _dir_name.string();
-            }
-
         protected:
             std::filesystem::path _dir_name;
             Eigen::IOFormat _fmt;
-
-            std::vector<std::vector<double>> _load(const std::string& object_name) const
-            {
-                std::ifstream ifs(fname(object_name).c_str());
-                assert(ifs.good() && "file not found");
-                std::string line;
-                std::vector<std::vector<double>> v;
-                while (std::getline(ifs, line)) {
-                    std::stringstream line_stream(line);
-                    std::string cell;
-                    std::vector<double> lineVec;
-                    while (std::getline(line_stream, cell, ' '))
-                        lineVec.push_back(std::stod(cell));
-                    v.push_back(lineVec);
-                }
-                assert(!v.empty() && "empty file");
-                return v;
-            }
         };
     } // namespace serialize
 } // namespace limbo

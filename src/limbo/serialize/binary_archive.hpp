@@ -60,105 +60,32 @@
 namespace limbo {
     namespace serialize {
 
-        class BinaryArchive {
-        public:
-            BinaryArchive(const std::string& dir_name) : _dir_name(dir_name) {}
+        namespace bin_impl
+        {
 
-            /// write an Eigen::Matrix*
-            void save(const Eigen::MatrixXd& v, const std::string& object_name) const
+            inline std::filesystem::path getFileName(std::filesystem::path const& dir, std::string const& object_name)
             {
-                _create_directory();
-
-                std::ofstream out(fname(object_name).c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
-                _write_binary(out, v);
-                out.close();
-            }
-
-            /// write a vector of Eigen::Vector*
-            template <typename T>
-            void save(const std::vector<T>& v, const std::string& object_name) const
-            {
-                _create_directory();
-
-                std::stringstream s;
-
-                int size = v.size();
-                s.write((char*)(&size), sizeof(int));
-                for (auto& x : v) {
-                    _write_binary(s, x);
-                }
-
-                std::ofstream out(fname(object_name).c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
-                out << s.rdbuf();
-                out.close();
-            }
-
-            /// load an Eigen matrix (or vector)
-            template <typename M>
-            void load(M& m, const std::string& object_name) const
-            {
-                std::ifstream in(fname(object_name).c_str(), std::ios::in | std::ios::binary);
-                _read_binary(in, m);
-                in.close();
-            }
-
-            /// load a vector of Eigen::Vector*
-            template <typename V>
-            void load(std::vector<V>& m_list, const std::string& object_name) const
-            {
-                m_list.clear();
-
-                std::ifstream in(fname(object_name).c_str(), std::ios::in | std::ios::binary);
-
-                int size;
-                in.read((char*)(&size), sizeof(int));
-
-                for (int i = 0; i < size; i++) {
-                    V v;
-                    _read_binary(in, v);
-                    m_list.push_back(v);
-                }
-                in.close();
-                assert(!m_list.empty());
-            }
-
-            std::string fname(const std::string& object_name) const
-            {
-                return _dir_name + "/" + object_name + ".bin";
-            }
-
-            const std::string& directory() const
-            {
-                return _dir_name;
-            }
-
-        protected:
-            std::string _dir_name;
-
-            void _create_directory() const
-            {
-                std::filesystem::path my_path(_dir_name);
-                std::filesystem::create_directories(my_path);
+                return dir  / (object_name + ".bin");
             }
 
             template <class T, class Stream>
-            void _write_binary(Stream& out, const T& matrix) const
+            void write_binary(Stream& out, const T& matrix)
             {
                 if constexpr (std::is_same_v<T, double>)
                 {
                     out.write((char*)&matrix, sizeof(double));
                 }
-                else 
+                else
                 {
-	                typename T::Index rows = matrix.rows(), cols = matrix.cols();
-	                out.write((char*)(&rows), sizeof(typename T::Index));
-	                out.write((char*)(&cols), sizeof(typename T::Index));
-	                out.write((char*)matrix.data(), rows * cols * sizeof(typename T::Scalar));
-	            }
+                    typename T::Index rows = matrix.rows(), cols = matrix.cols();
+                    out.write((char*)(&rows), sizeof(typename T::Index));
+                    out.write((char*)(&cols), sizeof(typename T::Index));
+                    out.write((char*)matrix.data(), rows * cols * sizeof(typename T::Scalar));
+                }
             }
 
             template <class T, class Stream>
-            void _read_binary(Stream& in, T& matrix) const
+            void read_binary(Stream& in, T& matrix)
             {
                 if constexpr (std::is_same_v<T, double>)
                 {
@@ -173,6 +100,85 @@ namespace limbo {
                     in.read((char*)matrix.data(), rows * cols * sizeof(typename T::Scalar));
                 }
             }
+        }
+
+        class BinaryArchive {
+        public:
+            BinaryArchive(std::filesystem::path const& dir_name) : _dir_name(dir_name) {}
+
+            /// write an Eigen::Matrix*
+            void save(Eigen::MatrixXd const& v, std::string const& object_name) const
+            {
+                std::filesystem::path my_path(_dir_name);
+                std::filesystem::create_directories(my_path);
+
+                std::ofstream out(bin_impl::getFileName(_dir_name, object_name).c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+                bin_impl::write_binary(out, v);
+                out.close();
+            }
+
+            /// write a vector of Eigen::Vector*
+            template <typename T>
+            void save(const std::vector<T>& v, const std::string& object_name) const
+            {
+                std::filesystem::path my_path(_dir_name);
+                std::filesystem::create_directories(my_path);
+
+                std::stringstream s;
+
+                int size = v.size();
+                s.write((char*)(&size), sizeof(int));
+                for (auto& x : v) {
+                    bin_impl::write_binary(s, x);
+                }
+
+                std::ofstream out(bin_impl::getFileName(_dir_name, object_name).c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+                out << s.rdbuf();
+                out.close();
+            }
+
+            /// load an Eigen matrix (or vector)
+            template <typename M>
+            void load(M& m, const std::string& object_name) const
+            {
+                auto fPath = bin_impl::getFileName(_dir_name, object_name);
+                assert(exists(fPath));
+                std::ifstream in(fPath, std::ios::in | std::ios::binary);
+                if (!in.is_open())
+                {
+                    throw std::runtime_error("File failed to open");
+                }
+                bin_impl::read_binary<M, std::ifstream>(in, m);
+                in.close();
+            }
+
+            /// load a vector of Eigen::Vector*
+            template <typename V>
+            void load(std::vector<V>& m_list, const std::string& object_name) const
+            {
+                m_list.clear();
+                auto fPath = bin_impl::getFileName(_dir_name, object_name);
+                assert(exists(fPath));
+                std::ifstream in(fPath, std::ios::in | std::ios::binary);
+                if (!in.is_open())
+                {
+                    throw std::runtime_error("File failed to open");
+                }
+
+                int size;
+                in.read((char*)(&size), sizeof(int));
+
+                for (int i = 0; i < size; i++) {
+                    V v;
+                    bin_impl::read_binary<V, std::ifstream>(in, v);
+                    m_list.push_back(v);
+                }
+                in.close();
+                assert(!m_list.empty());
+            }
+
+        protected:
+            std::filesystem::path _dir_name;
         };
     } // namespace serialize
 } // namespace limbo

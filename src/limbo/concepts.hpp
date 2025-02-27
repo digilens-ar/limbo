@@ -111,4 +111,20 @@ namespace limbo::concepts
 		{ a.operator()(BayesOptimizerArchetype{}) } -> std::convertible_to<void>;
 	} &&
 		std::is_default_constructible_v<T>;
+
+	template <typename T>
+	concept Archive = requires (T const& a, Eigen::MatrixXd m, std::vector<Eigen::VectorXd> v)
+	{
+		/// write an Eigen::Matrix*
+		{ a.save(Eigen::MatrixXd{}, "matrix") } -> std::convertible_to<void>;
+
+		/// write a vector of Eigen::Vector*
+		{ a.save(std::vector<Eigen::VectorXd> {}, "samples") } -> std::convertible_to<void>;
+
+		/// load an Eigen matrix (or vector)
+		{ a.load(m, "matrix") } -> std::convertible_to<void>;
+
+		/// load a vector of Eigen::Vector*
+		{ a.load(v, "samples") } -> std::convertible_to<void>;
+	};
 }
