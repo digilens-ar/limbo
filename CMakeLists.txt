@@ -47,7 +47,7 @@ endif()
 
 option(LIMBO_USE_TBB "Use Intel TBB for parallelization" ON)
 if (LIMBO_USE_TBB)
-	target_compile_definitions(limbo INTERFACE "LIMBO_USE_TBB")
+	target_compile_definitions(limbo INTERFACE LIMBO_USE_TBB)
 	target_link_libraries(limbo INTERFACE TBB::tbb)
 endif()
 

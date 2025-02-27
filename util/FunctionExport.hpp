@@ -121,7 +121,7 @@ namespace limbo::serialize
                         double percent = static_cast<double>(muOut->size()) / total_iters_ * 100;
                         if (percent >= lastPercent_ + 5)
                         {
-                            prog_.value()(std::format("{:d}", static_cast<int>(percent)));
+                            prog_.value()(std::format("{:d}% Complete", static_cast<int>(percent)));
                             lastPercent_ = percent;
                         }
                     }
@@ -134,6 +134,11 @@ namespace limbo::serialize
                 size_t total_iters_;
                 std::optional<std::function<void(std::string)>>& prog_;
             };
+
+            if (progressCB)
+            {
+                progressCB.value()("Exporting Gaussian Process");
+            }
 
             CartesianGenerator gen(std::vector<unsigned>(model.dim_in(), samplesPerDim));
             std::vector<double> muOut;
@@ -158,6 +163,10 @@ namespace limbo::serialize
 		
 		if (flags & LogLikelihood)
 		{
+            if (progressCB)
+            {
+                progressCB.value()("Exporting Log Likelihood function");
+            }
             constexpr double LIMIT = 8;
             Model copy(model); // Create a copy so that we don't have to modify the original with hyperparameter adjustments.
          

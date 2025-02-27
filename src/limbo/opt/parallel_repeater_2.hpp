@@ -14,6 +14,8 @@ namespace limbo {
         /// @ingroup opt
         /// Meta-optimizer: run the same algorithm in parallel twice. Once from the requested initial point and once from the first requested initial point. Return the best of the two results
         /// (useful for local algorithms)
+        /// Example usage: You want to optimizize Gaussian Process hyperparameters without getting stuck in a local maxima. This allows you to optimize with initial point at
+        /// the first hyperparameter coordinate as well as the most recent best coordinate (from a previous hyperparameter optimization.
         template <concepts::Optimizer Optimizer>
         struct ParallelRepeater2 {
 
