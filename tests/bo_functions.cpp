@@ -326,7 +326,7 @@ int main(int argc, char** argv)
     using Opt_t = bayes_opt::BOptimizer<Params>;
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "sphere"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Sphere::dim_in());
                 opt.optimize(Sphere());
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "ellipsoid"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Ellipsoid::dim_in());
                 opt.optimize(Ellipsoid());
@@ -348,7 +348,7 @@ int main(int argc, char** argv)
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "rastrigin"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Rastrigin::dim_in());
                 opt.optimize(Rastrigin());
@@ -359,7 +359,7 @@ int main(int argc, char** argv)
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "hartman3"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Hartman3::dim_in());
                 opt.optimize(Hartman3());
@@ -371,7 +371,7 @@ int main(int argc, char** argv)
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "hartman6"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Hartman6::dim_in());
                 opt.optimize(Hartman6());
@@ -384,7 +384,7 @@ int main(int argc, char** argv)
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "golden_price"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(GoldenPrice::dim_in());
                 opt.optimize(GoldenPrice());

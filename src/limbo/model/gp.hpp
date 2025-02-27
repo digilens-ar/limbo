@@ -225,10 +225,11 @@ namespace limbo {
 
                 // only compute half of the matrix (symmetrical matrix)
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
-                for (size_t i = 0; i < n; ++i) {
-                    for (size_t j = 0; j <= i; ++j) {
-                        Eigen::VectorXd g = _kernel_function.grad(_samples[i], _samples[j], i, j);
-                        if (i == j)
+                for (size_t j=0; j<n; ++j) {
+					for (size_t i=j; i<n; ++i) {
+                        const bool isDiagonalElement = i == j;
+                        Eigen::VectorXd g = _kernel_function.grad(_samples[i], _samples[j], isDiagonalElement);
+                        if (isDiagonalElement) [[unlikely]]
                             grad += w(i, j) * g * 0.5;
                         else
                             grad += w(i, j) * g;
@@ -429,9 +430,13 @@ namespace limbo {
                 _kernel.resize(n, n);
 
                 // Compute lower triangle
-                for (size_t i = 0; i < n; i++)
-                    for (size_t j = 0; j <= i; ++j)
-                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);;
+                for (size_t j=0; j<n; ++j)
+                {
+                    for (size_t i=j; i<n; i++)
+                    {
+                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i == j);
+                    }
+                }
 
                 // O(n^3)
                 _matrixL = Eigen::LLT<Eigen::MatrixXd, Eigen::Lower>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
@@ -453,7 +458,7 @@ namespace limbo {
                 _matrixL.conservativeResize(n, n);
 
                 for (size_t i = 0; i < n; ++i) {
-                    _kernel(n - 1, i) = _kernel_function.compute(_samples[i], _samples[n - 1], i, n - 1);
+                    _kernel(n - 1, i) = _kernel_function.compute(_samples[i], _samples[n - 1], i == n - 1);
                 }
 
                 double L_j;

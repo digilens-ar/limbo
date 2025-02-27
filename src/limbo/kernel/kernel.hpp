@@ -70,6 +70,7 @@ namespace limbo {
              - ``double noise`` (initial signal noise squared)
              - ``bool optimize_noise`` (whether we are optimizing for the noise or not)
         */
+        //TODO allow templating out the `noise` handling.
         template <typename kernel_opt, typename Kernel>
         struct BaseKernel {
         public:
@@ -78,18 +79,18 @@ namespace limbo {
                 _noise_p = std::log(std::sqrt(_noise));
             }
 
-            double compute(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, int i = -1, int j = -2) const
+            double compute(const Eigen::VectorXd& v1, const Eigen::VectorXd& v2, bool isDiagonalElement = false) const
             {
-                return static_cast<const Kernel*>(this)->kernel_(v1, v2) + ((i == j) ? _noise + 1e-8 : 0.0);
+                return static_cast<const Kernel*>(this)->kernel_(v1, v2) + (isDiagonalElement ? _noise + 1e-8 : 0.0);
             }
 
-            Eigen::VectorXd grad(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, int i = -1, int j = -2) const
+            Eigen::VectorXd grad(const Eigen::VectorXd& x1, const Eigen::VectorXd& x2, bool isDiagonalElement = false) const
             {
                 Eigen::VectorXd g = static_cast<const Kernel*>(this)->gradient_(x1, x2);
 
                 if (kernel_opt::optimize_noise()) {
                     g.conservativeResize(g.size() + 1);
-                    g(g.size() - 1) = ((i == j) ? 2.0 * _noise : 0.0);
+                    g(g.size() - 1) = (isDiagonalElement ? 2.0 * _noise : 0.0);
                 }
 
                 return g;
