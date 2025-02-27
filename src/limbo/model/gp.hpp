@@ -402,10 +402,10 @@ namespace limbo {
             double observation_mean_ = 0;
 
             Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->observation_deviation_;
-            Eigen::MatrixXd _kernel;
-        	Eigen::MatrixXd _inv_kernel;
+            Eigen::MatrixXd _kernel; // This is symmetric positive definite matrix. In practice we only populate the lower triangle
+        	Eigen::MatrixXd _inv_kernel; // The inverse of the kernel
 
-            Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition
+            Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition. This is a lower triangular matrix
 
         	bool _inv_kernel_updated;
 
@@ -431,15 +431,10 @@ namespace limbo {
                 // Compute lower triangle
                 for (size_t i = 0; i < n; i++)
                     for (size_t j = 0; j <= i; ++j)
-                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);
-
-                // Copy lower triangle to top (TODO is this needed?)
-                for (size_t i = 0; i < n; i++)
-                    for (size_t j = 0; j < i; ++j)
-                        _kernel(j, i) = _kernel(i, j);
+                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);;
 
                 // O(n^3)
-                _matrixL = Eigen::LLT<Eigen::MatrixXd>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
+                _matrixL = Eigen::LLT<Eigen::MatrixXd, Eigen::Lower>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
                 this->_compute_alpha();
 
                 // notify change of kernel
@@ -448,20 +443,18 @@ namespace limbo {
 
             void _compute_incremental_kernel()
             {
-                // Incremental LLT
+                // Incremental LLT. Update the kernel if only a single sample has been added since the last kernel update
                 // This part of the code is inspired from the Bayesopt Library (cholesky_add_row function).
                 // However, the mathematical foundations can be easily retrieved by detailing the equations of the
                 // extended L matrix that produces the desired kernel.
 
                 size_t n = _samples.size();
                 _kernel.conservativeResize(n, n);
+                _matrixL.conservativeResize(n, n);
 
                 for (size_t i = 0; i < n; ++i) {
-                    _kernel(i, n - 1) = _kernel_function.compute(_samples[i], _samples[n - 1], i, n - 1);
-                    _kernel(n - 1, i) = _kernel(i, n - 1);
+                    _kernel(n - 1, i) = _kernel_function.compute(_samples[i], _samples[n - 1], i, n - 1);
                 }
-
-                _matrixL.conservativeResizeLike(Eigen::MatrixXd::Zero(n, n));
 
                 double L_j;
                 for (size_t j = 0; j < n - 1; ++j) {
