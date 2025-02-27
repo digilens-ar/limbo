@@ -133,23 +133,25 @@ BO_DECLARE_DYN_PARAM(int, BobyqaParams_HP::opt_nloptnograd, iterations);
 template <concepts::BayesOptimizer Optimizer, TestFunction Function>
 void optimize(benchmark::State& state)
 {
-
     int iters_base = 250;
     DirectParams::opt_nloptnograd::set_iterations(static_cast<int>(iters_base * Function::dim_in() * 0.9));
     BobyqaParams::opt_nloptnograd::set_iterations(iters_base * Function::dim_in() - DirectParams::opt_nloptnograd::iterations());
 
     BobyqaParams_HP::opt_nloptnograd::set_iterations(10 * Function::dim_in() * Function::dim_in());
 
+    double bestObs = 0;
+    Eigen::VectorXd bestSample;
+    double accuracy = 100;
     for (auto _ : state) {
         srand(time(NULL));
         Optimizer opt(Function::dim_in());
         Benchmark<Function> target;
         opt.optimize(target);
-        auto [bestObs, bestSample] = opt.model().best_observation();
-        double accuracy = target.accuracy(bestObs);
-        std::cout << "Result: " << std::fixed << bestSample.transpose() << " -> " << bestObs << std::endl;
-        std::cout << "Smallest difference: " << accuracy << std::endl;
+        std::tie(bestObs, bestSample) = opt.model().best_observation();
+        accuracy = target.accuracy(bestObs);
     }
+    std::cout << "Result: " << std::fixed << bestSample.transpose() << " -> " << bestObs << std::endl;
+    std::cout << "Smallest difference: " << accuracy << std::endl;
 }
 
 

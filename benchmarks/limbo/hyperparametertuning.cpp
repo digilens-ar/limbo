@@ -97,7 +97,7 @@ struct Model<PARALLEL_RPT_4> : Model<PARALLEL_RPT_2>
 template<GP_Type ModelType>
 void BM_KernelHPTune(benchmark::State& state)
 {
-	constexpr int numSamples = 5000;
+	constexpr int numSamples = 1000;
 	constexpr int dim = TestFunc::dim_in();
 
 	if (samples.empty()) {
@@ -115,13 +115,13 @@ void BM_KernelHPTune(benchmark::State& state)
 	switch (state.range(0))
 	{
 	case 0:
-		grad = 0;
-		break;
-	case 1:
 		grad = 1e-6;
 		break;
-	case 2:
+	case 1:
 		grad = 1e-3;
+		break;
+	case 2:
+		grad = 1e-1;
 		break;
 	default:
 		throw std::runtime_error("E");
@@ -138,13 +138,16 @@ void BM_KernelHPTune(benchmark::State& state)
 		Params::opt_parallel::set_repeats(4);
 	}
 
+	double before = 0;
+	double after = 0;
 	for (auto _ : state) {
 		typename Model<ModelType>::GP gp(dim);
 		gp.initialize(samples, observations);
-		const double before = gp.compute_log_lik();
+		before = gp.compute_log_lik();
 		gp.optimize_hyperparams();
-		std::cout << std::format("LogLik Before {}, After {}\n", before, gp.compute_log_lik());
+		after = gp.compute_log_lik();
 	}
+	std::cout << std::format("LogLik Before {}, After {}\n", before, after);
 }
 
 BENCHMARK(BM_KernelHPTune<R_PROP>)->ArgNames({"MinGradient"})->Arg(0)->Arg(1)->Arg(2)->Unit(benchmark::kMillisecond)->MinTime(6);
