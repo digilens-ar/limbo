@@ -1,8 +1,9 @@
-
+#include <tbb/tbbmalloc_proxy.h> // Huge improvement in performance with this allocator.
 #include <limbo/kernel.hpp>
 #include <limbo/model.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/serialize/text_archive.hpp>
+#include <limbo/serialize/binary_archive.hpp>
 #include "FunctionExport.hpp"
 
 using namespace limbo;
@@ -39,16 +40,16 @@ int main()
     using Kernel = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Model = model::GaussianProcess<Kernel, mean::Data, model::gp::KernelLFOpt<opt::Irpropplus<Params::opt_irpropplus>>>;
 
-    std::filesystem::path rootDir(R"(C:\Users\NicholasAnthony\source\repos\wt_gui\external\WaveTracer\testing\optimizerTests\resources\DIA_highD\optimizations\hp_10_irpropplus_ser_1eneg3)");
-    Model m = Model::load(serialize::TextArchive((rootDir / "modelArchive_init").string()));
+    std::filesystem::path rootDir(R"(C:\Users\NicholasAnthony\source\repos\wt_gui\external\WaveTracer\external\limbo\tests\resources\digiTraceModel)");
+    Model m = Model::load(serialize::BinaryArchive((rootDir / "modelArchive").string()));
 
     serialize::exportFunction(
-        rootDir / "pre",
-        serialize::MeanFunction | serialize::KernelFunction | serialize::LogLikelihood,
+        rootDir / "export",
+        serialize::GaussianProcess, // | serialize::LogLikelihood,
         m,
-        6);
+        3);
 
-    m.optimize_hyperparams(); // TODO log each iteration
+    //m.optimize_hyperparams(); // TODO log each iteration
     // serialize::FunctionExport(
     //     rootDir / "post",
     //     serialize::FunctionExport::MeanFunction | serialize::FunctionExport::KernelFunction | serialize::FunctionExport::LogLikelihood,
