@@ -49,12 +49,17 @@
 #include <limbo/limbo.hpp>
 
 #include "testfunctions.hpp"
+#include "benchmark/benchmark.h"
+
+
+#define LIMBO_DEF // Select the type of Bayes optimizer to test with
+
 
 using namespace limbo;
 
 struct Params {
-    struct bayes_opt_boptimizer {
-#if defined(LIMBO_DEF_HPOPT) || defined(BAYESOPT_DEF_HPOPT)
+    struct bayes_opt_boptimizer : defaults::bayes_opt_boptimizer {
+#if defined(LIMBO_DEF_HPOPT)
         BO_PARAM(int, hp_period, 50);
 #else
         BO_PARAM(int, hp_period, -1);
@@ -125,99 +130,63 @@ BO_DECLARE_DYN_PARAM(int, DirectParams::opt_nloptnograd, iterations);
 BO_DECLARE_DYN_PARAM(int, BobyqaParams::opt_nloptnograd, iterations);
 BO_DECLARE_DYN_PARAM(int, BobyqaParams_HP::opt_nloptnograd, iterations);
 
-template <typename Optimizer, typename Function>
-void benchmark(const std::string& name)
+template <concepts::BayesOptimizer Optimizer, TestFunction Function>
+void optimize(benchmark::State& state)
 {
+
     int iters_base = 250;
     DirectParams::opt_nloptnograd::set_iterations(static_cast<int>(iters_base * Function::dim_in() * 0.9));
     BobyqaParams::opt_nloptnograd::set_iterations(iters_base * Function::dim_in() - DirectParams::opt_nloptnograd::iterations());
 
     BobyqaParams_HP::opt_nloptnograd::set_iterations(10 * Function::dim_in() * Function::dim_in());
 
-    auto t1 = std::chrono::steady_clock::now();
-    Optimizer opt;
-    Benchmark<Function> target;
-    opt.optimize(target);
-    auto time_running = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t1).count();
-    std::cout.precision(17);
-    std::cout << std::endl;
-    auto best = opt.best_observation();
-    double accuracy = target.accuracy(best[0]);
-
-    std::cout << name << std::endl;
-    std::cout << "Result: " << std::fixed << opt.best_sample().transpose() << " -> " << best << std::endl;
-    std::cout << "Smallest difference: " << accuracy << std::endl;
-    std::cout << "Time running: " << time_running << "ms" << std::endl
-              << std::endl;
-
-    std::ofstream res_file(name + ".dat", std::ios_base::out | std::ios_base::app);
-    res_file.precision(17);
-    res_file << std::fixed << accuracy << " " << time_running << std::endl;
+    for (auto _ : state) {
+        srand(time(NULL));
+        Optimizer opt(Function::dim_in());
+        Benchmark<Function> target;
+        opt.optimize(target);
+        auto [bestObs, bestSample] = opt.model().best_observation();
+        double accuracy = target.accuracy(bestObs);
+        std::cout << "Result: " << std::fixed << bestSample.transpose() << " -> " << bestObs << std::endl;
+        std::cout << "Smallest difference: " << accuracy << std::endl;
+    }
 }
 
-int main()
-{
-    srand(time(NULL));
 
 // limbo default parameters
 #ifdef LIMBO_DEF
-    using Opt_t = bayes_opt::BOptimizer<Params>;
+using Opt_t = bayes_opt::BOptimizer<Params>;
 #elif defined(LIMBO_DEF_HPOPT)
-    using Opt_t = bayes_opt::BOptimizerHPOpt<Params>;
-
-// Bayesopt default parameters
-#elif defined(BAYESOPT_DEF_HPOPT)
-    using Kernel_t = kernel::SquaredExpARD<Params>;
-    using AcquiOpt_t = opt::Chained<Params, opt::NLOptNoGrad<DirectParams, nlopt::GN_DIRECT_L>, opt::NLOptNoGrad<BobyqaParams, nlopt::LN_BOBYQA>>;
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
-    using Mean_t = mean::Constant<Params>;
-    using Stat_t = boost::fusion::vector<>;
-    using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::KernelLFOpt<Params, opt::NLOptNoGrad<BobyqaParams_HP, nlopt::LN_BOBYQA>>>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
-
-    using Opt_t = bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>>;
-#elif defined(BAYESOPT_DEF)
-    using Kernel_t = kernel::MaternFiveHalves<Params>;
-    using AcquiOpt_t = opt::Chained<Params, opt::NLOptNoGrad<DirectParams, nlopt::GN_DIRECT_L>, opt::NLOptNoGrad<BobyqaParams, nlopt::LN_BOBYQA>>;
-    using Stop_t = boost::fusion::vector<stop::MaxIterations<Params>>;
-    using Mean_t = mean::Constant<Params>;
-    using Stat_t = boost::fusion::vector<>;
-    using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t, model::gp::NoLFOpt<Params>>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
-
-    using Opt_t = bayes_opt::BOptimizer<Params, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>>;
+using Opt_t = bayes_opt::BOptimizerHPOpt<Params>;
 
 // benchmark different optimization algorithms
 #elif defined(OPT_CMAES)
-    using AcquiOpt_t = opt::Cmaes<Params>;
-    using Opt_t = bayes_opt::BOptimizer<Params, acquiopt<AcquiOpt_t>>;
+using AcquiOpt_t = opt::Cmaes<Params>;
+using Opt_t = bayes_opt::BOptimizer<Params, acquiopt<AcquiOpt_t>>;
 #elif defined(OPT_DIRECT)
-    using AcquiOpt_t = opt::Chained<Params, opt::NLOptNoGrad<DirectParams, nlopt::GN_DIRECT_L>, opt::NLOptNoGrad<BobyqaParams, nlopt::LN_BOBYQA>>;
-    using Opt_t = bayes_opt::BOptimizer<Params, acquiopt<AcquiOpt_t>>;
+using AcquiOpt_t = opt::Chained<Params, opt::NLOptNoGrad<DirectParams, nlopt::GN_DIRECT_L>, opt::NLOptNoGrad<BobyqaParams, nlopt::LN_BOBYQA>>;
+using Opt_t = bayes_opt::BOptimizer<Params, acquiopt<AcquiOpt_t>>;
 
 //benchmark different acquisition functions
 #elif defined(ACQ_UCB)
-    using GP_t = model::GP<Params>;
-    using Acqui_t = acqui::UCB<Params, GP_t>;
-    using Opt_t = bayes_opt::BOptimizer<Params, acquifun<Acqui_t>>;
+using GP_t = model::GP<Params>;
+using Acqui_t = acqui::UCB<Params, GP_t>;
+using Opt_t = bayes_opt::BOptimizer<Params, acquifun<Acqui_t>>;
 #elif defined(ACQ_EI)
-    using GP_t = model::GP<Params>;
-    using Acqui_t = acqui::EI<Params, GP_t>;
-    using Opt_t = bayes_opt::BOptimizer<Params, acquifun<Acqui_t>>;
+using GP_t = model::GP<Params>;
+using Acqui_t = acqui::EI<Params, GP_t>;
+using Opt_t = bayes_opt::BOptimizer<Params, acquifun<Acqui_t>>;
 #else
 #error "Unknown variant in benchmark"
 #endif
 
-    benchmark<Opt_t, BraninNormalized>("branin");
-    benchmark<Opt_t, Hartmann6>("hartmann6");
-    benchmark<Opt_t, Hartmann3>("hartmann3");
-    benchmark<Opt_t, Rastrigin>("rastrigin");
-    benchmark<Opt_t, Sphere>("sphere");
-    benchmark<Opt_t, Ellipsoid>("ellipsoid");
-    benchmark<Opt_t, GoldsteinPrice>("goldsteinprice");
-    benchmark<Opt_t, SixHumpCamel>("sixhumpcamel");
+BENCHMARK(optimize<Opt_t, BraninNormalized>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, Hartmann6>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, Hartmann3>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, Rastrigin>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, Sphere>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, Ellipsoid>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, GoldsteinPrice>)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(optimize<Opt_t, SixHumpCamel>)->Unit(benchmark::kMillisecond)->MinTime(6);
 
-    return 0;
-}
+
