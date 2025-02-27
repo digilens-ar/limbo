@@ -17,12 +17,12 @@ namespace limbo::serialize
 
         void iterate();
 
-        unsigned totalIterations() const
+        size_t totalIterations() const
         {
             return totalIterations_;
         }
 
-        unsigned currentIteration() const
+        size_t currentIteration() const
         {
             return currentIteration_;
         }
@@ -30,8 +30,8 @@ namespace limbo::serialize
         std::vector<unsigned> numPerDimension_;
         std::vector<unsigned> currentIdx_;
         unsigned currentDim_;
-        unsigned totalIterations_;
-        unsigned currentIteration_;
+        size_t totalIterations_;
+        size_t currentIteration_;
     };
 
 }
