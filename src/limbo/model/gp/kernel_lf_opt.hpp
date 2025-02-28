@@ -47,6 +47,7 @@
 #define LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 
 #include <limbo/opt/irprop_plus.hpp>
+#include <tbb/enumerable_thread_specific.h>
 
 namespace limbo {
     namespace model {
@@ -77,11 +78,11 @@ namespace limbo {
 
                 template <typename GP>
                 struct KernelLFOptimization {
-                    KernelLFOptimization(const GP& gp) : gp_(gp) {}
+                    KernelLFOptimization(const GP& gp) : gp_ets_(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
-                        GP gp(gp_);
+                        GP& gp = gp_ets_.local();
                         gp.set_kernel_hyperparams(params);
 
                         double lik = gp.compute_log_lik();
@@ -95,7 +96,7 @@ namespace limbo {
                     }
 
                 private:
-                    GP const& gp_;
+                    mutable tbb::enumerable_thread_specific<GP> gp_ets_;
                 };
             };
         } // namespace gp
