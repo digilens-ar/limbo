@@ -58,6 +58,10 @@
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 
+#ifdef LIMBO_USE_TBB
+#include <tbb/tbb.h>
+#endif
+
 #include <numeric>
 #include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/kernel/squared_exp_ard.hpp>
@@ -225,6 +229,53 @@ namespace limbo {
 
                 // only compute half of the matrix (symmetrical matrix)
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
+#ifdef LIMBO_USE_TBB
+                struct ParallelWorker
+                {
+                    ParallelWorker(GaussianProcess* gp, Eigen::MatrixXd const& w):
+						gp_(gp),
+						w_(w),
+						thisGrad_(Eigen::VectorXd::Zero(gp_->_kernel_function.h_params_size()))
+                    {}
+
+	                void operator()(tbb::blocked_range<size_t> const& r)
+	                {
+		                for (size_t j=r.begin(); j!=r.end(); ++j)
+		                {
+                            for (size_t i = j; i < w_.rows(); ++i) {
+                                const bool isDiagonalElement = i == j;
+                                Eigen::VectorXd g = gp_->_kernel_function.grad(gp_->_samples[i], gp_->_samples[j], isDiagonalElement);
+                                if (isDiagonalElement) [[unlikely]]
+                                    thisGrad_ += w_(i, j) * g * 0.5;
+                                else
+                                    thisGrad_ += w_(i, j) * g;
+                            }
+		                }
+	                }
+
+                    ParallelWorker(ParallelWorker const& other, tbb::split):
+						gp_(other.gp_),
+						w_(other.w_),
+                        thisGrad_(Eigen::VectorXd::Zero(gp_->_kernel_function.h_params_size()))
+					{}
+
+                    void join(ParallelWorker const& other)
+                    {
+                        thisGrad_ += other.thisGrad_;
+                    }
+
+                    Eigen::VectorXd getGradient() const { return thisGrad_; }
+                private:
+                    GaussianProcess* gp_;
+                    Eigen::MatrixXd const& w_;
+                    Eigen::VectorXd thisGrad_;
+
+                };
+
+                ParallelWorker worker(this, w);
+                tbb::parallel_reduce(tbb::blocked_range<size_t>(0, n), worker);
+                grad = worker.getGradient();
+#else
                 for (size_t j=0; j<n; ++j) {
 					for (size_t i=j; i<n; ++i) {
                         const bool isDiagonalElement = i == j;
@@ -235,6 +286,7 @@ namespace limbo {
                             grad += w(i, j) * g;
                     }
                 }
+#endif
                 return grad;
             }
 
