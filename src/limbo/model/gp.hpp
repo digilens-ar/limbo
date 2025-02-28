@@ -526,13 +526,12 @@ namespace limbo {
                     _kernel(n - 1, i) = _kernel_function.compute(_samples[i], _samples[n - 1], i == n - 1);
                 }
 
-                double L_j;
                 for (size_t j = 0; j < n - 1; ++j) {
-                    L_j = _kernel(n - 1, j) - (_matrixL.block(j, 0, 1, j) * _matrixL.block(n - 1, 0, 1, j).transpose())(0, 0);
+                    const double L_j = _kernel(n - 1, j) - (_matrixL.block(j, 0, 1, j) * _matrixL.block(n - 1, 0, 1, j).transpose())(0, 0);
                     _matrixL(n - 1, j) = (L_j) / _matrixL(j, j);
                 }
 
-                L_j = _kernel(n - 1, n - 1) - (_matrixL.block(n - 1, 0, 1, n - 1) * _matrixL.block(n - 1, 0, 1, n - 1).transpose())(0, 0);
+                const double L_j = _kernel(n - 1, n - 1) - (_matrixL.block(n - 1, 0, 1, n - 1) * _matrixL.block(n - 1, 0, 1, n - 1).transpose())(0, 0);
                 _matrixL(n - 1, n - 1) = sqrt(L_j);
 
                 this->_compute_alpha();
@@ -545,7 +544,7 @@ namespace limbo {
             {
                 // alpha = K^{-1} * this->observation_deviation_;
                 Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.triangularView<Eigen::Lower>();
-                _alpha = triang.solve(observation_deviation_);
+                _alpha.noalias() = triang.solve(observation_deviation_);
                 triang.adjoint().solveInPlace(_alpha);
             }
 
@@ -556,7 +555,7 @@ namespace limbo {
 
             double _sigma_sq(Eigen::VectorXd const& v, Eigen::VectorXd const& k) const
             {
-                Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k);
+                Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k); // This is equivalent to (k^T * K^-1 * k) -> (k^T * L^-1T * L^-1 * k) -> ((L^-1 * k)^T * (L^-1 * k))
                 double res = _kernel_function.compute(v, v) - z.dot(z);
 
                 return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res;
@@ -588,10 +587,10 @@ namespace limbo {
             {
                 const size_t n = observation_deviation_.rows();
                 // K^{-1} using Cholesky decomposition
-                _inv_kernel = Eigen::MatrixXd::Identity(n, n);
+                _inv_kernel.setIdentity(n, n);
 
-                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
-                _matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel); // After this step `_inv_kernel` is the inverse of `_matrixL`
+            	_matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
 
                 _inv_kernel_updated = true;
             }
