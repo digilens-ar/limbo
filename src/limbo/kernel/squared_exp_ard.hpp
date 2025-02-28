@@ -112,8 +112,8 @@ namespace limbo {
                 else {
                     Eigen::VectorXd grad(this->params_size_());
                     Eigen::VectorXd z = (x1 - x2).cwiseProduct(_ell_inv).array().square();
-                    double k = _sf2 * std::exp(-0.5 * z.sum());
-                    grad.head(_input_dim) = z * k;
+                    const double k = _sf2 * std::exp(-0.5 * z.sum());
+                    grad.head(_input_dim).noalias() = z * k;
 
                     grad(grad.size() - 1) = 2 * k;
                     return grad;

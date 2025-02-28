@@ -53,11 +53,9 @@
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 #include <tbb/blocked_range.h>
-#include <tbb/concurrent_vector.h>
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_for_each.h>
 #include <tbb/parallel_reduce.h>
-#include <tbb/parallel_sort.h>
 #endif
 
 ///@defgroup par_tools
