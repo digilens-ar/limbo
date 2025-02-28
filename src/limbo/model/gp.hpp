@@ -231,7 +231,7 @@ namespace limbo {
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
 #ifdef LIMBO_USE_TBB
                 struct ParallelWorker
-                {
+                { // This worker works with TBB to iterate over the lower triangle of the kernel to accumulate the values of the gradient.
                     ParallelWorker(GaussianProcess* gp, Eigen::MatrixXd const& w):
 						gp_(gp),
 						w_(w),
@@ -253,6 +253,7 @@ namespace limbo {
 		                }
 	                }
 
+                    //TBB uses this to split workers.
                     ParallelWorker(ParallelWorker const& other, tbb::split):
 						gp_(other.gp_),
 						w_(other.w_),
@@ -260,7 +261,7 @@ namespace limbo {
 					{}
 
                     void join(ParallelWorker const& other)
-                    {
+                    { // TBB uses this to combine workers.
                         thisGrad_ += other.thisGrad_;
                     }
 
@@ -269,7 +270,6 @@ namespace limbo {
                     GaussianProcess* gp_;
                     Eigen::MatrixXd const& w_;
                     Eigen::VectorXd thisGrad_;
-
                 };
 
                 ParallelWorker worker(this, w);
@@ -481,7 +481,19 @@ namespace limbo {
                 size_t n = _samples.size();
                 _kernel.resize(n, n);
 
-                // Compute lower triangle
+                // Compute lower triangle of kernel
+#ifdef LIMBO_USE_TBB
+                tbb::parallel_for(tbb::blocked_range<size_t>(0, n), [this, n](tbb::blocked_range<size_t> const& r)
+                {
+	                for (size_t j=r.begin(); j!=r.end(); ++j)
+	                {
+                        for (size_t i = j; i < n; i++)
+                        {
+                            _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i == j);
+                        }
+	                }
+                });
+#else
                 for (size_t j=0; j<n; ++j)
                 {
                     for (size_t i=j; i<n; i++)
@@ -489,6 +501,7 @@ namespace limbo {
                         _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i == j);
                     }
                 }
+#endif
 
                 // O(n^3)
                 _matrixL = Eigen::LLT<Eigen::MatrixXd, Eigen::Lower>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
