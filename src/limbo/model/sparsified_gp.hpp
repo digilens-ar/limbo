@@ -69,38 +69,37 @@ namespace limbo {
         /// A sparsification based on the density of points is performed
         /// until a desired number of points is reached
         template <typename ModelSparseGP, typename KernelFunction, typename MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
-        class SparsifiedGP : public GP<KernelFunction, MeanFunction, HyperParamsOptimizer> {
+        class SparsifiedGP : public GaussianProcess<KernelFunction, MeanFunction, HyperParamsOptimizer> {
         public:
-            using base_gp_t = GP<KernelFunction, MeanFunction, HyperParamsOptimizer>;
+            using base_gp_t = GaussianProcess<KernelFunction, MeanFunction, HyperParamsOptimizer>;
 
             /// useful because the model might be created before having samples
             SparsifiedGP(int dim_in, int dim_out)
                 : base_gp_t(dim_in, dim_out) {}
 
-            /// Compute the GP from samples and observations. This call needs to be explicit!
-            void initialize(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
+            /// Compute the GaussianProcess from samples and observations. This call needs to be explicit!
+            void initialize(std::vector<Eigen::VectorXd> samples, std::vector<double> observations)
             {
                 /// if the number of samples is less or equal than the desired
-                /// compute the normal GP
+                /// compute the normal GaussianProcess
                 if (samples.size() <= ModelSparseGP::max_points())
-                    base_gp_t::initialize(samples, observations, compute_kernel);
+                    base_gp_t::initialize(std::move(samples), std::move(observations));
                 /// otherwise, sparsify the samples
                 else {
                     auto [samp, obs] = _sparsify(samples, observations);
 
-                    /// now compute the normal GP with less points
-                    base_gp_t::initialize(samp, obs, compute_kernel);
+                    /// now compute the normal GaussianProcess with less points
+                    base_gp_t::initialize(std::move(samp), std::move(obs));
                 }
             }
 
-            /// add sample and update the GP. If the number of samples is bigger than
-            /// the desired maximum points, we re-sparsify and re-compute the GP
-            void add_sample(const Eigen::VectorXd& sample, const Eigen::VectorXd& observation)
+            /// add sample and update the GaussianProcess. If the number of samples is bigger than
+            /// the desired maximum points, we re-sparsify and re-compute the GaussianProcess
+            void add_sample(const Eigen::VectorXd& sample, double observation)
             {
                 base_gp_t::add_sample(sample, observation);
                 /// if we surpassed the maximum points, re-sparsify
-                /// and recompute
+                /// and recompute_
                 if (this->_samples.size() > ModelSparseGP::max_points()) {
                     /// get observations in appropriate format
                     std::vector<Eigen::VectorXd> observations;
@@ -108,7 +107,7 @@ namespace limbo {
                         observations.push_back(this->_observations.row(i));
                     }
 
-                    initialize(this->_samples, observations, true);
+                    initialize(this->_samples, observations);
                 }
             }
 

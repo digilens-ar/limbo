@@ -112,8 +112,8 @@ namespace limbo {
                 else {
                     Eigen::VectorXd grad(this->params_size_());
                     Eigen::VectorXd z = (x1 - x2).cwiseProduct(_ell_inv).array().square();
-                    double k = _sf2 * std::exp(-0.5 * z.sum());
-                    grad.head(_input_dim) = z * k;
+                    const double k = _sf2 * std::exp(-0.5 * z.sum());
+                    grad.head(_input_dim).noalias() = z * k;
 
                     grad(grad.size() - 1) = 2 * k;
                     return grad;
@@ -151,11 +151,11 @@ namespace limbo {
                 _sf2 = std::exp(2.0 * p(params_size_() - 1));
             }
 
-            double _sf2;
-            Eigen::VectorXd _ell_inv;
+            double _sf2; // Sigma squared
+            Eigen::VectorXd _ell_inv; // vector of 1 / l where l is the length scale for each axis.
             Eigen::MatrixXd _A;
             size_t _input_dim;
-            Eigen::VectorXd _h_params;
+            Eigen::VectorXd _h_params; // The natural log of the length scales and sigma^2
 
             friend struct BaseKernel<kernel_opt, SquaredExpARD<kernel_opt, kernel_squared_exp_ard>>;
         };

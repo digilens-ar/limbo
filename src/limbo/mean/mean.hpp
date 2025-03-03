@@ -47,25 +47,56 @@
 #define LIMBO_MEAN_MEAN_HPP
 
 #include <Eigen/Core>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace mean {
-        /** @ingroup mean
-          \rst
+        /**
           Base struct for mean definition.
-          \endrst
         */
         struct BaseMean {
             BaseMean() {}
 
+            /**
+             * 
+             * @return The number of hyperparameters for the mean function
+             */
             size_t h_params_size() const { return 0; }
 
+            /**
+             * 
+             * @return The current values of the hyperparameters
+             */
             Eigen::VectorXd h_params() const { return Eigen::VectorXd(); }
 
+            /**
+             * 
+             * @param p Set the current hyperparameter values
+             */
             void set_h_params([[maybe_unused]] const Eigen::VectorXd& p) {}
 
+            /**
+             * 
+             * @tparam GP The type of the gaussian process class
+             * @param x The coordinate to evaluate the gradient at
+             * @param gp The gaussian process to operate on
+             * @return The gradient of the mean function as a function of changes in hyperparameters
+             */
             template <typename GP>
             Eigen::VectorXd grad(const Eigen::VectorXd& x, const GP& gp) const
+            {
+                throw std::runtime_error("Cannot call this base class function"); // cannot call this.
+            }
+
+            /**
+             * 
+             * @tparam GP The type of the gaussian process class
+             * @param v the coordinate to evaluate the mean function value at
+             * @param model The gaussian process model to operate on
+             * @return 
+             */
+            template <typename GP>
+            double operator()(const Eigen::VectorXd& v, const GP& model) const
             {
                 throw std::runtime_error("Cannot call this base class function"); // cannot call this.
             }

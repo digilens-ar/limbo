@@ -98,13 +98,14 @@ namespace limbo {
 
                 // Compute EI(x)
                 // First find the best so far (predicted) observation -- if needed
-                if (_nb_samples != _model.nb_samples()) {
+                if (_nb_samples != _model.samples().size()) {
                     std::vector<double> rewards;
+                    rewards.reserve(_model.samples().size());
                     for (auto s : _model.samples()) {
                         rewards.push_back(_model.mu(s));
                     }
 
-                    _nb_samples = _model.nb_samples();
+                    _nb_samples = _model.samples().size();
                     _f_max = *std::max_element(rewards.begin(), rewards.end());
                 }
                 // Calculate Z and \Phi(Z) and \phi(Z)

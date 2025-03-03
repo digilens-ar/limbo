@@ -112,13 +112,20 @@ int main()
 {
     using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
     using Mean_t = mean::Data;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
     using Acqui_t = acqui::GP_UCB<Params::acqui_gpucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);
 
     std::cout << "Optimize using  Average aggregator" << std::endl;
     opt.optimize(StateEval());
-    std::cout << "best obs based on Average aggregator: " << opt.best_observation() << " res  " << opt.best_sample().transpose() << std::endl;
+
+    auto const& gaussianProcess = opt.model();
+    const auto max_e = std::max_element(gaussianProcess.observations().begin(), gaussianProcess.observations().end());
+    const auto index = std::distance(gaussianProcess.observations().begin(), max_e);
+    const double bestObs = gaussianProcess.observations()[index];
+    const Eigen::VectorXd bestSample = gaussianProcess.samples()[index];
+
+    std::cout << "best obs based on Average aggregator: " << bestObs << " res  " << bestSample.transpose() << std::endl;
     return 0;
 }

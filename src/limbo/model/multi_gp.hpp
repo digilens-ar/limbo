@@ -47,13 +47,14 @@
 #define LIMBO_MODEL_MULTI_GP_HPP
 
 #include <limbo/mean/null_function.hpp>
+#include <limbo/tools/parallel.hpp>
 
 namespace limbo {
     namespace model {
         /// @ingroup model
         /// A wrapper for N-output Gaussian processes.
         /// It is parametrized by:
-        /// - GP class
+        /// - GaussianProcess class
         /// - a kernel function (the same type for all GPs, but can have different parameters)
         /// - a mean function (the same type and parameters for all GPs)
         /// - [optional] an optimizer for the hyper-parameters
@@ -73,9 +74,9 @@ namespace limbo {
                 }
             }
 
-            /// Compute the GP from samples and observations. This call needs to be explicit!
+            /// Compute the GaussianProcess from samples and observations. This call needs to be explicit!
             void initialize(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<Eigen::VectorXd>& observations, bool compute_kernel = true)
+                const std::vector<Eigen::VectorXd>& observations)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
@@ -84,7 +85,7 @@ namespace limbo {
                 assert(_dim_out == observations[0].size());
 
                 // save observations
-                // TO-DO: Check how can we improve for not saving observations twice (one here and one for each GP)!?
+                // TO-DO: Check how can we improve for not saving observations twice (one here and one for each GaussianProcess)!?
                 _observations = observations;
 
                 // compute the new observations for the GPs
@@ -94,13 +95,13 @@ namespace limbo {
                     Eigen::VectorXd mean_vector = _mean_function(samples[j], *this);
                     assert(mean_vector.size() == _dim_out);
                     for (int i = 0; i < _dim_out; i++) {
-                        obs[i].push_back(tools::make_vector(observations[j][i] - mean_vector[i]));
+                        obs[i].push_back(Eigen::VectorXd { {observations[j][i] - mean_vector[i]} });
                     }
                 }
 
                 // do the actual computation
                 limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                    _gp_models[i].initialize(samples, obs[i], compute_kernel);
+                    _gp_models[i].initialize(samples, obs[i]);
                 });
             }
 
@@ -111,8 +112,6 @@ namespace limbo {
             }
 
             const MeanFunction& mean_function() const { return _mean_function; }
-
-            MeanFunction& mean_function() { return _mean_function; }
 
             /// add sample and update the GPs. This code uses an incremental implementation of the Cholesky
             /// decomposition. It is therefore much faster than a call to compute()
@@ -127,13 +126,13 @@ namespace limbo {
                 assert(mean_vector.size() == _dim_out);
 
                 limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                    _gp_models[i].add_sample(sample, tools::make_vector(observation[i] - mean_vector[i]));
+                    _gp_models[i].add_sample(sample, { {observation[i] - mean_vector[i]} });
                 });
             }
 
             /**
              \\rst
-             return :math:`\mu`, :math:`\sigma^2` (un-normalized; this will return a vector --- one for each GP). Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
+             return :math:`\mu`, :math:`\sigma^2` (un-normalized; this will return a vector --- one for each GaussianProcess). Using this method instead of separate calls to mu() and sigma() is more efficient because some computations are shared between mu() and sigma().
              \\endrst
             */
             std::tuple<Eigen::VectorXd, Eigen::VectorXd> query(const Eigen::VectorXd& v) const
@@ -173,7 +172,7 @@ namespace limbo {
 
             /**
              \\rst
-             return :math:`\sigma^2` (un-normalized). This returns a vector; one value for each GP.
+             return :math:`\sigma^2` (un-normalized). This returns a vector; one value for each GaussianProcess.
              \\endrst
             */
             Eigen::VectorXd sigma(const Eigen::VectorXd& v) const
@@ -197,27 +196,6 @@ namespace limbo {
             int dim_out() const
             {
                 return _dim_out;
-            }
-
-            /// return the number of samples used to compute the GP
-            int nb_samples() const
-            {
-                return _observations.size();
-            }
-
-            ///  recomputes the GPs
-            void recompute(bool update_obs_mean = true, bool update_full_kernel = true)
-            {
-                // if there are no GPs, there's nothing to recompute
-                if (_gp_models.size() == 0)
-                    return;
-
-                if (update_obs_mean) // if the mean is updated, we need to fully re-compute
-                    return initialize(_gp_models[0].samples(), _observations, update_full_kernel);
-                else
-                    limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                        _gp_models[i].recompute(false, update_full_kernel);
-                    });
             }
 
             /// return the list of samples
@@ -244,7 +222,7 @@ namespace limbo {
             }
 
             /// return the list of GPs
-            std::vector<GP_t> gp_models() const
+            std::vector<GP_t> const& gp_models() const
             {
                 return _gp_models;
             }
@@ -255,8 +233,7 @@ namespace limbo {
                 return _gp_models;
             }
 
-
-            /// save the parameters and the data for the GP to the archive (text or binary)
+            /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
             template <typename A>
             void save(const A& archive) const
             {
@@ -275,9 +252,9 @@ namespace limbo {
                 }
             }
 
-            /// load the parameters and the data for the GP from the archive (text or binary)
-            /// if recompute is true, we do not read the kernel matrix
-            /// but we recompute it given the data and the hyperparameters
+            /// load the parameters and the data for the GaussianProcess from the archive (text or binary)
+            /// if recompute_ is true, we do not read the kernel matrix
+            /// but we recompute_ it given the data and the hyperparameters
             template <typename A>
             static MultiGP load(const A& archive, bool recompute = true)
             {
@@ -301,22 +278,37 @@ namespace limbo {
                 out._gp_models.clear();
 
                 for (int i = 0; i < out._dim_out; i++) {
-                    // do not recompute the individual GPs on their own
+                    // do not recompute_ the individual GPs on their own
                     out._gp_models.emplace_back(GP_t::load(A(archive.directory() + "/gp_" + std::to_string(i)), false));
                 }
 
                 if (recompute)
-                    out.recompute(true, true);
+                    out.recompute_(true, true);
 
                 return out;
             }
 
-        protected:
+        private:
             std::vector<GP_t> _gp_models;
             int _dim_in, _dim_out;
             HyperParamsOptimizer _hp_optimize;
             MeanFunction _mean_function;
             std::vector<Eigen::VectorXd> _observations;
+
+            ///  recomputes the GPs
+            void recompute_(bool update_obs_mean, bool update_full_kernel)
+            {
+                // if there are no GPs, there's nothing to recompute_
+                if (_gp_models.size() == 0)
+                    return;
+
+                if (update_obs_mean) // if the mean is updated, we need to fully re-compute
+                    return initialize(_gp_models[0].samples(), _observations, update_full_kernel);
+                else
+                    limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
+                    _gp_models[i].recompute_(false, update_full_kernel);
+                        });
+            }
         };
     } // namespace model
 } // namespace limbo

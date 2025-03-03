@@ -46,12 +46,10 @@
 #ifndef LIMBO_STOP_MAX_PREDICTED_VALUE_HPP
 #define LIMBO_STOP_MAX_PREDICTED_VALUE_HPP
 
-#include <iostream>
-
 #include <Eigen/Core>
 #include <spdlog/fmt/fmt.h>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 namespace limbo {
     namespace defaults {
@@ -79,9 +77,13 @@ namespace limbo {
                 if (bo.observations().size() == 0 || !stop_maxpredictedvalue::enabled())
                     return false;
 
+                std::optional<std::vector<std::pair<double, double>>> parameterBounds = std::nullopt;
+                if (bo.isBounded()) {
+                    parameterBounds = std::vector<std::pair<double, double>>(bo.dim_in(), std::make_pair(0.0, 1.0));
+                }
                 Eigen::VectorXd starting_point = tools::random_vector(bo.model().dim_in());
                 auto model_optimization = [&](const Eigen::VectorXd& x, bool g) { return opt::no_grad(afun(bo.model().mu(x))); };
-                auto x = bo.acquisitionOptimizer().optimize(model_optimization, starting_point, true);
+                auto x = bo.acquisition_optimizer().optimize(model_optimization, starting_point, parameterBounds);
                 double val = afun(bo.model().mu(x));
 
                 if (afun(bo.best_observation()) <= stop_maxpredictedvalue::ratio() * val)

@@ -11,9 +11,11 @@ namespace limbo::stop
 		template<concepts::BayesOptimizer BO>
 		bool operator()(BO const& bo, std::string& stopMessage) const
 		{
+			auto const& gaussianProcess = bo.model();
+			auto [bestObs, bestSample] = gaussianProcess.best_observation();
 			for (auto const& func : stopFuncs_)
 			{
-				if (func(bo.best_observation(), bo.best_sample(), bo.observations(), bo.samples(), stopMessage))
+				if (func(bestObs, bestSample, gaussianProcess.observations(), gaussianProcess.samples(), stopMessage))
 				{
 					return true;
 				}

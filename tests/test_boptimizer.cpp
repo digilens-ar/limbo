@@ -85,7 +85,7 @@ namespace {
         };
 
         struct acqui_ucb {
-            BO_PARAM(double, alpha, 1.0);
+            BO_PARAM(double, kappa, 1.0);
         };
 
         struct acqui_ei {
@@ -121,7 +121,7 @@ namespace {
 
         Eigen::VectorXd operator()(const Eigen::VectorXd& x) const
         {
-            return tools::make_vector(-std::pow(x(0) - 2.5, 2.0));
+            return Eigen::VectorXd{ {-std::pow(x(0) - 2.5, 2.0)} };
         }
     };
 #endif
@@ -149,7 +149,7 @@ TEST(Limbo_Boptimizer, bo_inheritance)
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::NoInit;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
@@ -181,7 +181,7 @@ TEST(Limbo_Boptimizer, bo_unbounded)
     using Mean_t = mean::NullFunction<Params>;
     using Stat_t = boost::fusion::vector<stat::ConsoleSummary<Params>>;
     using Init_t = init::RandomSampling<Params>;
-    using GP_t = model::GP<Params, Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Params, Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params, GP_t>;
 
     bayes_opt::BOptimizer<Parameters, modelfun<GP_t>, initfun<Init_t>, acquifun<Acqui_t>, acquiopt<AcquiOpt_t>, statsfun<Stat_t>, stopcrit<Stop_t>> opt;
@@ -207,7 +207,7 @@ TEST(Limbo_Boptimizer, bo_gp)
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params::init_randomsampling>;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
     using Acqui_t = acqui::EI<Params::acqui_ei, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
@@ -215,7 +215,7 @@ TEST(Limbo_Boptimizer, bo_gp)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.model().best_observation().second).squaredNorm() < 1e-3);
 }
 
 TEST(Limbo_Boptimizer, bo_gp_auto)
@@ -234,7 +234,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
     using Mean_t = mean::Data;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params::init_randomsampling>;
-    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
@@ -242,7 +242,7 @@ TEST(Limbo_Boptimizer, bo_gp_auto)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.model().best_observation().second).squaredNorm() < 1e-3);
 }
 
 TEST(Limbo_Boptimizer, bo_gp_mean)
@@ -261,7 +261,7 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
     using Mean_t = mean::FunctionARD<mean::Data>;
     using Stat_t = boost::fusion::vector<limbo::stat::Samples, limbo::stat::Observations>;
     using Init_t = init::RandomSampling<Params::init_randomsampling>;
-    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::MeanLFOpt<opt::Rprop<Params::opt_rprop>>>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t, model::gp::MeanLFOpt<opt::Rprop<Params::opt_rprop>>>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, Init_t, Stop_t, Stat_t, AcquiOpt_t> opt(eval2<Params>::dim_in());
@@ -269,5 +269,5 @@ TEST(Limbo_Boptimizer, bo_gp_mean)
 
     Eigen::VectorXd sol(2);
     sol << 0.25, 0.75;
-    ASSERT_TRUE((sol - opt.best_sample()).squaredNorm() < 1e-3);
+    ASSERT_TRUE((sol - opt.model().best_observation().second).squaredNorm() < 1e-3);
 }

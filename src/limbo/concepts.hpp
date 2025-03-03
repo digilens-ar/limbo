@@ -1,12 +1,14 @@
 #pragma once
 #include <limbo/public.hpp>
 #include <concepts>
+#include <optional>
 #include <Eigen/Dense>
 
 
-
+//These concepts are used for constraining the types passed as template parameters to the template classes
 namespace limbo::concepts
 {
+	// Helper template for a functor with return type and argument types
 	template <typename F, typename Ret, class... Args >
 	concept Callable = std::invocable<F, Args...> && std::same_as<Ret, std::invoke_result_t<F, Args...>>;
 
@@ -21,7 +23,6 @@ namespace limbo::concepts
         { a.mu(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.sigma_sq(Eigen::VectorXd{}) } -> std::convertible_to<double>;
         { a.dim_in() } -> std::convertible_to<int>;
-        { a.nb_samples() } -> std::convertible_to<int>;
         { a.samples() } -> std::convertible_to<const std::vector<Eigen::VectorXd>&>;
 	};
 
@@ -59,7 +60,6 @@ namespace limbo::concepts
 		{a.isBounded()} -> std::convertible_to<bool>;
 		{a.addInequalityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
 		{a.addEqualityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
-		{a.constraintsAreSatisfied(Eigen::VectorXd{})} -> std::convertible_to<bool>;
 		{a.hasConstraints()} -> std::convertible_to<bool>;
 	};
 
@@ -111,4 +111,20 @@ namespace limbo::concepts
 		{ a.operator()(BayesOptimizerArchetype{}) } -> std::convertible_to<void>;
 	} &&
 		std::is_default_constructible_v<T>;
+
+	template <typename T>
+	concept Archive = requires (T const& a, Eigen::MatrixXd m, std::vector<Eigen::VectorXd> v)
+	{
+		/// write an Eigen::Matrix*
+		{ a.save(Eigen::MatrixXd{}, "matrix") } -> std::convertible_to<void>;
+
+		/// write a vector of Eigen::Vector*
+		{ a.save(std::vector<Eigen::VectorXd> {}, "samples") } -> std::convertible_to<void>;
+
+		/// load an Eigen matrix (or vector)
+		{ a.load(m, "matrix") } -> std::convertible_to<void>;
+
+		/// load a vector of Eigen::Vector*
+		{ a.load(v, "samples") } -> std::convertible_to<void>;
+	};
 }

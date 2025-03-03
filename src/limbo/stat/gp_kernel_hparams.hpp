@@ -61,12 +61,12 @@ namespace limbo {
                 if (bo.observations().empty())
                     return;
 
-                this->_create_log_file(bo, "gp_kernel_hparams.dat");
+                auto& logFile = get_log_file(bo, "gp_kernel_hparams.dat");
 
                 if (bo.total_iterations() == 0)
-                    (*this->_log_file) << "#iteration gp_kernel_hparams" << std::endl;
+                    logFile<< "#iteration gp_kernel_hparams" << std::endl;
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.model().kernel_function().h_params().transpose() << std::endl;
+                logFile<< bo.total_iterations() << " " << bo.model().kernel_function().h_params().transpose() << std::endl;
             }
         };
     }

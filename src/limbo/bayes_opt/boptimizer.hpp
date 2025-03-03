@@ -48,15 +48,13 @@
 
 // #define SAVE_HP_MODELS
 
-#include <algorithm>
-#include <iterator>
 #include <filesystem>
 #include <Eigen/Core>
 #include <boost/fusion/container.hpp>
 #include <boost/fusion/algorithm.hpp>
 #include <limbo/public.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 #include <limbo/stat.hpp>
 
 #include "limbo/acqui/ucb.hpp"
@@ -118,24 +116,24 @@ namespace limbo {
 
        This class is templated by several types with default values (thanks to boost::parameters).
 
-		+----------------+---------+---------+---------------+
-		|type            |typedef  | argument| default       |
-		+================+=========+=========+===============+
-		|init. func.     |init_t   | initfun | RandomSampling|
-		+----------------+---------+---------+---------------+
-		|model           |model_t  | modelfun| GP<...>       |
-		+----------------+---------+---------+---------------+
-		|acquisition fun.|aqui_t   | acquifun| GP_UCB        |
-		+----------------+---------+---------+---------------+
-		|statistics      | stat_t  | statfun | see below     |
-		+----------------+---------+---------+---------------+
-		|stopping crit.  | stop_t  | stopcrit| MaxIterations |
-		+----------------+---------+---------+---------------+
-		|acqui. optimizer|acquiopt_t| acquiopt | see below |
-        +----------------+------------+----------+---------------+
+		+----------------+-------------+---------+---------------+
+		|type            |typedef      | argument| default       |
+		+================+=============+=========+===============+
+		|init. func.     |InitializerT | initfun | RandomSampling|
+		+----------------+-------------+---------+---------------+
+		|model           |model_t      | modelfun| GaussianProcess<...>       |
+		+----------------+-------------+---------+---------------+
+		|acquisition fun.|aqui_t       | acquifun| GP_UCB        |
+		+----------------+-------------+---------+---------------+
+		|statistics      | stat_t      | statfun | see below     |
+		+----------------+-------------+---------+---------------+
+		|stopping crit.  | stop_t      | stopcrit| MaxIterations |
+		+----------------+-------------+---------+---------------+
+		|acqui. optimizer|acquiopt_t   | acquiopt | see below |
+        +----------------+-------------+----------+---------------+
        \endrst
 
-       For GP, the default value is: ``model::GP<Params, kf_t, mean_t, opt_t>>``,
+       For GaussianProcess, the default value is: ``model::GaussianProcess<Params, kf_t, mean_t, opt_t>>``,
          - with ``kf_t = kernel::SquaredExpARD<Params>``
          - with ``mean_t = mean::Data<Params>``
          - with ``opt_t = model::gp::KernelLFOpt<Params>``
@@ -160,7 +158,7 @@ namespace limbo {
        */
 		template <
             class Params,
-        	concepts::Model model_type = model::GP<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
+        	concepts::Model model_type = model::GaussianProcess<kernel::MaternFiveHalves<typename Params::kernel, typename Params::kernel_maternfivehalves>>,
 			concepts::AcquisitionFunc acqui_t = acqui::UCB<typename Params::acqui_ucb, model_type>,
 			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
     		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
@@ -176,247 +174,78 @@ namespace limbo {
             using model_t = model_type;
             using stats_t = typename boost::mpl::if_<boost::fusion::traits::is_sequence<Stat>, Stat, boost::fusion::vector<Stat>>::type;
             using constraint_func_t = std::function<std::pair<double, std::optional<Eigen::VectorXd>>(Eigen::VectorXd, bool)>;
+            using acquisition_optimizer_t = acqui_opt_t;
 
-            /// default constructor
-            BOptimizer(int dimIn):
-				acqui_optimizer(acqui_opt_t::create(dimIn)),
-				_model(dimIn)
-            {}
+            /// Construct an optimizer with no observations
+            BOptimizer(int dimIn);
+
+            /// Construct an optimizer with a prebuilt model
+            BOptimizer(model_t&& model);
 
             BOptimizer(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer& operator=(const BOptimizer& other) = delete; // copy is disabled (dangerous and useless)
             BOptimizer(BOptimizer&& other) = default;
             BOptimizer& operator=(BOptimizer&& other) = default;
 
-            template <typename Archive>
-            void loadFromArchive(Archive const& archive )
-            {
-	            _model = model_type::load(archive);
-                _total_iterations = _model.observations().size();
-            }
-
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction>
-            std::string optimize(const StateFunction& sfun, bool reset = true, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt)
-            {
-                if (reset) {
-                    _total_iterations = 0;
-                    _model = model_type(sfun.dim_in());
-                }
+            std::string optimize(const StateFunction& sfun, bool reset = true, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt);
 
-                if (_total_iterations == 0) {
-                    EvaluationStatus initStatus;
-                    if (initialPoint.has_value())
-                    {
-	                    initStatus = eval_and_add(sfun, initialPoint.value());
-                        if (initStatus == TERMINATE)
-	                    {
-	                        return "Initialization requested that optimization be terminated";
-	                    }
-                    }
-                    initStatus = init_t()(sfun, *this);
-                    if (initStatus == TERMINATE)
-                    {
-                        return "Initialization requested that optimization be terminated";
-                    }
-                }
+            model_t const& model() const;
 
-                if (Params::bayes_opt_boptimizer::hp_period() > 0)
-                { // If hyperparameter tuning is enabled then run it after initialization
-					#ifdef SAVE_HP_MODELS
-                    _model.save(serialize::TextArchive((outputDir_ / "modelArchive_init").string()));
-					#endif
-                	_model.optimize_hyperparams();
-					#ifdef SAVE_HP_MODELS
-					_model.save(serialize::TextArchive((outputDir_ / "modelArchive_post_init").string()));
-					#endif
-                }
-
-                std::optional<std::vector<std::pair<double, double>>> parameterBounds = std::nullopt;
-                if (Params::bayes_opt_boptimizer::bounded())
-                {
-                    parameterBounds = std::vector<std::pair<double, double>>(_model.dim_in(), std::make_pair( 0.0, 1.0 ));
-                }
-
-                std::string stopMessage = "";
-                // While no stopping criteria return `true`
-                while (!boost::fusion::accumulate(stopping_criteria_, false, [this, msgPtr=&stopMessage](bool state, concepts::StoppingCriteria auto const& stop_criteria) { return state || stop_criteria(*this, *msgPtr); }))
-                {
-                    acquisition_function_t acqui(_model, this->_total_iterations);
-
-                    Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_boptimizer::bounded());
-                    Eigen::VectorXd new_sample = acqui_optimizer.optimize(
-                        [&](const Eigen::VectorXd& x, bool g) -> opt::eval_t { return acqui(x, g); },
-                        starting_point, 
-                        parameterBounds);
-
-                	auto status = this->eval_and_add(sfun, new_sample);
-                    if (status == TERMINATE)
-                    {
-                        stopMessage = "Objective function requested that optimization be terminated";
-                        break;
-                    }
-
-                    if (Params::bayes_opt_boptimizer::stats_enabled()) {
-                        //update stats
-                        boost::fusion::for_each(
-                            stat_, 
-                            [this](concepts::StatsFunc auto& func)
-                            {
-	                            func.template operator()<decltype(*this)>(*this);
-                            });
-                    }
-
-                    if (Params::bayes_opt_boptimizer::hp_period() > 0)
-                    {
-                        if ((iterations_since_hp_optimize_ + 1) % static_cast<int>(Params::bayes_opt_boptimizer::hp_period() + _total_iterations * Params::bayes_opt_boptimizer::hp_period_scaler()) == 0)
-                        {
-                            iterations_since_hp_optimize_ = 0;
-                            _model.optimize_hyperparams();
-#ifdef SAVE_HP_MODELS
-                            _model.save(serialize::TextArchive((outputDir_ / ("modelArchive_" + std::to_string(_total_iterations))).string()));
-#endif
-                        }
-                        else
-                        {
-                            ++iterations_since_hp_optimize_;
-                        }
-                    }
-
-                    ++_total_iterations;
-                }
-                return stopMessage;
-            }
-
-            /// return the best observation so far (i.e. max(f(x)))
-            double best_observation() const
-            {
-                auto max_e = std::max_element(observations().begin(), observations().end());
-                return observations()[std::distance(observations().begin(), max_e)];
-            }
-
-            /// return the best sample so far (i.e. the argmax(f(x)))
-            const Eigen::VectorXd& best_sample() const
-            {
-                auto max_e = std::max_element(observations().begin(), observations().end());
-                return samples()[std::distance(observations().begin(), max_e)];
-            }
-
-            model_type const& model() const { return _model; }
-
-            /// return the vector of points of observations (observations can be multi-dimensional, hence the VectorXd) -- f(x)
-            std::vector<double> const& observations() const { return _model.observations(); }
-
-            /// return the list of the points that have been evaluated so far (x)
-            std::vector<Eigen::VectorXd> const& samples() const { return _model.samples(); }
+            acquisition_optimizer_t const& acquisition_optimizer() const;
 
             /// return the current iteration number
-            int total_iterations() const { return _total_iterations; }
-
-            acqui_opt_t const& acquisitionOptimizer() const { return acqui_optimizer; }
+            int total_iterations() const;
 
             /// Evaluate a sample and add the result to the 'database' (sample / observations vectors)
             template <concepts::StateFunc StateFunction>
-            EvaluationStatus eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample)
-            {
-                auto [status, observation] = seval(sample);
-                if (status == OK) // TODO if `seval` returns `SKIP` we need to do something to avoid that sample being tested again. I.E addd a very negative observation
-                {
-                    /// Add a new sample / observation pair
-					/// - does not update the model!
-					/// - we don't add NaN and inf observations
-					if (std::isnan(observation))
-					{
-                        throw EvaluationError("Merit function returned a NaN value");
-					}
-                    if (std::isinf(observation)) 
-                    {
-                        throw EvaluationError("Merit function returned an infinite value");
-                    }
-                    _model.add_sample(sample, observation);
-                }
-                return status;
-            }
+            EvaluationStatus eval_and_add(const StateFunction& seval, const Eigen::VectorXd& sample);
 
-            bool isBounded() const { return Params::bayes_opt_boptimizer::bounded(); }
+            bool isBounded() const;
 
-            template<concepts::EvalFunc Func>
-            void addInequalityConstraint(Func func)
-            {
-                auto& it = inequalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(std::move(func)));
-                acqui_optimizer.add_inequality_constraint(it.get());
-            }
+            void addInequalityConstraint(constraint_func_t func);
 
-            template<concepts::EvalFunc Func>
-            void addEqualityConstraint(Func func)
-            {
-                auto& it = equalityConstraints_.emplace_back(std::make_unique<constraint_func_t>(std::move(func)));
-                acqui_optimizer.add_equality_constraint(it.get());
-            }
+            void addEqualityConstraint(constraint_func_t func);
 
-            bool hasConstraints() const
-            {
-                return !equalityConstraints_.empty() || !inequalityConstraints_.empty();
-            }
+            bool hasConstraints() const;
 
-            bool constraintsAreSatisfied(Eigen::VectorXd const& sampleLocation) const
-            {
-	            for (auto const& ineq : inequalityConstraints_)
-	            {
-                    auto [val, gradient] = ineq->operator()(sampleLocation, false);
-                    if (val >= 0)
-                    {
-                        return false;
-                    }
-	            }
-                for (auto const& eq : equalityConstraints_)
-                {
-                    auto [val, gradient] = eq->operator()(sampleLocation, false);
-                    if (std::abs(val) > 1e-8) // Ideally the value should be 0 but we use 1e-8 to give a little wiggle room.
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
+            void setStatsOutputDirectory(std::filesystem::path const& dir);
 
-            void setStatsOutputDirectory(std::filesystem::path const& dir)
-            {
-                assert(exists(dir));
-                assert(std::filesystem::is_directory(dir));
-                outputDir_ = dir;
-                boost::fusion::for_each(stat_, [&dir](auto& stat) {stat.setOutputDirectory(dir); });
-            }
-
-		protected:
+        protected:
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type stopping_criteria_;
             stats_t  stat_;
             std::filesystem::path outputDir_;
         private:
+            model_type _model;
             size_t _total_iterations = 0;
             size_t iterations_since_hp_optimize_ = 0;
             acqui_opt_t acqui_optimizer;
-            std::vector<std::unique_ptr<constraint_func_t>> equalityConstraints_;
-            std::vector<std::unique_ptr<constraint_func_t>> inequalityConstraints_;
-            model_type _model;
+            std::vector<constraint_func_t> equalityConstraints_;
+            std::vector<constraint_func_t> inequalityConstraints_;
         };
 
-        namespace _default_hp {
-            template <typename Params>
-            using model_t = model::GPOpt<Params>;
-            template <typename Params>
-            using acqui_t = acqui::UCB<typename Params::acqui_ucb, model_t<Params>>;
-        }
 
         /// A shortcut for a BOptimizer with UCB + GPOpt
         /// The acquisition function and the model CANNOT be tuned (use BOptimizer for this)
         template <class Params,
-			typename init_t = init::RandomSampling<typename Params::init_randomsampling>,
-    		typename StoppingCriteria = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
-    		typename Stat =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
+			typename InitializerT = init::RandomSampling<typename Params::init_randomsampling>,
+    		typename StoppingCriteriaT = boost::fusion::vector<stop::MaxIterations<typename Params::stop_maxiterations>>,
+    		typename StatT =  boost::fusion::vector<stat::Samples, stat::AggregatedObservations, stat::ConsoleSummary>,
 			typename acqui_opt_t = typename defaults<Params>::acquiopt_t>
-        using BOptimizerHPOpt = BOptimizer<Params, _default_hp::model_t<Params>, _default_hp::acqui_t<Params>, init_t, StoppingCriteria, Stat, acqui_opt_t>;
+        using BOptimizerHPOpt = BOptimizer<
+            Params,
+            model::GPOpt<Params>,
+            acqui::UCB<typename Params::acqui_ucb, model::GPOpt<Params>>,
+    		InitializerT,
+    		StoppingCriteriaT,
+    		StatT,
+    		acqui_opt_t>;
 
     }
 }
+
+// Include the implementation of boptimizers methods
+#include "boptimizer_impl.hpp"
+
 #endif

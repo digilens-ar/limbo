@@ -47,7 +47,7 @@
 #define LIMBO_OPT_RANDOM_POINT_HPP
 
 #include <Eigen/Core>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 namespace limbo {
     namespace opt {

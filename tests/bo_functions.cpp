@@ -326,52 +326,52 @@ int main(int argc, char** argv)
     using Opt_t = bayes_opt::BOptimizer<Params>;
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "sphere"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Sphere::dim_in());
                 opt.optimize(Sphere());
                 Eigen::Vector2d s_val(0.5, 0.5);
                 auto [status, x_opt] = Sphere()(s_val);
-                add_to_results("Sphere", results, std::make_pair(x_opt, opt.best_observation()));
+                add_to_results("Sphere", results, std::make_pair(x_opt, opt.model().best_observation().first));
             
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "ellipsoid"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Ellipsoid::dim_in());
                 opt.optimize(Ellipsoid());
                 Eigen::Vector2d s_val(0.5, 0.5);
                 auto [status, x_opt] = Ellipsoid()(s_val);
-                add_to_results("Ellipsoid", results, std::make_pair(x_opt, opt.best_observation()));
+                add_to_results("Ellipsoid", results, std::make_pair(x_opt, opt.model().best_observation().first));
             
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "rastrigin"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Rastrigin::dim_in());
                 opt.optimize(Rastrigin());
                 Eigen::Vector4d s_val(0, 0, 0, 0);
                 auto [status, x_opt] = Rastrigin()(s_val);
-                add_to_results("Rastrigin", results, std::make_pair(x_opt, opt.best_observation()));
+                add_to_results("Rastrigin", results, std::make_pair(x_opt, opt.model().best_observation().first));
             
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "hartman3"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Hartman3::dim_in());
                 opt.optimize(Hartman3());
                 // double s_max = 3.86278;
                 Eigen::Vector3d s_val(0.114614, 0.555549, 0.852547);
                 auto [status, x_opt] = Hartman3()(s_val);
-                add_to_results("Hartman 3", results, std::make_pair(x_opt, opt.best_observation()));
+                add_to_results("Hartman 3", results, std::make_pair(x_opt, opt.model().best_observation().first));
             
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "hartman6"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(Hartman6::dim_in());
                 opt.optimize(Hartman6());
@@ -379,19 +379,19 @@ int main(int argc, char** argv)
                 s_val << 0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573;
                 //double s_max = 3.32237;
                 auto [status, x_opt] = Hartman6()(s_val);
-                add_to_results("Hartman 6", results, std::make_pair(x_opt, opt.best_observation()));
+                add_to_results("Hartman 6", results, std::make_pair(x_opt, opt.model().best_observation().first));
             
         });
 
     if (!is_in_argv(argc, argv, "--only") || is_in_argv(argc, argv, "golden_price"))
-        tools::par::replicate(nb_replicates, [&]() {
+        tools::par::loop(0, nb_replicates, [&](size_t i) {
             
                 Opt_t opt(GoldenPrice::dim_in());
                 opt.optimize(GoldenPrice());
                 //    double s_max = -log(3);
                 Eigen::Vector2d s_val(0.5, 0.25);
                 auto [status, x_opt] = GoldenPrice()(s_val);
-                add_to_results("Golden Price", results, std::make_pair(x_opt, opt.best_observation()));
+                add_to_results("Golden Price", results, std::make_pair(x_opt, opt.model().best_observation().first));
             
         });
 

@@ -17,8 +17,9 @@ namespace limbo::stat
 		template <limbo::concepts::BayesOptimizer BO>
 		void operator()(BO const& bo)
 		{
+			auto [bestObs, bestSample] = bo.model().best_observation();
 			for (auto& func : outFuncs_) {
-				func(bo.best_observation(), bo.best_sample(), bo.observations(), bo.samples());
+				func(bestObs, bestSample, bo.model().observations(), bo.model().samples());
 			}
 		}
 

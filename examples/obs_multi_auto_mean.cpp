@@ -199,13 +199,14 @@ int main()
 
     using Kernel_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Mean_t = mean::FunctionARD<MeanComplet<Params>>;
-    using GP_t = model::GP<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<opt::Rprop<Params::opt_rprop>>>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t, model::gp::KernelMeanLFOpt<opt::Rprop<Params::opt_rprop>>>;
     using Acqui_t = UCB_multi<Params, GP_t>;
 
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t> opt(2);
     opt.optimize(fit_eval());
 
-    std::cout << opt.best_observation() << " res  "
-              << opt.best_sample().transpose() << std::endl;
+    auto [bestObs, bestSample] = opt.model().best_observation();
+    std::cout << bestObs << " res  "
+              << bestSample.transpose() << std::endl;
     return 0;
 }

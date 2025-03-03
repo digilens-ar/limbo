@@ -53,7 +53,7 @@
 #include <limbo/kernel/matern_three_halves.hpp>
 #include <limbo/kernel/squared_exp_ard.hpp>
 #include <limbo/tools/macros.hpp>
-#include <limbo/tools/random_generator.hpp>
+#include <limbo/tools/random.hpp>
 
 using namespace limbo;
 

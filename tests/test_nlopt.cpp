@@ -157,7 +157,7 @@ TEST(Limbo_NLOpt, nlopt_no_grad_constraint)
 // 	    struct acqui_ucb : defaults::acqui_ucb {};
 //     };
 //
-//     using Model = model::GP<kernel::SquaredExpARD<MyParams::kernel_opt, MyParams::kernel_squared_exp_ard>>;
+//     using Model = model::GaussianProcess<kernel::SquaredExpARD<MyParams::kernel_opt, MyParams::kernel_squared_exp_ard>>;
 //     using Acqui = acqui::UCB<MyParams::acqui_ucb, Model>;
 //
 // 	std::filesystem::path root = R"(C:\Users\NicholasAnthony\source\repos\wt_gui\external\WaveTracer\testing\optimizerTests\resources\DIA_highD\optimizations\hp_10_irpropplus_dual_1eneg3_unbound)";

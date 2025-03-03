@@ -71,7 +71,7 @@ using namespace limbo;
               };
 #endif
               struct acqui_ucb {
-                  BO_PARAM(double, alpha, 0.1);
+                  BO_PARAM(double, kappa, 0.1);
               };
 
               struct kernel : public defaults::kernel {
@@ -123,7 +123,7 @@ int main()
 {
     using Kernel_t = kernel::MaternFiveHalves<Params::kernel, Params::kernel_maternfivehalves>;
     using Mean_t = mean::Data;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
     using Acqui_t = acqui::UCB<Params::acqui_ucb, GP_t>;
     using stat_t = boost::fusion::vector<limbo::stat::ConsoleSummary,
         limbo::stat::Samples,
@@ -133,13 +133,16 @@ int main()
     using BD = bayes_opt::BOptimizer<Params>;
     bayes_opt::BOptimizer<Params, GP_t, Acqui_t, BD::init_function_t, BD::stopping_criteria_t, stat_t> opt(2);
     opt.optimize(fit_eval());
-    std::cout << opt.best_observation() << " res  "
-              << opt.best_sample().transpose() << std::endl;
+    auto [bestObs, bestSample] = opt.model().best_observation();
+    std::cout << bestObs << " res  "
+              << bestSample.transpose() << std::endl;
 
     // example with basic HP opt
     bayes_opt::BOptimizerHPOpt<Params> opt_hp(2);
     opt_hp.optimize(fit_eval());
-    std::cout << opt_hp.best_observation() << " res  "
-              << opt_hp.best_sample().transpose() << std::endl;
+    std::tie(bestObs, bestSample) = opt_hp.model().best_observation();
+
+    std::cout << bestObs << " res  "
+              << bestSample.transpose() << std::endl;
     return 0;
 }

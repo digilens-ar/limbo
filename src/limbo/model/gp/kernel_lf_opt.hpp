@@ -47,6 +47,7 @@
 #define LIMBO_MODEL_GP_KERNEL_LF_OPT_HPP
 
 #include <limbo/opt/irprop_plus.hpp>
+#include <tbb/enumerable_thread_specific.h>
 
 namespace limbo {
     namespace model {
@@ -55,7 +56,6 @@ namespace limbo {
             ///optimize the likelihood of the kernel only
             template <concepts::Optimizer Optimizer = opt::Irpropplus<defaults::opt_irpropplus>>
             struct KernelLFOpt {
-            public:
                 KernelLFOpt(int dims):
 					optimizer_(Optimizer::create(dims))
                 {}
@@ -70,8 +70,7 @@ namespace limbo {
                 {
                     KernelLFOptimization<GP> optimization(gp);
                     Eigen::VectorXd params = optimizer_.optimize(optimization, gp.kernel_function().h_params(), std::nullopt);
-                    gp.kernel_function().set_h_params(params);
-                    gp.recompute(false);
+                    gp.set_kernel_hyperparams(params);
                 }
 
             private:
@@ -79,15 +78,12 @@ namespace limbo {
 
                 template <typename GP>
                 struct KernelLFOptimization {
-                public:
-                    KernelLFOptimization(const GP& gp) : gp_(gp) {}
+                    KernelLFOptimization(const GP& gp) : gp_ets_(gp) {}
 
                     opt::eval_t operator()(const Eigen::VectorXd& params, bool compute_grad) const
                     {
-                        GP gp(gp_);
-                        gp.kernel_function().set_h_params(params);
-
-                        gp.recompute(false);
+                        GP& gp = gp_ets_.local();
+                        gp.set_kernel_hyperparams(params);
 
                         double lik = gp.compute_log_lik();
 
@@ -100,7 +96,7 @@ namespace limbo {
                     }
 
                 private:
-                    GP const& gp_;
+                    mutable tbb::enumerable_thread_specific<GP> gp_ets_;
                 };
             };
         } // namespace gp

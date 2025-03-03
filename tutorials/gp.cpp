@@ -49,7 +49,6 @@
 #include <limbo/mean/data.hpp>
 #include <limbo/model/gp.hpp>
 #include <limbo/model/gp/kernel_lf_opt.hpp>
-#include <limbo/tools.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/opt.hpp>
 #include <limbo/serialize/text_archive.hpp>
@@ -85,21 +84,21 @@ int main(int argc, char** argv)
         observations.push_back(std::cos(s(0)));
     }
 
-    // the type of the GP
+    // the type of the GaussianProcess
     using Kernel_t = kernel::Exp<Params::kernel, Params::kernel_exp>;
     using Mean_t = mean::Data;
-    using GP_t = model::GP<Kernel_t, Mean_t>;
+    using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
 
     // 1-D inputs, 1-D outputs
     GP_t gp(1);
 
-    // compute the GP
+    // compute the GaussianProcess
     gp.initialize(samples, observations);
 
     // write the predicted data in a file (e.g. to be plotted)
     std::ofstream ofs("gp.dat");
     for (int i = 0; i < 100; ++i) {
-        Eigen::VectorXd v = tools::make_vector(i / 100.0).array() * 4.0 - 2.0;
+        Eigen::VectorXd v{ { i / 100.0 * 4.0 - 2.0} };
         auto [mu, sigma] = gp.query(v);
         // an alternative (slower) is to query mu and sigma separately:
         //  double mu = gp.mu(v)[0]; // mu() returns a 1-D vector
@@ -111,17 +110,17 @@ int main(int argc, char** argv)
     // in that case, we need a kernel with hyper-parameters that are designed to be optimized
     using Kernel2_t = kernel::SquaredExpARD<Params::kernel, Params::kernel_squared_exp_ard>;
     using Mean_t = mean::Data;
-    using GP2_t = model::GP<Kernel2_t, Mean_t, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
+    using GP2_t = model::GaussianProcess<Kernel2_t, Mean_t, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
 
     GP2_t gp_ard(1);
     // do not forget to call the optimization!
-    gp_ard.initialize(samples, observations, false);
+    gp_ard.initialize(samples, observations);
     gp_ard.optimize_hyperparams();
 
     // write the predicted data in a file (e.g. to be plotted)
     std::ofstream ofs_ard("gp_ard.dat");
     for (int i = 0; i < 100; ++i) {
-        Eigen::VectorXd v = tools::make_vector(i / 100.0).array() * 4.0 - 2.0;
+        Eigen::VectorXd v { {i / 100.0 * 4.0 - 2.0} };
         auto [mu, sigma] = gp_ard.query(v);
         ofs_ard << v.transpose() << " " << mu << " " << sqrt(sigma) << std::endl;
     }
@@ -131,7 +130,7 @@ int main(int argc, char** argv)
     for (size_t i = 0; i < samples.size(); ++i)
         ofs_data << samples[i].transpose() << " " << observations[i] << std::endl;
 
-    // Sometimes is useful to save an optimized GP
+    // Sometimes is useful to save an optimized GaussianProcess
     gp_ard.save(serialize::TextArchive("myGP"));
 
     // Later we can load -- we need to make sure that the type is identical to the one saved

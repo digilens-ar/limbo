@@ -61,6 +61,5 @@
 #include <limbo/opt.hpp>
 #include <limbo/stat.hpp>
 #include <limbo/stop.hpp>
-#include <limbo/tools.hpp>
 
 #endif

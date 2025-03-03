@@ -47,6 +47,7 @@
 #define LIMBO_STAT_AGGREGATED_OBSERVATIONS_HPP
 
 #include <limbo/stat/stat_base.hpp>
+#include <limbo/concepts.hpp>
 
 namespace limbo {
     namespace stat {
@@ -54,21 +55,21 @@ namespace limbo {
         ///Write all the observations
         ///filename: `aggregated_observations.dat`
         struct AggregatedObservations : public StatBase {
-            template <typename BO>
+            template <limbo::concepts::BayesOptimizer BO>
             void operator()(const BO& bo)
             {
-                if (bo.observations().empty())
+                if (bo.model().observations().empty())
                     return;
 
-                this->_create_log_file("aggregated_observations.dat");
+                auto& logFile = this->get_log_file("aggregated_observations.dat");
 
                 if (bo.total_iterations() == 0) {
-                    (*this->_log_file) << "#iteration aggregated_observation" << std::endl;
-                    for (size_t i = 0; i < bo.observations().size() - 1; i++)
-                        (*this->_log_file) << "-1 " << bo.observations()[i] << std::endl;
+					logFile << "#iteration aggregated_observation" << std::endl;
+                    for (size_t i = 0; i < bo.model().observations().size() - 1; i++)
+						logFile << "-1 " << bo.model().observations()[i] << std::endl;
                 }
 
-                (*this->_log_file) << bo.total_iterations() << " " << bo.observations().back() << std::endl;
+				logFile << bo.total_iterations() << " " << bo.model().observations().back() << std::endl;
             }
         };
     }

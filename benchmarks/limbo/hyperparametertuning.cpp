@@ -3,26 +3,14 @@
 #include <random>
 #include <limbo/limbo.hpp>
 
-static std::default_random_engine eng;
+#include "testfunctions.hpp"
 
-// see : http://www.sfu.ca/~ssurjano/goldpr.html
-// (with ln, as suggested in Jones et al.)
-struct GoldenPrice {
-	BO_PARAM(size_t, dim_in, 2);
-
-	double operator()(const Eigen::VectorXd& xx) const
-	{
-		Eigen::VectorXd x = (4.0 * xx).array() - 2.0;
-		double r = (1 + (x(0) + x(1) + 1) * (x(0) + x(1) + 1) * (19 - 14 * x(0) + 3 * x(0) * x(0) - 14 * x(1) + 6 * x(0) * x(1) + 3 * x(1) * x(1))) * (30 + (2 * x(0) - 3 * x(1)) * (2 * x(0) - 3 * x(1)) * (18 - 32 * x(0) + 12 * x(0) * x(0) + 48 * x(1) - 36 * x(0) * x(1) + 27 * x(1) * x(1)));
-
-		return -log(r) + 5 ;
-	}
-};
+using TestFunc = Hartmann6;
 
 static std::tuple<Eigen::VectorXd, double> generateObservation(size_t n)
 {
-	auto sample = Eigen::VectorXd::Random(2, 1);
-	return { sample, GoldenPrice()(sample)};
+	auto sample = Eigen::VectorXd::Random(TestFunc::dim_in(), 1);
+	return { sample, TestFunc()(sample)};
 }
 
 namespace
@@ -56,13 +44,65 @@ namespace
 static std::vector<Eigen::VectorXd> samples;
 static std::vector<double> observations;
 
-void kernelLFOpt(benchmark::State& state)
+enum GP_Type
 {
-	// constexpr int numSamples = 800;
-	constexpr int numSamples = 500;
-	constexpr int dim = 2;
+	R_PROP,
+	IR_PROP_PLUS,
+	PARALLEL_RPT_2,
+	PARALLEL_RPT_4,
+};
+
+
+template<GP_Type ModelType>
+struct Model
+{
+	static_assert(false);
+};
+
+template<>
+struct Model<R_PROP>
+{
+	using GP = limbo::model::GaussianProcess<
+		limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+		limbo::mean::Data,
+		limbo::model::gp::KernelLFOpt<limbo::opt::Rprop<Params::opt_rprop>>
+	>;
+};
+
+template<>
+struct Model<IR_PROP_PLUS>
+{
+	using GP = limbo::model::GaussianProcess<
+		limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+		limbo::mean::Data,
+		limbo::model::gp::KernelLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>
+	>;
+};
+
+template<>
+struct Model<PARALLEL_RPT_2>
+{
+	using GP = limbo::model::GaussianProcess<
+		limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
+		limbo::mean::Data,
+		limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
+	>;
+};
+
+template<>
+struct Model<PARALLEL_RPT_4> : Model<PARALLEL_RPT_2>
+{};
+
+
+template<GP_Type ModelType>
+void BM_KernelHPTune(benchmark::State& state)
+{
+	constexpr int numSamples = 1000;
+	constexpr int dim = TestFunc::dim_in();
 
 	if (samples.empty()) {
+		samples.reserve(numSamples);
+		observations.reserve(numSamples);
 		for (int i = 0; i < numSamples; i++)
 		{
 			auto [s, o] = generateObservation(dim);
@@ -75,13 +115,13 @@ void kernelLFOpt(benchmark::State& state)
 	switch (state.range(0))
 	{
 	case 0:
-		grad = 0;
-		break;
-	case 1:
 		grad = 1e-6;
 		break;
-	case 2:
+	case 1:
 		grad = 1e-3;
+		break;
+	case 2:
+		grad = 1e-1;
 		break;
 	default:
 		throw std::runtime_error("E");
@@ -89,78 +129,28 @@ void kernelLFOpt(benchmark::State& state)
 	Params::opt_irpropplus::set_min_gradient(grad);
 	Params::opt_rprop::set_eps_stop(grad);
 
-
-	if (state.range(1) == 0) {
-	
-
-		for (auto _ : state)
-		{
-			limbo::model::GP<
-				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-				limbo::mean::Data,
-				limbo::model::gp::KernelLFOpt<limbo::opt::Rprop<Params::opt_rprop>>
-			> gp(dim);
-			gp.initialize(samples, observations);
-			gp.optimize_hyperparams();
-			std::cout << gp.compute_log_lik() << "\n";
-		}
-	}
-	else if (state.range(1) == 1){
-
-
-		for (auto _ : state)
-		{
-			limbo::model::GP<
-				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-				limbo::mean::Data,
-				limbo::model::gp::KernelLFOpt<limbo::opt::Irpropplus<Params::opt_irpropplus>>
-			> gp(dim);
-			gp.initialize(samples, observations);
-			gp.optimize_hyperparams();
-			std::cout << gp.compute_log_lik() << "\n";
-		}
-	}
-	else if (state.range(1) == 2) {
-		Params::opt_parallel::set_repeats(2);
-
-
-		for (auto _ : state)
-		{
-			limbo::model::GP<
-				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-				limbo::mean::Data,
-				limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
-			> gp(dim);
-			gp.initialize(samples, observations);
-			gp.optimize_hyperparams();
-			std::cout << gp.compute_log_lik() << "\n";
-		}
-
-	}
-	else if (state.range(1) == 3) {
-		Params::opt_parallel::set_repeats(4);
-
-
-		for (auto _ : state)
-		{
-			limbo::model::GP<
-				limbo::kernel::SquaredExpARD<Params::kernel_opt, Params::kernel_squared_exp_ard>,
-				limbo::mean::Data,
-				limbo::model::gp::KernelLFOpt<limbo::opt::ParallelRepeater<Params::opt_parallel, limbo::opt::Irpropplus<Params::opt_irpropplus>>>
-			> gp(dim);
-			gp.initialize(samples, observations);
-			gp.optimize_hyperparams();
-			std::cout << gp.compute_log_lik() << "\n";
-		}
-
-	}
-	else 
+	if constexpr (ModelType == PARALLEL_RPT_2)
 	{
-		throw std::runtime_error("E");
+		Params::opt_parallel::set_repeats(2);
 	}
-	
+	else if constexpr (ModelType == PARALLEL_RPT_4)
+	{
+		Params::opt_parallel::set_repeats(4);
+	}
+
+	double before = 0;
+	double after = 0;
+	for (auto _ : state) {
+		typename Model<ModelType>::GP gp(dim);
+		gp.initialize(samples, observations);
+		before = gp.compute_log_lik();
+		gp.optimize_hyperparams();
+		after = gp.compute_log_lik();
+	}
+	std::cout << std::format("LogLik Before {}, After {}\n", before, after);
 }
 
-// BENCHMARK(kernelLFOpt)->ArgsProduct({ {0}, {2} })->Unit(benchmark::kMillisecond)->MinTime(12);
-// BENCHMARK(kernelLFOpt)->ArgsProduct({ {1}, {1} })->Unit(benchmark::kMillisecond)->MinTime(12);
-BENCHMARK(kernelLFOpt)->ArgsProduct({ {0, 1, 2}, {0, 1, 2, 3} })->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(BM_KernelHPTune<R_PROP>)->ArgNames({"MinGradient"})->Arg(0)->Arg(1)->Arg(2)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(BM_KernelHPTune<IR_PROP_PLUS>)->ArgNames({"MinGradient"})->Arg(0)->Arg(1)->Arg(2)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(BM_KernelHPTune<PARALLEL_RPT_2>)->ArgNames({"MinGradient"})->Arg(0)->Arg(1)->Arg(2)->Unit(benchmark::kMillisecond)->MinTime(6);
+BENCHMARK(BM_KernelHPTune<PARALLEL_RPT_4>)->ArgNames({"MinGradient"})->Arg(0)->Arg(1)->Arg(2)->Unit(benchmark::kMillisecond)->MinTime(6);
