@@ -74,7 +74,7 @@ namespace limbo {
         template <typename kernel_opt, typename Kernel>
         struct BaseKernel {
         public:
-            BaseKernel(size_t dim = 1) : _noise(kernel_opt::noise())
+            BaseKernel() : _noise(kernel_opt::noise())
             {
                 _noise_p = std::log(std::sqrt(_noise));
             }
