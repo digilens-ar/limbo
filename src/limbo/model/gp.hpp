@@ -47,13 +47,11 @@
 #define LIMBO_MODEL_GP_HPP
 
 #include <cassert>
-#include <iostream>
 #include <limits>
 #include <vector>
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
-#include <Eigen/LU>
 
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
@@ -84,6 +82,8 @@ namespace limbo {
         template <typename KernelFunction, std::derived_from<mean::BaseMean> MeanFunction = mean::Data, typename HyperParamsOptimizer = gp::NoLFOpt>
         class GaussianProcess {
         public:
+            static constexpr size_t MAX_SAMPLES = 10000;
+
             explicit GaussianProcess(int dim_in)
                 : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
@@ -137,8 +137,9 @@ namespace limbo {
                     return std::make_tuple(
                         _mean_function(v, *this),
                         _kernel_function.compute(v, v) + _kernel_function.noise());
-
-                Eigen::VectorXd k = _compute_k(v);
+                std::byte buffer[sizeof(double) * MAX_SAMPLES];
+                Eigen::Map<Eigen::VectorXd> k(reinterpret_cast<double*>(buffer), _samples.size());
+                compute_k_(v, k);
                 return std::make_tuple(_mu(v, k), _sigma_sq(v, k) + _kernel_function.noise());
             }
 
@@ -151,7 +152,10 @@ namespace limbo {
             {
                 if (_samples.size() == 0)
                     return _mean_function(v, *this);
-                return _mu(v, _compute_k(v));
+                std::byte buffer[sizeof(double) * MAX_SAMPLES];
+                Eigen::Map<Eigen::VectorXd> k(reinterpret_cast<double*>(buffer), _samples.size());
+                compute_k_(v, k);
+                return _mu(v, k);
             }
 
             /**
@@ -163,7 +167,10 @@ namespace limbo {
             {
                 if (_samples.size() == 0)
                     return _kernel_function.compute(v, v) + _kernel_function.noise();
-                return _sigma_sq(v, _compute_k(v)) + _kernel_function.noise();
+                std::byte buffer[sizeof(double) * MAX_SAMPLES];
+                Eigen::Map<Eigen::VectorXd> k(reinterpret_cast<double*>(buffer), _samples.size());
+                compute_k_(v, k);
+                return _sigma_sq(v, k) + _kernel_function.noise();
             }
 
             /// return the number of dimensions of the input
@@ -558,15 +565,14 @@ namespace limbo {
                 Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k); // This is equivalent to (k^T * K^-1 * k) -> (k^T * L^-1T * L^-1 * k) -> ((L^-1 * k)^T * (L^-1 * k))
                 double res = _kernel_function.compute(v, v) - z.dot(z);
 
-                return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res;
+                return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res; // TODO sometimes we can get res < 0 or z.dot(z) == nan. This seems like a bug, but for now this condition prevents it from crashing the program
             }
 
-            Eigen::VectorXd _compute_k(Eigen::VectorXd const& v) const
+            void compute_k_(Eigen::VectorXd const& v, Eigen::Map<Eigen::VectorXd>& k) const
             {
-                Eigen::VectorXd k(_samples.size());
+                assert(k.size() == samples().size());
                 for (int i = 0; i < k.size(); i++)
                     k[i] = _kernel_function.compute(_samples[i], v);
-                return k;
             }
 
             ///  recomputes the GaussianProcess
