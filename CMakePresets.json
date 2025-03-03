@@ -84,7 +84,7 @@
       "name": "Clang-Release-Fast",
       "inherits": "Clang-Release",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "/fp:fast /EHsc"
+        "CMAKE_CXX_FLAGS": "/clang:-march=haswell /fp:fast /EHsc"
       }
     }
   ]

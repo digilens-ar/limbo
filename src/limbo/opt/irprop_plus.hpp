@@ -14,6 +14,8 @@ namespace limbo {
             /// @ingroup opt_defaults
             /// number of max iterations
             BO_PARAM(int, max_iterations, 300);
+
+            // The initial step size for the optimizer
             BO_PARAM(double, init_delta, 0.1);
             BO_PARAM(double, max_delta, 50);
             BO_PARAM(double, min_delta, 1e-6);

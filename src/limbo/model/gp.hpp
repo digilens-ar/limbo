@@ -58,6 +58,10 @@
 // Quick hack for definition of 'I' in <complex.h>
 #undef I
 
+#ifdef LIMBO_USE_TBB
+#include <tbb/tbb.h>
+#endif
+
 #include <numeric>
 #include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/kernel/squared_exp_ard.hpp>
@@ -225,15 +229,64 @@ namespace limbo {
 
                 // only compute half of the matrix (symmetrical matrix)
                 Eigen::VectorXd grad = Eigen::VectorXd::Zero(_kernel_function.h_params_size());
-                for (size_t i = 0; i < n; ++i) {
-                    for (size_t j = 0; j <= i; ++j) {
-                        Eigen::VectorXd g = _kernel_function.grad(_samples[i], _samples[j], i, j);
-                        if (i == j)
+#ifdef LIMBO_USE_TBB
+                struct ParallelWorker
+                { // This worker works with TBB to iterate over the lower triangle of the kernel to accumulate the values of the gradient.
+                    ParallelWorker(GaussianProcess* gp, Eigen::MatrixXd const& w):
+						gp_(gp),
+						w_(w),
+						thisGrad_(Eigen::VectorXd::Zero(gp_->_kernel_function.h_params_size()))
+                    {}
+
+	                void operator()(tbb::blocked_range<size_t> const& r)
+	                {
+		                for (size_t j=r.begin(); j!=r.end(); ++j)
+		                {
+                            for (size_t i = j; i < w_.rows(); ++i) {
+                                const bool isDiagonalElement = i == j;
+                                Eigen::VectorXd g = gp_->_kernel_function.grad(gp_->_samples[i], gp_->_samples[j], isDiagonalElement);
+                                if (isDiagonalElement) [[unlikely]]
+                                    thisGrad_ += w_(i, j) * g * 0.5;
+                                else
+                                    thisGrad_ += w_(i, j) * g;
+                            }
+		                }
+	                }
+
+                    //TBB uses this to split workers.
+                    ParallelWorker(ParallelWorker const& other, tbb::split):
+						gp_(other.gp_),
+						w_(other.w_),
+                        thisGrad_(Eigen::VectorXd::Zero(gp_->_kernel_function.h_params_size()))
+					{}
+
+                    void join(ParallelWorker const& other)
+                    { // TBB uses this to combine workers.
+                        thisGrad_ += other.thisGrad_;
+                    }
+
+                    Eigen::VectorXd getGradient() const { return thisGrad_; }
+                private:
+                    GaussianProcess* gp_;
+                    Eigen::MatrixXd const& w_;
+                    Eigen::VectorXd thisGrad_;
+                };
+
+                ParallelWorker worker(this, w);
+                tbb::parallel_reduce(tbb::blocked_range<size_t>(0, n), worker);
+                grad = worker.getGradient();
+#else
+                for (size_t j=0; j<n; ++j) {
+					for (size_t i=j; i<n; ++i) {
+                        const bool isDiagonalElement = i == j;
+                        Eigen::VectorXd g = _kernel_function.grad(_samples[i], _samples[j], isDiagonalElement);
+                        if (isDiagonalElement) [[unlikely]]
                             grad += w(i, j) * g * 0.5;
                         else
                             grad += w(i, j) * g;
                     }
                 }
+#endif
                 return grad;
             }
 
@@ -402,10 +455,10 @@ namespace limbo {
             double observation_mean_ = 0;
 
             Eigen::VectorXd _alpha;  // alpha = K^{-1} * this->observation_deviation_;
-            Eigen::MatrixXd _kernel;
-        	Eigen::MatrixXd _inv_kernel;
+            Eigen::MatrixXd _kernel; // This is symmetric positive definite matrix. In practice we only populate the lower triangle
+        	Eigen::MatrixXd _inv_kernel; // The inverse of the kernel
 
-            Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition
+            Eigen::MatrixXd _matrixL;     /// The L matrix from LLT Cholesky decomposition. This is a lower triangular matrix
 
         	bool _inv_kernel_updated;
 
@@ -428,18 +481,30 @@ namespace limbo {
                 size_t n = _samples.size();
                 _kernel.resize(n, n);
 
-                // Compute lower triangle
-                for (size_t i = 0; i < n; i++)
-                    for (size_t j = 0; j <= i; ++j)
-                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i, j);
-
-                // Copy lower triangle to top (TODO is this needed?)
-                for (size_t i = 0; i < n; i++)
-                    for (size_t j = 0; j < i; ++j)
-                        _kernel(j, i) = _kernel(i, j);
+                // Compute lower triangle of kernel
+#ifdef LIMBO_USE_TBB
+                tbb::parallel_for(tbb::blocked_range<size_t>(0, n), [this, n](tbb::blocked_range<size_t> const& r)
+                {
+	                for (size_t j=r.begin(); j!=r.end(); ++j)
+	                {
+                        for (size_t i = j; i < n; i++)
+                        {
+                            _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i == j);
+                        }
+	                }
+                });
+#else
+                for (size_t j=0; j<n; ++j)
+                {
+                    for (size_t i=j; i<n; i++)
+                    {
+                        _kernel(i, j) = _kernel_function.compute(_samples[i], _samples[j], i == j);
+                    }
+                }
+#endif
 
                 // O(n^3)
-                _matrixL = Eigen::LLT<Eigen::MatrixXd>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
+                _matrixL = Eigen::LLT<Eigen::MatrixXd, Eigen::Lower>(_kernel).matrixL(); // _matrixL * _matrixL.transpose = _kernel
                 this->_compute_alpha();
 
                 // notify change of kernel
@@ -448,28 +513,25 @@ namespace limbo {
 
             void _compute_incremental_kernel()
             {
-                // Incremental LLT
+                // Incremental LLT. Update the kernel if only a single sample has been added since the last kernel update
                 // This part of the code is inspired from the Bayesopt Library (cholesky_add_row function).
                 // However, the mathematical foundations can be easily retrieved by detailing the equations of the
                 // extended L matrix that produces the desired kernel.
 
                 size_t n = _samples.size();
                 _kernel.conservativeResize(n, n);
+                _matrixL.conservativeResize(n, n);
 
                 for (size_t i = 0; i < n; ++i) {
-                    _kernel(i, n - 1) = _kernel_function.compute(_samples[i], _samples[n - 1], i, n - 1);
-                    _kernel(n - 1, i) = _kernel(i, n - 1);
+                    _kernel(n - 1, i) = _kernel_function.compute(_samples[i], _samples[n - 1], i == n - 1);
                 }
 
-                _matrixL.conservativeResizeLike(Eigen::MatrixXd::Zero(n, n));
-
-                double L_j;
                 for (size_t j = 0; j < n - 1; ++j) {
-                    L_j = _kernel(n - 1, j) - (_matrixL.block(j, 0, 1, j) * _matrixL.block(n - 1, 0, 1, j).transpose())(0, 0);
+                    const double L_j = _kernel(n - 1, j) - (_matrixL.block(j, 0, 1, j) * _matrixL.block(n - 1, 0, 1, j).transpose())(0, 0);
                     _matrixL(n - 1, j) = (L_j) / _matrixL(j, j);
                 }
 
-                L_j = _kernel(n - 1, n - 1) - (_matrixL.block(n - 1, 0, 1, n - 1) * _matrixL.block(n - 1, 0, 1, n - 1).transpose())(0, 0);
+                const double L_j = _kernel(n - 1, n - 1) - (_matrixL.block(n - 1, 0, 1, n - 1) * _matrixL.block(n - 1, 0, 1, n - 1).transpose())(0, 0);
                 _matrixL(n - 1, n - 1) = sqrt(L_j);
 
                 this->_compute_alpha();
@@ -482,7 +544,7 @@ namespace limbo {
             {
                 // alpha = K^{-1} * this->observation_deviation_;
                 Eigen::TriangularView<Eigen::MatrixXd, Eigen::Lower> triang = _matrixL.triangularView<Eigen::Lower>();
-                _alpha = triang.solve(observation_deviation_);
+                _alpha.noalias() = triang.solve(observation_deviation_);
                 triang.adjoint().solveInPlace(_alpha);
             }
 
@@ -493,7 +555,7 @@ namespace limbo {
 
             double _sigma_sq(Eigen::VectorXd const& v, Eigen::VectorXd const& k) const
             {
-                Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k);
+                Eigen::VectorXd z = _matrixL.triangularView<Eigen::Lower>().solve(k); // This is equivalent to (k^T * K^-1 * k) -> (k^T * L^-1T * L^-1 * k) -> ((L^-1 * k)^T * (L^-1 * k))
                 double res = _kernel_function.compute(v, v) - z.dot(z);
 
                 return (res <= std::numeric_limits<double>::epsilon()) ? 0 : res;
@@ -525,10 +587,10 @@ namespace limbo {
             {
                 const size_t n = observation_deviation_.rows();
                 // K^{-1} using Cholesky decomposition
-                _inv_kernel = Eigen::MatrixXd::Identity(n, n);
+                _inv_kernel.setIdentity(n, n);
 
-                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel);
-                _matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
+                _matrixL.triangularView<Eigen::Lower>().solveInPlace(_inv_kernel); // After this step `_inv_kernel` is the inverse of `_matrixL`
+            	_matrixL.triangularView<Eigen::Lower>().transpose().solveInPlace(_inv_kernel);
 
                 _inv_kernel_updated = true;
             }
