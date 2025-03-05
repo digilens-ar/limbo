@@ -214,7 +214,7 @@ namespace limbo {
 
         protected:
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type stopping_criteria_;
-            stats_t  stat_;
+            stats_t  outputFuncs_;
             std::filesystem::path outputDir_;
         private:
             model_type _model;

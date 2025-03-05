@@ -47,7 +47,7 @@
 #define LIMBO_TOOLS_MACROS_HPP
 
 #define BO_PARAM(Type, Name, Value) \
-    static constexpr auto Name = []()constexpr -> Type { return Value; };
+    static constexpr auto Name = []() consteval -> Type { return Value; };
 
 #define BO_DYN_PARAM(Type, Name)           \
     static Type _##Name;                   \

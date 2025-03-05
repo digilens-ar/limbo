@@ -1,6 +1,7 @@
 #pragma once
 #include <limbo/public.hpp>
 #include <concepts>
+#include <filesystem>
 #include <optional>
 #include <Eigen/Dense>
 
@@ -104,11 +105,12 @@ namespace limbo::concepts
 		{ a.optimize(EvalFuncArchetype{}, Eigen::VectorXd{}, std::optional<std::vector<std::pair<double, double>>>{}) } -> std::convertible_to<Eigen::VectorXd>;
 	};
 
-	//Receives data about the model and saves/logs it somewhere
+	//Receives data about the model and saves/logs it somewhere. This is called each time after the state function is evaluated and added to the model.
 	template <typename T>
-	concept StatsFunc = requires (T a)
+	concept OutputFunc = requires (T a)
 	{
 		{ a.operator()(BayesOptimizerArchetype{}) } -> std::convertible_to<void>;
+		{ a.setOutputDirectory(std::filesystem::path("")) } -> std::convertible_to<void>;
 	} &&
 		std::is_default_constructible_v<T>;
 
