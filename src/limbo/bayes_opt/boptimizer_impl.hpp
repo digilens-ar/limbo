@@ -94,16 +94,6 @@ namespace limbo::bayes_opt
 				break;
 			}
 
-			if (Params::bayes_opt_boptimizer::stats_enabled()) {
-				//update stats
-				boost::fusion::for_each(
-					stat_, 
-					[this](concepts::StatsFunc auto& func)
-					{
-						func.template operator()<decltype(*this)>(*this);
-					});
-			}
-
 			if (Params::bayes_opt_boptimizer::hp_period() > 0)
 			{
 				if ((iterations_since_hp_optimize_ + 1) % static_cast<int>(Params::bayes_opt_boptimizer::hp_period() + _total_iterations * Params::bayes_opt_boptimizer::hp_period_scaler()) == 0)
@@ -154,6 +144,17 @@ namespace limbo::bayes_opt
 			}
 			_model.add_sample(sample, observation);
 		}
+
+		if (Params::bayes_opt_boptimizer::stats_enabled()) {
+			// Call all Output functions
+			boost::fusion::for_each(
+				outputFuncs_,
+				[this](concepts::OutputFunc auto& func)
+				{
+					func.template operator()<decltype(*this)>(*this);
+				});
+		}
+
 		return status;
 	}
 
@@ -182,6 +183,6 @@ namespace limbo::bayes_opt
 		assert(exists(dir));
 		assert(std::filesystem::is_directory(dir));
 		outputDir_ = dir;
-		boost::fusion::for_each(stat_, [&dir](auto& stat) {stat.setOutputDirectory(dir); });
+		boost::fusion::for_each(outputFuncs_, [&dir](auto& stat) {stat.setOutputDirectory(dir); });
 	}
 }
