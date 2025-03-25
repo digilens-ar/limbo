@@ -31,13 +31,8 @@ namespace limbo::bayes_opt
 	{}
 
 	OptClassTemplateFunction(template <concepts::StateFunc StateFunction>, std::string)::optimize(
-		StateFunction const& sfun, bool reset, std::optional<Eigen::VectorXd> const& initialPoint)
+		StateFunction const& sfun, std::optional<Eigen::VectorXd> const& initialPoint)
 	{
-		if (reset) {
-			_total_iterations = 0;
-			_model = model_type(sfun.dim_in());
-		}
-
 		if (_total_iterations == 0) {
 			// Run pre-optimizer initialization routine
 			EvaluationStatus initStatus;

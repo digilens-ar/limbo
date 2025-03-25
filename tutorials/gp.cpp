@@ -90,10 +90,7 @@ int main(int argc, char** argv)
     using GP_t = model::GaussianProcess<Kernel_t, Mean_t>;
 
     // 1-D inputs, 1-D outputs
-    GP_t gp(1);
-
-    // compute the GaussianProcess
-    gp.initialize(samples, observations);
+    GP_t gp = GP_t::createFromSamples(samples, observations);
 
     // write the predicted data in a file (e.g. to be plotted)
     std::ofstream ofs("gp.dat");
@@ -112,9 +109,8 @@ int main(int argc, char** argv)
     using Mean_t = mean::Data;
     using GP2_t = model::GaussianProcess<Kernel2_t, Mean_t, model::gp::KernelLFOpt<opt::Rprop<Params::opt_rprop>>>;
 
-    GP2_t gp_ard(1);
+    GP2_t gp_ard = GP2_t::createFromSamples(samples, observations);
     // do not forget to call the optimization!
-    gp_ard.initialize(samples, observations);
     gp_ard.optimize_hyperparams();
 
     // write the predicted data in a file (e.g. to be plotted)

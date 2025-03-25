@@ -189,7 +189,7 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction>
-            std::string optimize(const StateFunction& sfun, bool reset = true, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt);
+            std::string optimize(const StateFunction& sfun, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt);
 
             model_t const& model() const;
 

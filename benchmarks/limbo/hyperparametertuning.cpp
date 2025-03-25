@@ -141,8 +141,8 @@ void BM_KernelHPTune(benchmark::State& state)
 	double before = 0;
 	double after = 0;
 	for (auto _ : state) {
-		typename Model<ModelType>::GP gp(dim);
-		gp.initialize(samples, observations);
+		using GP_t = typename Model<ModelType>::GP;
+		auto gp = GP_t::createFromSamples(samples, observations);
 		before = gp.compute_log_lik();
 		gp.optimize_hyperparams();
 		after = gp.compute_log_lik();

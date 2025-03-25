@@ -55,7 +55,7 @@ namespace limbo::concepts
 	template<typename T>
 	concept BayesOptimizer = requires (T a)
 	{
-		{a.optimize(StateFuncArchetype{}, true) } -> std::convertible_to<std::string>;
+		{a.optimize(StateFuncArchetype{}) } -> std::convertible_to<std::string>;
 		{a.eval_and_add(StateFuncArchetype{}, Eigen::VectorXd()) } -> std::convertible_to<EvaluationStatus>;
 		{a.isBounded()} -> std::convertible_to<bool>;
 		{a.addInequalityConstraint(EvalFuncArchetype{})} -> std::convertible_to<void>;
@@ -66,7 +66,7 @@ namespace limbo::concepts
 	struct BayesOptimizerArchetype
 	{
 		EvaluationStatus eval_and_add(StateFuncArchetype stateFunc, Eigen::VectorXd param) { return OK; }
-		std::string optimize(StateFuncArchetype stateFunc, bool reset) { return "Ended for no reason"; }
+		std::string optimize(StateFuncArchetype stateFunc) { return "Ended for no reason"; }
 		bool isBounded() { return true; }
 		void addInequalityConstraint(EvalFuncArchetype arch) {}
 		void addEqualityConstraint(EvalFuncArchetype arch) {}

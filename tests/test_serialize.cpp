@@ -128,8 +128,7 @@ void test_gp(const std::string& name, bool optimize_hp = true)
         observations.push_back(std::cos(s(0) * s(1) * s(2)));
     }
     // 3-D inputs, 1-D outputs
-    GP gp(3);
-    gp.initialize(std::move(samples), std::move(observations));
+    GP gp = GP::createFromSamples(std::move(samples), std::move(observations));
     if (optimize_hp)
         gp.optimize_hyperparams();
 
