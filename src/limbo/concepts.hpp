@@ -18,7 +18,6 @@ namespace limbo::concepts
 	template<typename T>
 	concept Model = requires (T a)
 	{
-        { a.initialize(std::vector<Eigen::VectorXd>{}, std::vector<double>{}) } -> std::convertible_to<void>;
         { a.add_sample(Eigen::VectorXd{}, double()) } -> std::convertible_to<void>;
         { a.query(Eigen::VectorXd{}) } -> std::convertible_to<std::tuple<double, double>>;
         { a.mu(Eigen::VectorXd{}) } -> std::convertible_to<double>;

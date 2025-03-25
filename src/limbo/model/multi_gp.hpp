@@ -68,41 +68,40 @@ namespace limbo {
                 : _dim_in(dim_in), _dim_out(dim_out), _mean_function()
             {
                 // initialize dim_in models with 1 output
-                _gp_models.clear();
                 for (int i = 0; i < _dim_out; i++) {
                     _gp_models.emplace_back(_dim_in, 1);
                 }
             }
 
             /// Compute the GaussianProcess from samples and observations. This call needs to be explicit!
-            void initialize(const std::vector<Eigen::VectorXd>& samples,
-                const std::vector<Eigen::VectorXd>& observations)
+            static MultiGP createFromSamples(const std::vector<Eigen::VectorXd>& samples, const std::vector<Eigen::VectorXd>& observations)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
-                assert(_dim_in == samples[0].size());
-                assert(_dim_out == observations[0].size());
+         
+                MultiGP out(samples[0].size(), observations[0].size());
 
                 // save observations
                 // TO-DO: Check how can we improve for not saving observations twice (one here and one for each GaussianProcess)!?
-                _observations = observations;
+                out._observations = observations;
 
                 // compute the new observations for the GPs
-                std::vector<std::vector<Eigen::VectorXd>> obs(_dim_out);
+                std::vector<std::vector<Eigen::VectorXd>> obs(out._dim_out);
 
                 for (size_t j = 0; j < observations.size(); j++) {
-                    Eigen::VectorXd mean_vector = _mean_function(samples[j], *this);
-                    assert(mean_vector.size() == _dim_out);
-                    for (int i = 0; i < _dim_out; i++) {
+                    Eigen::VectorXd mean_vector = _mean_function(samples[j], out);
+                    assert(mean_vector.size() == out._dim_out);
+                    for (int i = 0; i < out._dim_out; i++) {
                         obs[i].push_back(Eigen::VectorXd { {observations[j][i] - mean_vector[i]} });
                     }
                 }
 
                 // do the actual computation
-                limbo::tools::par::loop(0, _dim_out, [&](size_t i) {
-                    _gp_models[i].initialize(samples, obs[i]);
+                limbo::tools::par::loop(0, out._dim_out, [&](size_t i) {
+                    out._gp_models[i] = GP_t::createFromSamples(samples, obs[i]);
                 });
+                return out;
             }
 
             /// Do not forget to call this if you use hyper-parameters optimization!!

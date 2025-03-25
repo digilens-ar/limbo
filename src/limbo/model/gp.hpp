@@ -88,22 +88,23 @@ namespace limbo {
                 : _dim_in(dim_in), _kernel_function(dim_in), _mean_function(), _inv_kernel_updated(false), _hp_optimize(HyperParamsOptimizer::create(dim_in)) {}
 
             /// Initialize the GaussianProcess from samples and observations. This call needs to be explicit!
-            void initialize(std::vector<Eigen::VectorXd> samples, std::vector<double> observations)
+            static GaussianProcess createFromSamples(std::vector<Eigen::VectorXd> samples, std::vector<double> observations)
             {
                 assert(samples.size() != 0);
                 assert(observations.size() != 0);
                 assert(samples.size() == observations.size());
-                assert(_dim_in == samples[0].size());
+                GaussianProcess out(samples[0].size());
 
-                _samples = std::move(samples);
-                _observations = std::move(observations);
+                out._samples = std::move(samples);
+                out._observations = std::move(observations);
 
                 //calculate the mean observation
-                observation_sum_ = std::accumulate(_observations.begin(), _observations.end(), 0.0);
-                observation_mean_ = observation_sum_ / _observations.size();
+                out.observation_sum_ = std::accumulate(out._observations.begin(), out._observations.end(), 0.0);
+                out.observation_mean_ = out.observation_sum_ / out._observations.size();
 
-                this->_compute_observation_deviation();
-            	this->_compute_full_kernel();
+                out._compute_observation_deviation();
+                out._compute_full_kernel();
+                return out;
             }
 
             /// Do not forget to call this if you use hyper-parameters optimization!!
