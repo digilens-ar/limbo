@@ -189,7 +189,7 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <concepts::StateFunc StateFunction>
-            std::string optimize(const StateFunction& sfun, std::optional<Eigen::VectorXd> const& initialPoint = std::nullopt);
+            std::string optimize(const StateFunction& sfun);
 
             model_t const& model() const;
 
@@ -215,6 +215,7 @@ namespace limbo {
         protected:
             typename boost::mpl::if_<boost::fusion::traits::is_sequence<StoppingCriteria>, StoppingCriteria, boost::fusion::vector<StoppingCriteria>>::type stopping_criteria_;
             stats_t  outputFuncs_;
+            init_t initializer_;
             std::filesystem::path outputDir_;
         private:
             model_type _model;

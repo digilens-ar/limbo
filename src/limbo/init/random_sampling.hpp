@@ -115,6 +115,35 @@ namespace limbo {
                 return OK;
             }
         };
+
+
+        //This initialization routine extends `RandomSampling` with an initial measurement at an externally provided coordinate
+    	template<typename InitRandomSampling>
+        struct RandomSamplingWithSingleInit : RandomSampling<InitRandomSampling>
+    	{
+            void setInitialPoint(std::optional<Eigen::VectorXd> const& init)
+            {
+                initialPoint_ = init;
+            }
+
+            template <concepts::StateFunc StateFunction, concepts::BayesOptimizer Opt>
+            EvaluationStatus operator()(const StateFunction& seval, Opt& opt) const
+            {
+                if (initialPoint_.has_value())
+                {
+                    EvaluationStatus status = opt.eval_and_add(seval, initialPoint_.value());
+                    assert(status != SKIP); // I'm not sure how we should handle this case.
+                    if (status == TERMINATE)
+                    {
+                        return TERMINATE;
+                    }
+                }
+                return RandomSampling<InitRandomSampling>::operator()(seval, opt);
+            }
+
+            std::optional<Eigen::VectorXd> initialPoint_;
+    	};
+
     }
 }
 

@@ -31,24 +31,17 @@ namespace limbo::bayes_opt
 	{}
 
 	OptClassTemplateFunction(template <concepts::StateFunc StateFunction>, std::string)::optimize(
-		StateFunction const& sfun, std::optional<Eigen::VectorXd> const& initialPoint)
+		StateFunction const& sfun)
 	{
 		if (_total_iterations == 0) {
 			// Run pre-optimizer initialization routine
 			EvaluationStatus initStatus;
-			if (initialPoint.has_value())
-			{
-				initStatus = eval_and_add(sfun, initialPoint.value());
-				if (initStatus == TERMINATE)
-				{
-					return "Initialization requested that optimization be terminated";
-				}
-			}
-			initStatus = init_t()(sfun, *this);
+			initStatus = initializer_(sfun, *this);
 			if (initStatus == TERMINATE)
 			{
 				return "Initialization requested that optimization be terminated";
 			}
+			_total_iterations = _model.observations().size(); // Include initialization iterations in the final count.
 		}
 
 		if (Params::bayes_opt_boptimizer::hp_period() > 0)
