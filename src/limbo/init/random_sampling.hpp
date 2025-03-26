@@ -141,7 +141,7 @@ namespace limbo {
                 return RandomSampling<InitRandomSampling>::operator()(seval, opt);
             }
 
-            std::optional<Eigen::VectorXd> initialPoint_;
+            std::optional<Eigen::VectorXd> initialPoint_ = std::nullopt;
     	};
 
     }
