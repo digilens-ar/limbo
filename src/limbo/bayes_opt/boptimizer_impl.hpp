@@ -131,17 +131,19 @@ namespace limbo::bayes_opt
 				throw EvaluationError("Merit function returned an infinite value");
 			}
 			_model.add_sample(sample, observation);
+
+			if (Params::bayes_opt_boptimizer::stats_enabled()) {
+				// Call all Output functions
+				boost::fusion::for_each(
+					outputFuncs_,
+					[this](concepts::OutputFunc auto& func)
+					{
+						func.template operator() < decltype(*this) > (*this);
+					});
+			}
 		}
 
-		if (Params::bayes_opt_boptimizer::stats_enabled()) {
-			// Call all Output functions
-			boost::fusion::for_each(
-				outputFuncs_,
-				[this](concepts::OutputFunc auto& func)
-				{
-					func.template operator()<decltype(*this)>(*this);
-				});
-		}
+	
 
 		return status;
 	}

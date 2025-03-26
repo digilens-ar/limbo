@@ -377,9 +377,10 @@ namespace limbo {
 
             std::pair<double, Eigen::VectorXd> best_observation() const
             {
-                const auto max_e = std::max_element(observations().begin(), observations().end());
-                const auto index = std::distance(observations().begin(), max_e);
-                return { observations()[index], samples()[index] };
+                assert(!_observations.empty());
+                const auto max_e = std::max_element(_observations.begin(), _observations.end());
+                const auto index = std::distance(_observations.begin(), max_e);
+                return { _observations[index], _samples[index] };
             }
 
             /// save the parameters and the data for the GaussianProcess to the archive (text or binary)
