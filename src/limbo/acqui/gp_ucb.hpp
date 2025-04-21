@@ -60,7 +60,7 @@ namespace limbo {
             /// @ingroup acqui_defaults
             BO_PARAM(double, delta, 0.1);
 
-            BO_PARAM(double, multiplicationFactor, 0.2); // To quote "Srinivas 2010" Section 6: "While the choice of βt as recommended by Theorem 1 leads to competitive performance of GP - UCB, we find(using cross - validation) that the algorithm is improved by scaling βt down by a factor"
+            BO_PARAM(double, multiplicationFactor, 0.2); // To quote "Gaussian Process Optimization in the Bandit Setting: No Regret and Experimental Design Srinivas 2010" Section 6: "While the choice of βt as recommended by Theorem 1 leads to competitive performance of GP - UCB, we find(using cross - validation) that the algorithm is improved by scaling βt down by a factor"
             // Our experience has shown that the default GP_UCB results in much more exploration than is desired. Scaling down by 5 results in faster convergence to a good result.
         };
     }
