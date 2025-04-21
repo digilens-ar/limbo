@@ -1,4 +1,4 @@
-//| Copyright Inria May 2015
+﻿//| Copyright Inria May 2015
 //| This project has received funding from the European Research Council (ERC) under
 //| the European Union's Horizon 2020 research and innovation programme (grant
 //| agreement No 637972) - see http://www.resibots.eu
@@ -59,6 +59,9 @@ namespace limbo {
         struct acqui_gpucb {
             /// @ingroup acqui_defaults
             BO_PARAM(double, delta, 0.1);
+
+            BO_PARAM(double, multiplicationFactor, 0.2); // To quote "Srinivas 2010" Section 6: "While the choice of βt as recommended by Theorem 1 leads to competitive performance of GP - UCB, we find(using cross - validation) that the algorithm is improved by scaling βt down by a factor"
+            // Our experience has shown that the default GP_UCB results in much more exploration than is desired. Scaling down by 5 results in faster convergence to a good result.
         };
     }
     namespace acqui {
@@ -88,7 +91,7 @@ namespace limbo {
                 double nt = std::pow(iteration + 1, _model.dim_in() / 2.0 + 2.0); // According to the reference `t` (iteration) starts at 1, not 0. if it is 0 then the resuling _beta is NaN.
                 static const double delta3 = acqui_gpucb::delta() * 3;
                 static constexpr double pi2 = M_PI * M_PI;
-                _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3));
+                _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3)) * acqui_gpucb::multiplicationFactor();
             }
 
             opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
