@@ -65,7 +65,7 @@ namespace limbo {
 
             /// useful because the model might be created before having samples
             MultiGP(int dim_in, int dim_out)
-                : _dim_in(dim_in), _dim_out(dim_out), _mean_function()
+                : _dim_in(dim_in), _dim_out(dim_out)
             {
                 // initialize dim_in models with 1 output
                 for (int i = 0; i < _dim_out; i++) {
@@ -291,7 +291,7 @@ namespace limbo {
             std::vector<GP_t> _gp_models;
             int _dim_in, _dim_out;
             HyperParamsOptimizer _hp_optimize;
-            MeanFunction _mean_function;
+            static MeanFunction _mean_function;
             std::vector<Eigen::VectorXd> _observations;
 
             ///  recomputes the GPs
