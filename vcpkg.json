@@ -15,7 +15,7 @@
     "benchmark",
     "zlib"
   ],
-  "builtin-baseline": "1a66c32c6f90c2f646529975c3c076ed3dbdae0c",
+  "builtin-baseline": "10609e53171b3d3e6945d9267a436ef0d9e26e75",
   "supports": "windows",
   "vcpkg-configuration": {
     "overlay-triplets": [ "C:/Users/NicholasAnthony/source/repos/digilens_vcpkg_registry/custom-triplets" ]
