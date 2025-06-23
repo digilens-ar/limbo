@@ -92,6 +92,7 @@ namespace limbo {
                 static const double delta3 = acqui_gpucb::delta() * 3;
                 static constexpr double pi2 = M_PI * M_PI;
                 _beta = std::sqrt(2.0 * std::log(nt * pi2 / delta3)) * acqui_gpucb::multiplicationFactor();
+                spdlog::info("Initializing GP-UCB acquisition function with kappa={} for iteration # {}", _beta, iteration);
             }
 
             opt::eval_t operator()(const Eigen::VectorXd& v, bool gradient) const
